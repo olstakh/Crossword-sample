@@ -1,0 +1,17 @@
+services:
+  crosswords:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    ports:
+      - "5000:8080"
+      - "5001:5001"  # Debug port
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_URLS=http://+:8080
+    volumes:
+      # Mount source code for hot reload
+      - ./src/server:/app/server:ro
+      - ./src/client:/app/client:ro
+    restart: unless-stopped

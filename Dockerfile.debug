@@ -1,0 +1,30 @@
+# Debug Dockerfile - optimized for development with remote debugging support
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS base
+WORKDIR /app
+EXPOSE 8080
+EXPOSE 5001
+
+# Install debugger
+RUN apt-get update && apt-get install -y unzip && \
+    curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
+
+# Copy csproj and restore dependencies
+COPY ["src/server/CrossWords.csproj", "src/server/"]
+COPY ["Directory.Packages.props", "."]
+COPY ["global.json", "."]
+RUN dotnet restore "src/server/CrossWords.csproj"
+
+# Copy everything
+COPY . .
+
+# Copy client files
+COPY src/client /app/client
+
+WORKDIR /app/src/server
+
+# Set environment for debugging
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_HTTP_PORTS=8080
+
+# Run with dotnet watch for hot reload
+ENTRYPOINT ["dotnet", "watch", "run", "--non-interactive", "--urls", "http://0.0.0.0:8080"]

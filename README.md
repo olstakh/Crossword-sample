@@ -53,6 +53,26 @@ A web-based crossword puzzle application built with ASP.NET Core and vanilla Jav
    docker-compose down
    ```
 
+### Running with Docker (Debug Mode)
+
+For development and debugging:
+
+1. Build and run using the debug compose file:
+   ```bash
+   docker-compose -f docker-compose.debug.yml up --build
+   ```
+
+2. In VS Code:
+   - Press `F5` or go to Run and Debug
+   - Select "Docker .NET Attach" configuration
+   - Choose the running CrossWords process
+
+The debug configuration includes:
+- Hot reload with `dotnet watch`
+- Remote debugging support with vsdbg
+- Source code mapping for breakpoints
+- Development environment variables
+
 ### Running with Docker (without compose)
 
 1. Build the Docker image:

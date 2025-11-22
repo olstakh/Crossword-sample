@@ -31,17 +31,22 @@ if (app.Environment.IsDevelopment())
 }
 
 // Serve static files from the client folder
+var clientPath = Path.Combine(Directory.GetCurrentDirectory(), "client", "wwwroot");
+// Fallback for local development
+if (!Directory.Exists(clientPath))
+{
+    clientPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot");
+}
+
 app.UseDefaultFiles(new DefaultFilesOptions
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot")),
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
     RequestPath = ""
 });
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot")),
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
     RequestPath = ""
 });
 

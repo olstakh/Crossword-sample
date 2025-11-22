@@ -1,0 +1,62 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Docker .NET Attach",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickRemoteProcess}",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "crosswords-crosswords-1"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceFolder}",
+        "quoteArgs": false
+      },
+      "sourceFileMap": {
+        "/app/src/server": "${workspaceFolder}/src/server"
+      }
+    },
+    {
+      "name": "Docker .NET Launch",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "docker-run-debug",
+      "program": "/app/src/server/bin/Debug/net9.0/CrossWords.dll",
+      "args": [],
+      "cwd": "/app/src/server",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "pipeTransport": {
+        "pipeCwd": "${workspaceFolder}",
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "crosswords-crosswords-1"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "quoteArgs": false
+      },
+      "sourceFileMap": {
+        "/app/src/server": "${workspaceFolder}/src/server"
+      }
+    },
+    {
+      "name": ".NET Core Launch (web - local)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/server/bin/Debug/net9.0/CrossWords.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/server",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    }
+  ]
+}
