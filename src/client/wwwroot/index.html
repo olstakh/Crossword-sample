@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossword Puzzle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Crossword Puzzle</h1>
+            <div class="controls">
+                <button id="checkBtn">Check Answers</button>
+                <button id="revealBtn">Reveal Answers</button>
+                <button id="clearBtn">Clear Grid</button>
+            </div>
+        </header>
+        
+        <main>
+            <div class="puzzle-section">
+                <div id="crossword-grid"></div>
+            </div>
+            
+            <div class="clues-section">
+                <div class="clues-column">
+                    <h2>Across</h2>
+                    <div id="across-clues" class="clues-list"></div>
+                </div>
+                
+                <div class="clues-column">
+                    <h2>Down</h2>
+                    <div id="down-clues" class="clues-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
