@@ -1,129 +1,130 @@
 // Configuration
 const API_BASE_URL = window.location.origin;
 
-class CrosswordPuzzle {
+class CryptogramPuzzle {
     constructor(data) {
         this.data = data;
         this.grid = [];
         this.currentCell = null;
-        this.currentDirection = 'across';
-        this.currentWord = null;
+        this.userAnswers = {}; // number -> letter mapping from user
         this.init();
     }
 
     init() {
         this.renderGrid();
-        this.renderClues();
+        this.renderAlphabetDecoder();
         this.setupEventListeners();
+        
+        // Initialize with revealed letters
+        if (this.data.initiallyRevealed) {
+            this.data.initiallyRevealed.forEach(num => {
+                const letter = this.data.letterMapping[num.toString()] || this.data.letterMapping[num];
+                if (letter) {
+                    this.userAnswers[num] = letter;
+                }
+            });
+            this.updateAllCells();
+            this.updateAlphabetDecoder();
+        }
     }
 
     renderGrid() {
         const gridElement = document.getElementById('crossword-grid');
-        gridElement.style.gridTemplateColumns = `repeat(${this.data.size.cols}, 40px)`;
-        gridElement.style.gridTemplateRows = `repeat(${this.data.size.rows}, 40px)`;
-
-        // Create cell number mapping
-        const cellNumbers = this.getCellNumbers();
+        gridElement.style.gridTemplateColumns = `repeat(${this.data.size.cols}, 50px)`;
+        gridElement.style.gridTemplateRows = `repeat(${this.data.size.rows}, 50px)`;
+        gridElement.innerHTML = '';
 
         for (let row = 0; row < this.data.size.rows; row++) {
             this.grid[row] = [];
             for (let col = 0; col < this.data.size.cols; col++) {
-                const cell = this.createCell(row, col, cellNumbers);
+                const cell = this.createCell(row, col);
                 gridElement.appendChild(cell);
                 this.grid[row][col] = cell;
             }
         }
     }
 
-    getCellNumbers() {
-        const numbers = {};
-        let currentNumber = 1;
-
-        // Combine all clues and sort by position
-        const allClues = [
-            ...this.data.clues.across.map(c => ({ ...c, dir: 'across' })),
-            ...this.data.clues.down.map(c => ({ ...c, dir: 'down' }))
-        ].sort((a, b) => {
-            if (a.row !== b.row) return a.row - b.row;
-            return a.col - b.col;
-        });
-
-        const processed = new Set();
-
-        for (const clue of allClues) {
-            const key = `${clue.row}-${clue.col}`;
-            if (!processed.has(key)) {
-                numbers[key] = clue.number;
-                processed.add(key);
-            }
-        }
-
-        return numbers;
-    }
-
-    createCell(row, col, cellNumbers) {
+    createCell(row, col) {
         const cellDiv = document.createElement('div');
         cellDiv.className = 'cell';
         cellDiv.dataset.row = row;
         cellDiv.dataset.col = col;
 
         const cellValue = this.data.grid[row][col];
+        const cellNumber = this.data.numbers[row][col];
 
-        if (cellValue === '#') {
+        if (cellValue === '#' || cellNumber === 0) {
             cellDiv.classList.add('black');
             return cellDiv;
         }
 
+        // Add number in corner
+        const numberSpan = document.createElement('span');
+        numberSpan.className = 'cell-number';
+        numberSpan.textContent = cellNumber;
+        cellDiv.appendChild(numberSpan);
+
+        // Add input for letter
         const input = document.createElement('input');
         input.type = 'text';
         input.maxLength = 1;
         input.dataset.answer = cellValue;
-
-        const cellKey = `${row}-${col}`;
-        if (cellNumbers[cellKey]) {
-            const numberSpan = document.createElement('span');
-            numberSpan.className = 'cell-number';
-            numberSpan.textContent = cellNumbers[cellKey];
-            cellDiv.appendChild(numberSpan);
+        input.dataset.number = cellNumber;
+        
+        // Check if this letter is initially revealed
+        if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(cellNumber)) {
+            input.value = cellValue;
+            input.readOnly = true;
+            cellDiv.classList.add('revealed');
         }
 
         cellDiv.appendChild(input);
         return cellDiv;
     }
 
-    renderClues() {
-        const acrossClues = document.getElementById('across-clues');
-        const downClues = document.getElementById('down-clues');
+    renderAlphabetDecoder() {
+        const alphabetRow = document.getElementById('alphabet-row');
+        alphabetRow.innerHTML = '';
 
-        this.data.clues.across.forEach(clue => {
-            const clueElement = this.createClueElement(clue, 'across');
-            acrossClues.appendChild(clueElement);
+        // Get unique numbers used in the puzzle, sorted
+        const usedNumbers = new Set();
+        for (let row = 0; row < this.data.numbers.length; row++) {
+            for (let col = 0; col < this.data.numbers[row].length; col++) {
+                const num = this.data.numbers[row][col];
+                if (num > 0) {
+                    usedNumbers.add(num);
+                }
+            }
+        }
+
+        const sortedNumbers = Array.from(usedNumbers).sort((a, b) => a - b);
+
+        sortedNumbers.forEach(num => {
+            const cell = document.createElement('div');
+            cell.className = 'alphabet-cell';
+            cell.dataset.number = num;
+
+            const numberDiv = document.createElement('div');
+            numberDiv.className = 'alphabet-number';
+            numberDiv.textContent = num;
+
+            const letterDiv = document.createElement('div');
+            letterDiv.className = 'alphabet-letter';
+            
+            // Check if initially revealed
+            if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(num)) {
+                const letter = this.data.letterMapping[num.toString()] || this.data.letterMapping[num];
+                letterDiv.textContent = letter || '?';
+                cell.classList.add('revealed');
+            } else {
+                letterDiv.textContent = '?';
+                letterDiv.classList.add('hidden');
+            }
+
+            cell.appendChild(numberDiv);
+            cell.appendChild(letterDiv);
+            alphabetRow.appendChild(cell);
         });
-
-        this.data.clues.down.forEach(clue => {
-            const clueElement = this.createClueElement(clue, 'down');
-            downClues.appendChild(clueElement);
-        });
-    }
-
-    createClueElement(clue, direction) {
-        const clueDiv = document.createElement('div');
-        clueDiv.className = 'clue-item';
-        clueDiv.dataset.number = clue.number;
-        clueDiv.dataset.direction = direction;
-        clueDiv.dataset.row = clue.row;
-        clueDiv.dataset.col = clue.col;
-
-        clueDiv.innerHTML = `
-            <span class="clue-number">${clue.number}.</span>
-            <span class="clue-text">${clue.clueText}</span>
-        `;
-
-        clueDiv.addEventListener('click', () => {
-            this.selectClue(clue, direction);
-        });
-
-        return clueDiv;
     }
 
     setupEventListeners() {
@@ -136,11 +137,23 @@ class CrosswordPuzzle {
             });
 
             input.addEventListener('input', (e) => {
-                const value = e.target.value.toUpperCase();
+                let value = e.target.value.toUpperCase();
+                
+                // Only allow letters A-Z
+                value = value.replace(/[^A-Z]/g, '');
                 e.target.value = value;
 
                 if (value) {
+                    const number = parseInt(e.target.dataset.number);
+                    this.userAnswers[number] = value;
+                    this.updateAllCells();
+                    this.checkNumberComplete(number);
                     this.moveToNextCell();
+                } else {
+                    const number = parseInt(e.target.dataset.number);
+                    delete this.userAnswers[number];
+                    this.updateAllCells();
+                    this.updateAlphabetDecoder();
                 }
             });
 
@@ -155,102 +168,68 @@ class CrosswordPuzzle {
     }
 
     selectCell(cell) {
-        this.clearHighlights();
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
         this.currentCell = cell;
         cell.classList.add('selected');
-        this.highlightCurrentWord();
-        this.highlightCurrentClue();
     }
 
-    selectClue(clue, direction) {
-        this.currentDirection = direction;
-        const cell = this.grid[clue.row][clue.col];
-        const input = cell.querySelector('input');
-        if (input) {
-            input.focus();
-        }
-    }
-
-    highlightCurrentWord() {
-        if (!this.currentCell) return;
-
-        const row = parseInt(this.currentCell.dataset.row);
-        const col = parseInt(this.currentCell.dataset.col);
-
-        const wordCells = this.getWordCells(row, col, this.currentDirection);
-        wordCells.forEach(cell => {
-            if (cell !== this.currentCell) {
-                cell.classList.add('highlighted');
+    updateAllCells() {
+        // Update all cells with the same number
+        const inputs = document.querySelectorAll('.cell:not(.black) input:not([readonly])');
+        inputs.forEach(input => {
+            const number = parseInt(input.dataset.number);
+            if (this.userAnswers[number]) {
+                input.value = this.userAnswers[number];
             }
         });
     }
 
-    getWordCells(row, col, direction) {
-        const cells = [];
+    checkNumberComplete(number) {
+        // Check if all instances of this number are correctly filled
+        const inputs = document.querySelectorAll(`input[data-number="${number}"]:not([readonly])`);
+        let allCorrect = true;
+        let allFilled = true;
 
-        if (direction === 'across') {
-            // Find start of word
-            let startCol = col;
-            while (startCol > 0 && this.data.grid[row][startCol - 1] !== '#') {
-                startCol--;
+        inputs.forEach(input => {
+            if (!input.value) {
+                allFilled = false;
+            } else if (input.value.toUpperCase() !== input.dataset.answer) {
+                allCorrect = false;
             }
+        });
 
-            // Get all cells in word
-            let currentCol = startCol;
-            while (currentCol < this.data.size.cols && this.data.grid[row][currentCol] !== '#') {
-                cells.push(this.grid[row][currentCol]);
-                currentCol++;
-            }
+        if (allFilled && allCorrect) {
+            // Reveal in alphabet decoder
+            this.revealInAlphabet(number);
         } else {
-            // Find start of word
-            let startRow = row;
-            while (startRow > 0 && this.data.grid[startRow - 1][col] !== '#') {
-                startRow--;
-            }
-
-            // Get all cells in word
-            let currentRow = startRow;
-            while (currentRow < this.data.size.rows && this.data.grid[currentRow][col] !== '#') {
-                cells.push(this.grid[currentRow][col]);
-                currentRow++;
-            }
-        }
-
-        return cells;
-    }
-
-    highlightCurrentClue() {
-        document.querySelectorAll('.clue-item').forEach(clue => clue.classList.remove('active'));
-
-        if (!this.currentCell) return;
-
-        const row = parseInt(this.currentCell.dataset.row);
-        const col = parseInt(this.currentCell.dataset.col);
-
-        // Find the clue that matches current position
-        const clues = this.data.clues[this.currentDirection];
-        const wordCells = this.getWordCells(row, col, this.currentDirection);
-        
-        if (wordCells.length > 0) {
-            const startCell = wordCells[0];
-            const startRow = parseInt(startCell.dataset.row);
-            const startCol = parseInt(startCell.dataset.col);
-
-            const matchingClue = clues.find(c => c.row === startRow && c.col === startCol);
-            if (matchingClue) {
-                const clueElement = document.querySelector(
-                    `.clue-item[data-number="${matchingClue.number}"][data-direction="${this.currentDirection}"]`
-                );
-                if (clueElement) {
-                    clueElement.classList.add('active');
-                }
-            }
+            this.updateAlphabetDecoder();
         }
     }
 
-    clearHighlights() {
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.classList.remove('selected', 'highlighted');
+    revealInAlphabet(number) {
+        const alphabetCell = document.querySelector(`.alphabet-cell[data-number="${number}"]`);
+        if (alphabetCell) {
+            const letterDiv = alphabetCell.querySelector('.alphabet-letter');
+            const letter = this.data.letterMapping[number.toString()] || this.data.letterMapping[number];
+            letterDiv.textContent = letter || '?';
+            letterDiv.classList.remove('hidden');
+            alphabetCell.classList.add('revealed');
+        }
+    }
+
+    updateAlphabetDecoder() {
+        const alphabetCells = document.querySelectorAll('.alphabet-cell:not(.revealed)');
+        alphabetCells.forEach(cell => {
+            const number = parseInt(cell.dataset.number);
+            const letterDiv = cell.querySelector('.alphabet-letter');
+            
+            if (this.userAnswers[number]) {
+                letterDiv.textContent = this.userAnswers[number];
+                letterDiv.classList.remove('hidden');
+            } else {
+                letterDiv.textContent = '?';
+                letterDiv.classList.add('hidden');
+            }
         });
     }
 
@@ -264,34 +243,24 @@ class CrosswordPuzzle {
             case 'ArrowRight':
                 e.preventDefault();
                 this.moveCell(row, col + 1);
-                this.currentDirection = 'across';
                 break;
             case 'ArrowLeft':
                 e.preventDefault();
                 this.moveCell(row, col - 1);
-                this.currentDirection = 'across';
                 break;
             case 'ArrowDown':
                 e.preventDefault();
                 this.moveCell(row + 1, col);
-                this.currentDirection = 'down';
                 break;
             case 'ArrowUp':
                 e.preventDefault();
                 this.moveCell(row - 1, col);
-                this.currentDirection = 'down';
                 break;
             case 'Backspace':
-                if (!e.target.value) {
+                if (!e.target.value && !e.target.readOnly) {
                     e.preventDefault();
                     this.moveToPreviousCell();
                 }
-                break;
-            case ' ':
-                e.preventDefault();
-                this.currentDirection = this.currentDirection === 'across' ? 'down' : 'across';
-                this.clearHighlights();
-                this.selectCell(this.currentCell);
                 break;
         }
     }
@@ -307,7 +276,7 @@ class CrosswordPuzzle {
         }
 
         const input = cell.querySelector('input');
-        if (input) {
+        if (input && !input.readOnly) {
             input.focus();
         }
     }
@@ -318,18 +287,28 @@ class CrosswordPuzzle {
         const row = parseInt(this.currentCell.dataset.row);
         const col = parseInt(this.currentCell.dataset.col);
 
-        if (this.currentDirection === 'across') {
-            for (let c = col + 1; c < this.data.size.cols; c++) {
-                if (this.data.grid[row][c] !== '#') {
-                    this.moveCell(row, c);
+        // Try to move right first
+        for (let c = col + 1; c < this.data.size.cols; c++) {
+            const cell = this.grid[row][c];
+            if (!cell.classList.contains('black')) {
+                const input = cell.querySelector('input');
+                if (input && !input.readOnly) {
+                    input.focus();
                     return;
                 }
             }
-        } else {
-            for (let r = row + 1; r < this.data.size.rows; r++) {
-                if (this.data.grid[r][col] !== '#') {
-                    this.moveCell(r, col);
-                    return;
+        }
+
+        // Move to next row
+        for (let r = row + 1; r < this.data.size.rows; r++) {
+            for (let c = 0; c < this.data.size.cols; c++) {
+                const cell = this.grid[r][c];
+                if (!cell.classList.contains('black')) {
+                    const input = cell.querySelector('input');
+                    if (input && !input.readOnly) {
+                        input.focus();
+                        return;
+                    }
                 }
             }
         }
@@ -341,18 +320,28 @@ class CrosswordPuzzle {
         const row = parseInt(this.currentCell.dataset.row);
         const col = parseInt(this.currentCell.dataset.col);
 
-        if (this.currentDirection === 'across') {
-            for (let c = col - 1; c >= 0; c--) {
-                if (this.data.grid[row][c] !== '#') {
-                    this.moveCell(row, c);
+        // Try to move left first
+        for (let c = col - 1; c >= 0; c--) {
+            const cell = this.grid[row][c];
+            if (!cell.classList.contains('black')) {
+                const input = cell.querySelector('input');
+                if (input && !input.readOnly) {
+                    input.focus();
                     return;
                 }
             }
-        } else {
-            for (let r = row - 1; r >= 0; r--) {
-                if (this.data.grid[r][col] !== '#') {
-                    this.moveCell(r, col);
-                    return;
+        }
+
+        // Move to previous row
+        for (let r = row - 1; r >= 0; r--) {
+            for (let c = this.data.size.cols - 1; c >= 0; c--) {
+                const cell = this.grid[r][c];
+                if (!cell.classList.contains('black')) {
+                    const input = cell.querySelector('input');
+                    if (input && !input.readOnly) {
+                        input.focus();
+                        return;
+                    }
                 }
             }
         }
@@ -361,10 +350,16 @@ class CrosswordPuzzle {
     checkAnswers() {
         const inputs = document.querySelectorAll('.cell:not(.black) input');
         let allCorrect = true;
+        let allFilled = true;
 
         inputs.forEach(input => {
             const cell = input.parentElement;
             cell.classList.remove('correct', 'incorrect');
+
+            if (input.readOnly) {
+                cell.classList.add('correct');
+                return;
+            }
 
             if (input.value) {
                 if (input.value.toUpperCase() === input.dataset.answer) {
@@ -374,13 +369,21 @@ class CrosswordPuzzle {
                     allCorrect = false;
                 }
             } else {
-                allCorrect = false;
+                allFilled = false;
             }
         });
 
-        if (allCorrect) {
+        if (allFilled && allCorrect) {
             setTimeout(() => {
                 alert('Congratulations! You solved the puzzle correctly!');
+            }, 100);
+        } else if (allFilled) {
+            setTimeout(() => {
+                alert('Some answers are incorrect. Keep trying!');
+            }, 100);
+        } else {
+            setTimeout(() => {
+                alert('Please fill in all cells before checking.');
             }, 100);
         }
     }
@@ -388,32 +391,78 @@ class CrosswordPuzzle {
     revealAnswers() {
         const inputs = document.querySelectorAll('.cell:not(.black) input');
         inputs.forEach(input => {
-            input.value = input.dataset.answer;
+            if (!input.readOnly) {
+                input.value = input.dataset.answer;
+                const number = parseInt(input.dataset.number);
+                this.userAnswers[number] = input.dataset.answer;
+            }
             const cell = input.parentElement;
             cell.classList.remove('incorrect');
             cell.classList.add('correct');
         });
+
+        // Reveal all in alphabet decoder
+        const alphabetCells = document.querySelectorAll('.alphabet-cell');
+        alphabetCells.forEach(cell => {
+            const number = parseInt(cell.dataset.number);
+            const letterDiv = cell.querySelector('.alphabet-letter');
+            // Convert number to string key for dictionary lookup
+            const letter = this.data.letterMapping[number.toString()] || this.data.letterMapping[number];
+            if (letter) {
+                letterDiv.textContent = letter;
+                letterDiv.classList.remove('hidden');
+                cell.classList.add('revealed');
+            }
+        });
     }
 
     clearGrid() {
-        const inputs = document.querySelectorAll('.cell:not(.black) input');
+        const inputs = document.querySelectorAll('.cell:not(.black) input:not([readonly])');
         inputs.forEach(input => {
             input.value = '';
             const cell = input.parentElement;
             cell.classList.remove('correct', 'incorrect');
         });
+
+        // Reset user answers except initially revealed
+        this.userAnswers = {};
+        if (this.data.initiallyRevealed) {
+            this.data.initiallyRevealed.forEach(num => {
+                const letter = this.data.letterMapping[num.toString()] || this.data.letterMapping[num];
+                if (letter) {
+                    this.userAnswers[num] = letter;
+                }
+            });
+        }
+
+        // Reset alphabet decoder
+        const alphabetCells = document.querySelectorAll('.alphabet-cell');
+        alphabetCells.forEach(cell => {
+            const number = parseInt(cell.dataset.number);
+            const letterDiv = cell.querySelector('.alphabet-letter');
+            
+            if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(number)) {
+                const letter = this.data.letterMapping[number.toString()] || this.data.letterMapping[number];
+                letterDiv.textContent = letter || '?';
+                cell.classList.add('revealed');
+            } else {
+                letterDiv.textContent = '?';
+                letterDiv.classList.add('hidden');
+                cell.classList.remove('revealed');
+            }
+        });
     }
 }
 
 // Fetch puzzle data from the API
-async function fetchPuzzle(puzzleId = 'puzzle2') {
+async function fetchPuzzle(puzzleId = 'puzzle1') {
     try {
         const response = await fetch(`${API_BASE_URL}/api/crossword/puzzle/${puzzleId}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        return transformPuzzleData(data);
+        return data;
     } catch (error) {
         console.error('Error fetching puzzle:', error);
         alert('Error loading puzzle. Please make sure the server is running.');
@@ -421,29 +470,12 @@ async function fetchPuzzle(puzzleId = 'puzzle2') {
     }
 }
 
-// Transform API response to match the expected format
-function transformPuzzleData(apiData) {
-    return {
-        id: apiData.id,
-        title: apiData.title,
-        size: {
-            rows: apiData.size.rows,
-            cols: apiData.size.cols
-        },
-        grid: apiData.grid,
-        clues: {
-            across: apiData.clues.across,
-            down: apiData.clues.down
-        }
-    };
-}
-
 // Initialize the crossword puzzle when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Get puzzle ID from URL parameter or use default
         const urlParams = new URLSearchParams(window.location.search);
-        const puzzleId = urlParams.get('puzzle') || 'puzzle2';
+        const puzzleId = urlParams.get('puzzle') || 'puzzle1';
         
         const puzzleData = await fetchPuzzle(puzzleId);
         
@@ -452,8 +484,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelector('h1').textContent = puzzleData.title;
         }
         
-        new CrosswordPuzzle(puzzleData);
+        new CryptogramPuzzle(puzzleData);
     } catch (error) {
-        console.error('Failed to initialize crossword:', error);
+        console.error('Failed to initialize cryptogram:', error);
     }
 });

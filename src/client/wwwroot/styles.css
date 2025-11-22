@@ -56,16 +56,19 @@ button:active {
 
 main {
     display: flex;
-    gap: 30px;
     justify-content: center;
     flex-wrap: wrap;
 }
 
 .puzzle-section {
     background: white;
-    padding: 20px;
+    padding: 30px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
 }
 
 #crossword-grid {
@@ -73,11 +76,12 @@ main {
     gap: 0;
     border: 2px solid #2c3e50;
     width: fit-content;
+    margin-bottom: 20px;
 }
 
 .cell {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border: 1px solid #bdc3c7;
     position: relative;
     background-color: white;
@@ -93,11 +97,12 @@ main {
     height: 100%;
     border: none;
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: bold;
     text-transform: uppercase;
     background: transparent;
     cursor: pointer;
+    padding-top: 8px;
 }
 
 .cell input:focus {
@@ -107,10 +112,6 @@ main {
 
 .cell.selected {
     background-color: #fff9c4;
-}
-
-.cell.highlighted {
-    background-color: #e3f2fd;
 }
 
 .cell.correct {
@@ -123,79 +124,106 @@ main {
 
 .cell-number {
     position: absolute;
-    top: 1px;
-    left: 2px;
-    font-size: 0.6rem;
+    top: 2px;
+    left: 3px;
+    font-size: 0.7rem;
     font-weight: bold;
-    color: #2c3e50;
+    color: #666;
     pointer-events: none;
+    z-index: 1;
 }
 
-.clues-section {
-    display: flex;
-    gap: 30px;
-    flex-wrap: wrap;
+/* Alphabet Decoder Section */
+.alphabet-decoder {
+    width: 100%;
+    max-width: 900px;
 }
 
-.clues-column {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    min-width: 300px;
-    flex: 1;
-}
-
-.clues-column h2 {
-    font-size: 1.5rem;
+.alphabet-decoder h2 {
+    font-size: 1.3rem;
     color: #2c3e50;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
-.clues-list {
+#alphabet-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 50px);
+    gap: 2px;
+    justify-content: center;
+    border: 2px solid #2c3e50;
+    background-color: #2c3e50;
+    padding: 2px;
+}
+
+.alphabet-cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #bdc3c7;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    position: relative;
 }
 
-.clue-item {
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.2s;
+.alphabet-cell.revealed {
+    background-color: #e8f4f8;
 }
 
-.clue-item:hover {
-    background-color: #ecf0f1;
-}
-
-.clue-item.active {
-    background-color: #3498db;
-    color: white;
-}
-
-.clue-number {
+.alphabet-number {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 0.7rem;
     font-weight: bold;
-    margin-right: 8px;
+    color: #666;
+}
+
+.alphabet-letter {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-transform: uppercase;
+    margin-top: 8px;
+}
+
+.alphabet-letter.hidden {
+    color: #ccc;
+    font-size: 1.8rem;
 }
 
 @media (max-width: 768px) {
     .cell {
-        width: 35px;
-        height: 35px;
+        width: 40px;
+        height: 40px;
     }
     
     .cell input {
-        font-size: 1rem;
+        font-size: 1.2rem;
+        padding-top: 6px;
+    }
+
+    #alphabet-row {
+        grid-template-columns: repeat(auto-fit, 40px);
+    }
+
+    .alphabet-cell {
+        width: 40px;
+        height: 40px;
+    }
+
+    .alphabet-letter {
+        font-size: 1.2rem;
+        margin-top: 6px;
+    }
+
+    .alphabet-letter.hidden {
+        font-size: 1.5rem;
     }
     
     main {
-        flex-direction: column;
-    }
-    
-    .clues-section {
         flex-direction: column;
     }
 }
