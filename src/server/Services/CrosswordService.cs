@@ -10,21 +10,35 @@ public interface ICrosswordService
 
 public class CrosswordService : ICrosswordService
 {
-    private readonly Dictionary<string, CrosswordPuzzle> _puzzles;
+    private readonly ICryptogramGenerator _generator;
+    private readonly Dictionary<string, CrosswordPuzzle> _cachedPuzzles;
 
-    public CrosswordService()
+    public CrosswordService(ICryptogramGenerator generator)
     {
-        _puzzles = InitializePuzzles();
+        _generator = generator;
+        _cachedPuzzles = InitializePuzzles();
     }
 
     public CrosswordPuzzle GetPuzzle(string id)
     {
-        return _puzzles.GetValueOrDefault(id) ?? _puzzles["puzzle1"];
+        // Setting default puzzle here, since i need to change puzzle generator to be 2D
+        return _cachedPuzzles.GetValueOrDefault(id) ?? _cachedPuzzles["puzzle1"];
+        // Check cache first
+        if (_cachedPuzzles.TryGetValue(id, out var cachedPuzzle))
+        {
+            return cachedPuzzle;
+        }
+
+        // Generate puzzle and cache it
+        var puzzle = _generator.GeneratePuzzle(id);
+        _cachedPuzzles[id] = puzzle;
+        return puzzle;
     }
 
     public List<string> GetAvailablePuzzleIds()
     {
-        return _puzzles.Keys.ToList();
+        // Return suggested puzzle IDs - any string can be used as an ID
+        return new List<string> { "daily", "easy", "medium", "hard", "challenge", "1", "2", "3", "4", "5" };
     }
 
     private Dictionary<string, CrosswordPuzzle> InitializePuzzles()

@@ -7,7 +7,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Register crossword service
+// Register cryptogram generator and crossword service
+builder.Services.AddSingleton<ICryptogramGenerator, CryptogramGenerator>();
 builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
 
 // Add CORS for development
