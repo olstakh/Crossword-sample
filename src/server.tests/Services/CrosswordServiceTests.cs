@@ -2,22 +2,89 @@ using CrossWords.Models;
 using CrossWords.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace CrossWords.Tests.Services;
 
 public class CrosswordServiceTests
 {
     private readonly CrosswordService _service;
+    private readonly Mock<IPuzzleRepository> _mockRepository;
 
     public CrosswordServiceTests()
     {
-        // Use the puzzles.json file from the test project or server project
-        var puzzlesFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "puzzles.json");
-        var repositoryLogger = NullLogger<FilePuzzleRepository>.Instance;
-        var repository = new FilePuzzleRepository(puzzlesFilePath, repositoryLogger);
+        // Create mock puzzles
+        var mockPuzzles = new List<CrosswordPuzzle>
+        {
+            new CrosswordPuzzle
+            {
+                Id = "puzzle1",
+                Title = "Easy Cryptogram",
+                Language = PuzzleLanguage.English,
+                Size = new PuzzleSize { Rows = 5, Cols = 5 },
+                Grid = new List<List<string>>
+                {
+                    new List<string> { "C", "A", "T", "S", "#" },
+                    new List<string> { "O", "#", "O", "#", "D" },
+                    new List<string> { "D", "O", "G", "S", "#" },
+                    new List<string> { "E", "#", "#", "#", "A" },
+                    new List<string> { "#", "R", "A", "T", "S" }
+                }
+            },
+            new CrosswordPuzzle
+            {
+                Id = "puzzle2",
+                Title = "Medium Cryptogram",
+                Language = PuzzleLanguage.English,
+                Size = new PuzzleSize { Rows = 10, Cols = 10 },
+                Grid = new List<List<string>>
+                {
+                    new List<string> { "B", "I", "R", "D", "S", "#", "C", "A", "T", "#" },
+                    new List<string> { "E", "#", "A", "#", "U", "N", "#", "O", "#", "D" },
+                    new List<string> { "A", "N", "T", "S", "#", "#", "D", "O", "G", "#" },
+                    new List<string> { "R", "#", "#", "H", "E", "N", "#", "#", "#", "S" },
+                    new List<string> { "S", "U", "N", "#", "#", "#", "F", "O", "X", "#" },
+                    new List<string> { "#", "P", "I", "G", "S", "#", "#", "W", "#", "#" },
+                    new List<string> { "M", "O", "U", "S", "E", "#", "B", "A", "T", "#" },
+                    new List<string> { "#", "#", "C", "#", "#", "L", "I", "O", "N", "#" },
+                    new List<string> { "F", "I", "S", "H", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "B", "E", "A", "R", "#", "#" }
+                }
+            },
+            new CrosswordPuzzle
+            {
+                Id = "puzzle3",
+                Title = "Big Cryptogram Challenge",
+                Language = PuzzleLanguage.English,
+                Size = new PuzzleSize { Rows = 16, Cols = 16 },
+                Grid = new List<List<string>>
+                {
+                    new List<string> { "T", "H", "E", "#", "Q", "U", "I", "C", "K", "#", "B", "R", "O", "W", "N", "#" },
+                    new List<string> { "F", "O", "X", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "J", "U", "M", "P", "S", "#", "O", "V", "E", "R", "#", "T", "H", "E", "#", "#" },
+                    new List<string> { "L", "A", "Z", "Y", "#", "D", "O", "G", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "A", "L", "L", "#", "#", "#" },
+                    new List<string> { "Y", "O", "U", "#", "N", "E", "E", "D", "#", "I", "S", "#", "L", "O", "V", "E" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "T", "O", "#", "B", "E", "#", "O", "R", "#", "N", "O", "T", "#", "T", "O", "#" },
+                    new List<string> { "B", "E", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "T", "H", "A", "T", "#", "I", "S", "#", "T", "H", "E", "#", "#", "#" },
+                    new List<string> { "Q", "U", "E", "S", "T", "I", "O", "N", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "M", "A", "Y", "#", "T", "H", "E" },
+                    new List<string> { "F", "O", "R", "C", "E", "#", "B", "E", "#", "W", "I", "T", "H", "#", "Y", "O" },
+                    new List<string> { "U", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "L", "I", "F", "E", "#", "I", "S", "#", "G", "O", "O", "D", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
+                }
+            }
+        };
+
+        // Setup mock repository
+        _mockRepository = new Mock<IPuzzleRepository>(MockBehavior.Strict);
+        _mockRepository.Setup(r => r.LoadAllPuzzles()).Returns(mockPuzzles);
         
         var serviceLogger = NullLogger<CrosswordService>.Instance;
-        _service = new CrosswordService(repository, serviceLogger);
+        _service = new CrosswordService(_mockRepository.Object, serviceLogger);
     }
 
     [Fact]

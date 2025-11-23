@@ -46,7 +46,7 @@ public class CrosswordService : ICrosswordService
             .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
             .ToList();
 
-        if (!matchingPuzzles.Any())
+        if (matchingPuzzles.Count == 0)
         {
             // Final fallback to first available puzzle
             return languagePuzzles.First();    
