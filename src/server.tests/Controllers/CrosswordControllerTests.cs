@@ -96,9 +96,8 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
 
     [Theory]
     [InlineData(PuzzleLanguage.English)]
-    [InlineData(PuzzleLanguage.Russian)]
     [InlineData(PuzzleLanguage.Ukrainian)]
-    public async Task GetPuzzleBySize_WithLanguage_ReturnsSuccess(PuzzleLanguage language)
+    public async Task GetPuzzleBySize_WithAvailableLanguage_ReturnsSuccess(PuzzleLanguage language)
     {
         // Act
         var response = await _client.GetAsync($"/api/crossword/puzzle/size/medium?language={language}", TestContext.Current.CancellationToken);
@@ -109,6 +108,20 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
         
         Assert.NotNull(puzzle);
         Assert.NotEmpty(puzzle.Grid);
+    }
+
+    [Fact]
+    public async Task GetPuzzleBySize_WithUnavailableLanguage_ReturnsNotFound()
+    {
+        // Act - Request Russian puzzle (which doesn't exist in test data)
+        var response = await _client.GetAsync($"/api/crossword/puzzle/size/medium?language={PuzzleLanguage.Russian}", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var errorResponse = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.NotNull(errorResponse);
+        Assert.True(errorResponse.ContainsKey("error"));
+        Assert.Contains("Russian", errorResponse["error"]);
     }
 
     [Theory]

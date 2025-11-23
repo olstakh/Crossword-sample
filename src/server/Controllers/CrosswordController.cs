@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CrossWords.Services;
 using CrossWords.Models;
+using CrossWords.Exceptions;
 
 namespace CrossWords.Controllers;
 
@@ -44,16 +45,17 @@ public class CrosswordController : ControllerBase
         try
         {
             var puzzle = _crosswordService.GetPuzzle(id);
-            if (puzzle == null)
-            {
-                return NotFound($"Puzzle with ID '{id}' not found");
-            }
             return Ok(puzzle);
+        }
+        catch (PuzzleNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Puzzle not found: {PuzzleId}", id);
+            return NotFound(new { error = ex.Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving puzzle {PuzzleId}", id);
-            return StatusCode(500, "Error retrieving puzzle");
+            return StatusCode(500, new { error = "An unexpected error occurred while retrieving the puzzle." });
         }
     }
 
@@ -90,10 +92,15 @@ public class CrosswordController : ControllerBase
             var puzzle = _crosswordService.GetPuzzle(request);
             return Ok(puzzle);
         }
+        catch (PuzzleNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Puzzle not found for size {Size} and language {Language}", size, language);
+            return NotFound(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating puzzle of size {Size}", size);
-            return StatusCode(500, "Error generating puzzle");
+            return StatusCode(500, new { error = "An unexpected error occurred while generating the puzzle." });
         }
     }
 }

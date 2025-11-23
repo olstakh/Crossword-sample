@@ -1,5 +1,6 @@
 using CrossWords.Models;
 using CrossWords.Services;
+using CrossWords.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -106,17 +107,14 @@ public class CrosswordServiceTests
     }
 
     [Fact]
-    public void GetPuzzle_WithInvalidId_ReturnsDefaultPuzzle()
+    public void GetPuzzle_WithInvalidId_ThrowsException()
     {
         // Arrange
         var puzzleId = "nonexistent";
 
-        // Act
-        var result = _service.GetPuzzle(puzzleId);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("puzzle1", result.Id); // Should return default puzzle1
+        // Act & Assert
+        var exception = Assert.Throws<PuzzleNotFoundException>(() => _service.GetPuzzle(puzzleId));
+        Assert.Contains("nonexistent", exception.Message);
     }
 
     [Theory]

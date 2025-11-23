@@ -1,4 +1,5 @@
 using CrossWords.Models;
+using CrossWords.Exceptions;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -24,8 +25,12 @@ public class CrosswordService : ICrosswordService
 
     public CrosswordPuzzle GetPuzzle(string id)
     {
-        // Setting default puzzle here, since i need to change puzzle generator to be 2D
-        return _cachedPuzzles.GetValueOrDefault(id) ?? _cachedPuzzles["puzzle1"];
+        if (!_cachedPuzzles.TryGetValue(id, out var puzzle))
+        {
+            throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
+        }
+        
+        return puzzle;
     }
 
     public CrosswordPuzzle GetPuzzle(PuzzleRequest request)
@@ -35,8 +40,8 @@ public class CrosswordService : ICrosswordService
         
         if (!languagePuzzles.Any())
         {
-            // Fallback to English if no puzzles in requested language
-            languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == PuzzleLanguage.English).ToList();
+            throw new PuzzleNotFoundException(
+                $"No puzzles found for language '{request.Language}'. Please try a different language.");
         }
 
         // Filter by size category
@@ -46,10 +51,10 @@ public class CrosswordService : ICrosswordService
             .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
             .ToList();
 
-        if (matchingPuzzles.Count == 0)
+        if (!matchingPuzzles.Any())
         {
-            // Final fallback to first available puzzle
-            return languagePuzzles.First();    
+            throw new PuzzleNotFoundException(
+                $"No puzzles found for language '{request.Language}' and size '{request.SizeCategory}'. Please try a different combination.");
         }
 
         // Use seed for deterministic selection
