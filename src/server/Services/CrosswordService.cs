@@ -1,5 +1,6 @@
 using CrossWords.Models;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace CrossWords.Services;
 
@@ -14,10 +15,12 @@ public class CrosswordService : ICrosswordService
 {
     private readonly Dictionary<string, CrosswordPuzzle> _cachedPuzzles;
     private readonly string _puzzlesFilePath;
+    private readonly ILogger<CrosswordService> _logger;
 
-    public CrosswordService(string puzzlesFilePath)
+    public CrosswordService(string puzzlesFilePath, ILogger<CrosswordService> logger)
     {
         _puzzlesFilePath = puzzlesFilePath;
+        _logger = logger;
         _cachedPuzzles = InitializePuzzles();
     }
 
@@ -95,8 +98,7 @@ public class CrosswordService : ICrosswordService
         catch (Exception ex)
         {
             // Log the error and fall back to empty dictionary
-            // In a production app, you'd use proper logging here
-            Console.WriteLine($"Error loading puzzles from file: {ex.Message}");
+            _logger.LogError(ex, "Error loading puzzles from file: {FilePath}", _puzzlesFilePath);
         }
 
         return puzzles;

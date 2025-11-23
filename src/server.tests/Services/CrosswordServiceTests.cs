@@ -1,5 +1,7 @@
 using CrossWords.Models;
 using CrossWords.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CrossWords.Tests.Services;
 
@@ -11,7 +13,8 @@ public class CrosswordServiceTests
     {
         // Use the puzzles.json file from the test project or server project
         var puzzlesFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "puzzles.json");
-        _service = new CrosswordService(puzzlesFilePath);
+        var logger = NullLogger<CrosswordService>.Instance;
+        _service = new CrosswordService(puzzlesFilePath, logger);
     }
 
     [Fact]
