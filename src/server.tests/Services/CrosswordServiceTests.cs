@@ -66,14 +66,17 @@ public class CrosswordServiceTests
             case PuzzleSizeCategory.Small:
                 Assert.InRange(result.Size.Rows, 5, 8);
                 Assert.InRange(result.Size.Cols, 5, 8);
+                Assert.Equal(expectedPuzzleId, result.Id);
                 break;
             case PuzzleSizeCategory.Medium:
                 Assert.InRange(result.Size.Rows, 6, 14);
                 Assert.InRange(result.Size.Cols, 6, 14);
+                Assert.Equal(expectedPuzzleId, result.Id);
                 break;
             case PuzzleSizeCategory.Big:
                 Assert.InRange(result.Size.Rows, 15, 20);
                 Assert.InRange(result.Size.Cols, 15, 20);
+                Assert.Equal(expectedPuzzleId, result.Id);
                 break;
         }
     }
