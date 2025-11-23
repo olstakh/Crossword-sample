@@ -2,16 +2,16 @@ namespace CrossWords.Models;
 
 public class CrosswordPuzzle
 {
-    public string Id { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public PuzzleSize Size { get; set; } = new();
-    public List<List<string>> Grid { get; set; } = new(); // Letters in the solution, "#" for black cells
+    public string Id { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public PuzzleSize Size { get; init; } = new();
+    public List<List<string>> Grid { get; init; } = new(); // Letters in the solution, "#" for black cells
 }
 
 public class PuzzleSize
 {
-    public int Rows { get; set; }
-    public int Cols { get; set; }
+    public int Rows { get; init; }
+    public int Cols { get; init; }
 }
 
 public enum PuzzleSizeCategory
