@@ -7,10 +7,8 @@ namespace CrossWords.Services;
 public interface ICrosswordService
 {
     CrosswordPuzzle GetPuzzle(string id);
-    CrosswordPuzzle GetPuzzleBySize(PuzzleSizeCategory size, string? seed = null);
-    CrosswordPuzzle GetPuzzleBySizeAndLanguage(PuzzleSizeCategory size, PuzzleLanguage language, string? seed = null);
-    List<string> GetAvailablePuzzleIds();
-    List<string> GetAvailablePuzzleIdsByLanguage(PuzzleLanguage language);
+    CrosswordPuzzle GetPuzzle(PuzzleRequest request);
+    List<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null);
 }
 
 public class CrosswordService : ICrosswordService
@@ -32,26 +30,10 @@ public class CrosswordService : ICrosswordService
         return _cachedPuzzles.GetValueOrDefault(id) ?? _cachedPuzzles["puzzle1"];
     }
 
-    public CrosswordPuzzle GetPuzzleBySize(PuzzleSizeCategory size, string? seed = null)
-    {
-        // Generate a deterministic puzzle based on size and seed
-        var puzzleId = $"{size}_{seed ?? DateTime.UtcNow.ToString("yyyyMMdd")}";
-        
-        if (_cachedPuzzles.TryGetValue(puzzleId, out var cachedPuzzle))
-        {
-            return cachedPuzzle;
-        }
-
-        // Generate new puzzle based on size
-        var puzzle = GeneratePuzzleBySize(size, puzzleId);
-        _cachedPuzzles[puzzleId] = puzzle;
-        return puzzle;
-    }
-
-    public CrosswordPuzzle GetPuzzleBySizeAndLanguage(PuzzleSizeCategory size, PuzzleLanguage language, string? seed = null)
+    public CrosswordPuzzle GetPuzzle(PuzzleRequest request)
     {
         // Get puzzles filtered by language
-        var languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == language).ToList();
+        var languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == request.Language).ToList();
         
         if (!languagePuzzles.Any())
         {
@@ -60,7 +42,7 @@ public class CrosswordService : ICrosswordService
         }
 
         // Filter by size category
-        var (minSize, maxSize) = size.GetSizeRange();
+        var (minSize, maxSize) = request.SizeCategory.GetSizeRange();
 
         var matchingPuzzles = languagePuzzles
             .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
@@ -68,46 +50,35 @@ public class CrosswordService : ICrosswordService
 
         if (!matchingPuzzles.Any())
         {
-            // Fallback to original behavior
-            return GetPuzzleBySize(size, seed);
+            // Fallback to any puzzle in size range
+            matchingPuzzles = _cachedPuzzles.Values
+                .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
+                .ToList();
+        }
+
+        if (!matchingPuzzles.Any())
+        {
+            // Final fallback to first available puzzle
+            return _cachedPuzzles.Values.First();
         }
 
         // Use seed for deterministic selection
-        var random = new Random((seed ?? DateTime.UtcNow.ToString("yyyyMMdd")).GetHashCode());
+        var random = new Random((request.Seed ?? DateTime.UtcNow.ToString("yyyyMMdd")).GetHashCode());
         var selectedPuzzle = matchingPuzzles[random.Next(matchingPuzzles.Count)];
         
         return selectedPuzzle;
     }
 
-    public List<string> GetAvailablePuzzleIdsByLanguage(PuzzleLanguage language)
+    public List<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null)
     {
-        return _cachedPuzzles.Values
-            .Where(p => p.Language == language)
-            .Select(p => p.Id)
-            .ToList();
-    }
-
-    private CrosswordPuzzle GeneratePuzzleBySize(PuzzleSizeCategory size, string puzzleId)
-    {
-        var (minSize, maxSize) = size.GetSizeRange();
-
-        // Use seed for deterministic random
-        var random = new Random(puzzleId.GetHashCode());
-        var gridSize = random.Next(minSize, maxSize + 1);
-
-        // For now, return one of the hardcoded puzzles scaled to match requested size category
-        // This is temporary until you implement the full 2D crossword generator
-        return size switch
+        if (language.HasValue)
         {
-            PuzzleSizeCategory.Small => _cachedPuzzles["puzzle1"],
-            PuzzleSizeCategory.Medium => _cachedPuzzles["puzzle2"],
-            PuzzleSizeCategory.Big => _cachedPuzzles["puzzle3"],
-            _ => _cachedPuzzles["puzzle1"]
-        };
-    }
-
-    public List<string> GetAvailablePuzzleIds()
-    {
+            return _cachedPuzzles.Values
+                .Where(p => p.Language == language.Value)
+                .Select(p => p.Id)
+                .ToList();
+        }
+        
         return _cachedPuzzles.Keys.ToList();
     }
 

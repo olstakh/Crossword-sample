@@ -114,6 +114,37 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
         Assert.NotEmpty(puzzle.Grid);
     }
 
+    [Theory]
+    [InlineData("English")]
+    [InlineData("Russian")]
+    [InlineData("Ukrainian")]
+    public async Task GetPuzzleBySize_WithLanguage_ReturnsSuccess(string language)
+    {
+        // Act
+        var response = await _client.GetAsync($"/api/crossword/puzzle/size/medium?language={language}", TestContext.Current.CancellationToken);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(puzzle);
+        Assert.NotEmpty(puzzle.Grid);
+    }
+
+    [Fact]
+    public async Task GetPuzzleList_WithLanguageFilter_ReturnsSuccess()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/crossword/puzzles?language=English", TestContext.Current.CancellationToken);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var puzzleIds = await response.Content.ReadFromJsonAsync<List<string>>(cancellationToken: TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(puzzleIds);
+        Assert.NotEmpty(puzzleIds);
+    }
+
     [Fact]
     public async Task GetPuzzleBySize_Small_ReturnsSmallSizedGrid()
     {

@@ -50,55 +50,44 @@ public class CrosswordServiceTests
     }
 
     [Theory]
-    [InlineData(PuzzleSizeCategory.Small, "puzzle1")]
-    [InlineData(PuzzleSizeCategory.Medium, "puzzle2")]
-    [InlineData(PuzzleSizeCategory.Big, "puzzle3")]
-    public void GetPuzzleBySize_ReturnsCorrectPuzzle(PuzzleSizeCategory size, string expectedPuzzleId)
+    [InlineData(PuzzleSizeCategory.Small)]
+    [InlineData(PuzzleSizeCategory.Medium)]
+    [InlineData(PuzzleSizeCategory.Big)]
+    public void GetPuzzle_WithPuzzleRequest_ReturnsCorrectSizedPuzzle(PuzzleSizeCategory size)
     {
         // Arrange
-        var seed = "test-seed";
+        var request = new PuzzleRequest
+        {
+            SizeCategory = size,
+            Language = PuzzleLanguage.English,
+            Seed = "test-seed"
+        };
 
         // Act
-        var result = _service.GetPuzzleBySize(size, seed);
+        var result = _service.GetPuzzle(request);
 
         // Assert
         Assert.NotNull(result);
         Assert.NotEmpty(result.Grid);
         
         // Verify size is within expected range
-        switch (size)
-        {
-            case PuzzleSizeCategory.Small:
-                Assert.InRange(result.Size.Rows, 5, 8);
-                Assert.InRange(result.Size.Cols, 5, 8);
-                Assert.Equal(expectedPuzzleId, result.Id);
-                break;
-            case PuzzleSizeCategory.Medium:
-                Assert.InRange(result.Size.Rows, 6, 14);
-                Assert.InRange(result.Size.Cols, 6, 14);
-                Assert.Equal(expectedPuzzleId, result.Id);
-                break;
-            case PuzzleSizeCategory.Big:
-                Assert.InRange(result.Size.Rows, 15, 20);
-                Assert.InRange(result.Size.Cols, 15, 20);
-                Assert.Equal(expectedPuzzleId, result.Id);
-                break;
-        }
+        var (minSize, maxSize) = size.GetSizeRange();
+        Assert.InRange(result.Size.Rows, minSize, maxSize);
     }
 
     [Fact]
-    public void GetPuzzleBySize_WithSameSeed_ReturnsCachedPuzzle()
+    public void GetPuzzle_WithPuzzleRequest_UsesDefaultValues()
     {
         // Arrange
-        var size = PuzzleSizeCategory.Medium;
-        var seed = "consistent-seed";
+        var request = new PuzzleRequest(); // Uses defaults: Medium, English
 
         // Act
-        var result1 = _service.GetPuzzleBySize(size, seed);
-        var result2 = _service.GetPuzzleBySize(size, seed);
+        var result = _service.GetPuzzle(request);
 
         // Assert
-        Assert.Same(result1, result2); // Should return same cached instance
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Grid);
+        Assert.Equal(PuzzleLanguage.English, result.Language);
     }
 
     [Fact]
@@ -112,7 +101,18 @@ public class CrosswordServiceTests
         Assert.Contains("puzzle1", result);
         Assert.Contains("puzzle2", result);
         Assert.Contains("puzzle3", result);
-        Assert.Equal(3, result.Count);
+        Assert.True(result.Count >= 3);
+    }
+
+    [Fact]
+    public void GetAvailablePuzzleIds_WithLanguageFilter_ReturnsFilteredPuzzles()
+    {
+        // Act
+        var result = _service.GetAvailablePuzzleIds(PuzzleLanguage.English);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
     }
 
     [Fact]

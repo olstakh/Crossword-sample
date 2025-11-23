@@ -25,9 +25,7 @@ public class CrosswordController : ControllerBase
     {
         try
         {
-            var puzzleIds = language.HasValue 
-                ? _crosswordService.GetAvailablePuzzleIdsByLanguage(language.Value)
-                : _crosswordService.GetAvailablePuzzleIds();
+            var puzzleIds = _crosswordService.GetAvailablePuzzleIds(language);
             return Ok(puzzleIds);
         }
         catch (Exception ex)
@@ -75,13 +73,21 @@ public class CrosswordController : ControllerBase
     /// <param name="language">Language of the puzzle (English, Russian, Ukrainian)</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
     [HttpGet("puzzle/size/{size}")]
-    public ActionResult<CrosswordPuzzle> GetPuzzleBySize(PuzzleSizeCategory size, [FromQuery] PuzzleLanguage? language = null, [FromQuery] string? seed = null)
+    public ActionResult<CrosswordPuzzle> GetPuzzleBySize(
+        PuzzleSizeCategory size = PuzzleSizeCategory.Medium, 
+        [FromQuery] PuzzleLanguage language = PuzzleLanguage.English, 
+        [FromQuery] string? seed = null)
     {
         try
         {
-            var puzzle = language.HasValue
-                ? _crosswordService.GetPuzzleBySizeAndLanguage(size, language.Value, seed)
-                : _crosswordService.GetPuzzleBySize(size, seed);
+            var request = new PuzzleRequest
+            {
+                SizeCategory = size,
+                Language = language,
+                Seed = seed
+            };
+            
+            var puzzle = _crosswordService.GetPuzzle(request);
             return Ok(puzzle);
         }
         catch (Exception ex)

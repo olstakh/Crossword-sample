@@ -32,6 +32,13 @@ public enum PuzzleSizeCategory
     Big
 }
 
+public class PuzzleRequest
+{
+    public PuzzleSizeCategory SizeCategory { get; init; } = PuzzleSizeCategory.Medium;
+    public PuzzleLanguage Language { get; init; } = PuzzleLanguage.English;
+    public string? Seed { get; init; }
+}
+
 internal static class PuzzleSizeCategoryExtensions
 {
     public static (int minSize, int maxSize) GetSizeRange(this PuzzleSizeCategory sizeCategory)
