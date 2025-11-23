@@ -1,0 +1,194 @@
+// User Authentication and Progress Tracking
+// This module handles anonymous user IDs and tracks puzzle progress
+
+class UserAuth {
+    constructor() {
+        this.userId = this.getOrCreateUserId();
+        this.solvedPuzzles = new Set();
+        this.loadProgress();
+    }
+
+    /**
+     * Get or create anonymous user ID
+     * Stored in localStorage for persistence across sessions
+     */
+    getOrCreateUserId() {
+        let userId = localStorage.getItem('cryptogram_user_id');
+        
+        if (!userId) {
+            // Generate a unique anonymous ID
+            userId = 'anon_' + this.generateUUID();
+            localStorage.setItem('cryptogram_user_id', userId);
+            console.log('Created new anonymous user ID:', userId);
+        } else {
+            console.log('Existing user ID:', userId);
+        }
+        
+        return userId;
+    }
+
+    /**
+     * Generate a UUID for anonymous users
+     */
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    /**
+     * Load user progress from server
+     */
+    async loadProgress() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/progress/${this.userId}`);
+            if (response.ok) {
+                const progress = await response.json();
+                this.solvedPuzzles = new Set(progress.solvedPuzzleIds || []);
+                console.log(`Loaded progress: ${this.solvedPuzzles.size} puzzles solved`);
+                
+                // Update UI to show stats
+                this.updateProgressUI();
+            }
+        } catch (error) {
+            console.error('Error loading progress:', error);
+        }
+    }
+
+    /**
+     * Record that user solved a puzzle
+     */
+    async recordSolved(puzzleId) {
+        // Add to local set immediately
+        this.solvedPuzzles.add(puzzleId);
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/solved`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: this.userId,
+                    puzzleId: puzzleId
+                })
+            });
+            
+            if (response.ok) {
+                console.log(`Puzzle ${puzzleId} marked as solved`);
+                this.updateProgressUI();
+                this.showCongratulations();
+            }
+        } catch (error) {
+            console.error('Error recording solved puzzle:', error);
+        }
+    }
+
+    /**
+     * Get available (unsolved) puzzles for current language
+     */
+    async getAvailablePuzzles(language = 'English') {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/user/available/${this.userId}?language=${language}`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                return data;
+            }
+        } catch (error) {
+            console.error('Error fetching available puzzles:', error);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if user has solved a specific puzzle
+     */
+    hasSolved(puzzleId) {
+        return this.solvedPuzzles.has(puzzleId);
+    }
+
+    /**
+     * Update UI to show progress stats
+     */
+    updateProgressUI() {
+        const statsElement = document.getElementById('userStats');
+        if (statsElement) {
+            statsElement.innerHTML = `
+                <div class="stats-badge">
+                    <span class="stats-icon">🏆</span>
+                    <span class="stats-count">${this.solvedPuzzles.size}</span>
+                    <span class="stats-label">Solved</span>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Show congratulations message when puzzle is solved
+     */
+    showCongratulations() {
+        const modal = document.createElement('div');
+        modal.className = 'congrats-overlay';
+        
+        modal.innerHTML = `
+            <div class="congrats-modal">
+                <h2>🎉 Congratulations!</h2>
+                <p>You've successfully solved this puzzle!</p>
+                <p class="congrats-stats">Total puzzles solved: <strong>${this.solvedPuzzles.size}</strong></p>
+                <div class="congrats-actions">
+                    <button class="btn-next-puzzle">Try Another Puzzle</button>
+                    <button class="btn-close">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Animate in
+        setTimeout(() => modal.style.opacity = '1', 10);
+        
+        // Setup event listeners
+        const closeBtn = modal.querySelector('.btn-close');
+        const nextBtn = modal.querySelector('.btn-next-puzzle');
+        
+        const closeModal = () => {
+            modal.style.opacity = '0';
+            setTimeout(() => document.body.removeChild(modal), 300);
+        };
+        
+        closeBtn.addEventListener('click', closeModal);
+        nextBtn.addEventListener('click', () => {
+            closeModal();
+            // Trigger new puzzle load
+            document.getElementById('newPuzzleBtn')?.click();
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    /**
+     * Get a random unsolved puzzle
+     */
+    async getRandomUnsolvedPuzzle(size, language) {
+        const available = await this.getAvailablePuzzles(language);
+        
+        if (!available || available.unsolvedPuzzleIds.length === 0) {
+            return null;
+        }
+        
+        // Filter by size if needed (this requires puzzle metadata)
+        const randomIndex = Math.floor(Math.random() * available.unsolvedPuzzleIds.length);
+        return available.unsolvedPuzzleIds[randomIndex];
+    }
+}
+
+// Global user auth instance
+const userAuth = new UserAuth();

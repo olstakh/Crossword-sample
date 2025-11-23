@@ -431,7 +431,12 @@ class CryptogramPuzzle {
 
         if (allFilled && allCorrect) {
             setTimeout(() => {
-                alert('Congratulations! You solved the puzzle correctly!');
+                // Record solved puzzle
+                if (typeof userAuth !== 'undefined') {
+                    userAuth.recordSolved(this.data.id);
+                } else {
+                    alert('Congratulations! You solved the puzzle correctly!');
+                }
             }, 100);
         } else if (allFilled) {
             setTimeout(() => {
@@ -726,7 +731,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (newPuzzleBtn) {
         console.log('New Puzzle button found, setting up event listener');
-        newPuzzleBtn.addEventListener('click', (e) => {
+        newPuzzleBtn.addEventListener('click', async (e) => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
             const selectedRadio = document.querySelector('input[name="puzzleSize"]:checked');
@@ -737,12 +742,49 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (selectedRadio) {
                 const selectedSize = selectedRadio.value;
                 console.log('Selected size:', selectedSize);
-                // Update URL and reload
+                
+                // Try to load an unsolved puzzle if userAuth is available
+                if (typeof userAuth !== 'undefined') {
+                    try {
+                        const available = await userAuth.getAvailablePuzzles(selectedLanguage);
+                        if (available && available.unsolvedPuzzleIds.length > 0) {
+                            console.log(`Found ${available.unsolvedPuzzleIds.length} unsolved puzzles`);
+                            // Update URL and reload with new seed to get different puzzle
+                            const url = new URL(window.location);
+                            url.searchParams.set('size', selectedSize);
+                            url.searchParams.set('language', selectedLanguage);
+                            url.searchParams.delete('puzzle');
+                            url.searchParams.set('seed', Date.now().toString()); // Use timestamp as seed
+                            console.log('Navigating to:', url.toString());
+                            window.location.href = url.toString();
+                            return;
+                        } else if (available && available.totalSolved > 0) {
+                            // All puzzles solved for this language
+                            showErrorMessage(
+                                'All Puzzles Completed! 🎉',
+                                `Congratulations! You've solved all ${available.totalSolved} available puzzles in ${selectedLanguage}. Try a different language or replay puzzles!`,
+                                () => {
+                                    const url = new URL(window.location);
+                                    url.searchParams.set('size', selectedSize);
+                                    url.searchParams.set('language', selectedLanguage);
+                                    url.searchParams.delete('puzzle');
+                                    url.searchParams.set('seed', Date.now().toString());
+                                    window.location.href = url.toString();
+                                }
+                            );
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error checking unsolved puzzles:', error);
+                    }
+                }
+                
+                // Fallback: Update URL and reload normally
                 const url = new URL(window.location);
                 url.searchParams.set('size', selectedSize);
                 url.searchParams.set('language', selectedLanguage);
-                url.searchParams.delete('puzzle'); // Remove puzzle param if exists
-                url.searchParams.delete('seed'); // Remove seed to get a new puzzle
+                url.searchParams.delete('puzzle');
+                url.searchParams.delete('seed');
                 console.log('Navigating to:', url.toString());
                 window.location.href = url.toString();
             }

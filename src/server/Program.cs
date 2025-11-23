@@ -15,6 +15,7 @@ builder.Services.AddSingleton<IPuzzleRepository>(sp =>
     return new FilePuzzleRepository(puzzlesFilePath, logger);
 });
 builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
+builder.Services.AddSingleton<IUserProgressService, UserProgressService>();
 
 // Add CORS for development
 builder.Services.AddCors(options =>

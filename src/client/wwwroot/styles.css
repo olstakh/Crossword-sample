@@ -22,6 +22,47 @@ header {
     margin-bottom: 30px;
 }
 
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.user-stats {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.stats-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    font-weight: 600;
+}
+
+.stats-icon {
+    font-size: 1.5rem;
+}
+
+.stats-count {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
 h1 {
     font-size: 2.5rem;
     color: #2c3e50;
@@ -422,4 +463,107 @@ main {
     background-color: #7f8c8d;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(127, 140, 141, 0.3);
+}
+
+/* Congratulations Modal */
+.congrats-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in;
+}
+
+.congrats-modal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    color: white;
+    text-align: center;
+    animation: celebrateIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes celebrateIn {
+    0% {
+        transform: scale(0.5) rotate(-5deg);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.1) rotate(2deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.congrats-modal h2 {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.congrats-modal p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.congrats-stats {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin: 25px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.congrats-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.congrats-actions button {
+    padding: 12px 25px;
+    border: 2px solid white;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.btn-next-puzzle {
+    background-color: white;
+    color: #667eea;
+}
+
+.btn-next-puzzle:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.congrats-modal .btn-close {
+    background-color: transparent;
+    color: white;
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.congrats-modal .btn-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+    box-shadow: none;
 }
