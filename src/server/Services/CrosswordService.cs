@@ -75,7 +75,7 @@ public class CrosswordService : ICrosswordService
     {
         var puzzles = new Dictionary<string, CrosswordPuzzle>();
 
-        // Puzzle 1 - Cryptogram style
+        // Puzzle 1 - Small puzzle
         puzzles["puzzle1"] = new CrosswordPuzzle
         {
             Id = "puzzle1",
@@ -88,24 +88,10 @@ public class CrosswordService : ICrosswordService
                 new() { "D", "O", "G", "S", "#" },
                 new() { "E", "#", "#", "#", "A" },
                 new() { "#", "R", "A", "T", "S" }
-            },
-            Numbers = new List<List<int>>
-            {
-                new() { 1, 2, 3, 4, 0 },
-                new() { 5, 0, 5, 0, 6 },
-                new() { 6, 5, 7, 4, 0 },
-                new() { 8, 0, 0, 0, 2 },
-                new() { 0, 9, 2, 3, 4 }
-            },
-            LetterMapping = new Dictionary<int, string>
-            {
-                { 1, "C" }, { 2, "A" }, { 3, "T" }, { 4, "S" },
-                { 5, "O" }, { 6, "D" }, { 7, "G" }, { 8, "E" }, { 9, "R" }
-            },
-            InitiallyRevealed = new List<int> { 2, 5 } // Reveal A and O at start
+            }
         };
 
-        // Puzzle 2 - Medium difficulty
+        // Puzzle 2 - Medium puzzle
         puzzles["puzzle2"] = new CrosswordPuzzle
         {
             Id = "puzzle2",
@@ -119,23 +105,7 @@ public class CrosswordService : ICrosswordService
                 new() { "R", "#", "#", "H", "E", "N" },
                 new() { "S", "U", "N", "#", "#", "#" },
                 new() { "#", "P", "I", "G", "S", "#" }
-            },
-            Numbers = new List<List<int>>
-            {
-                new() { 1, 2, 3, 4, 5, 0 },
-                new() { 6, 0, 7, 0, 8, 9 },
-                new() { 7, 9, 10, 5, 0, 0 },
-                new() { 3, 0, 0, 11, 6, 9 },
-                new() { 5, 8, 9, 0, 0, 0 },
-                new() { 0, 12, 2, 13, 5, 0 }
-            },
-            LetterMapping = new Dictionary<int, string>
-            {
-                { 1, "B" }, { 2, "I" }, { 3, "R" }, { 4, "D" }, { 5, "S" },
-                { 6, "E" }, { 7, "A" }, { 8, "U" }, { 9, "N" }, { 10, "T" },
-                { 11, "H" }, { 12, "P" }, { 13, "G" }
-            },
-            InitiallyRevealed = new List<int> { 5, 9 } // Reveal S and N at start
+            }
         };
 
         // Puzzle 3 - Big puzzle (16x16)
@@ -162,36 +132,7 @@ public class CrosswordService : ICrosswordService
                 new() { "U", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
                 new() { "L", "I", "F", "E", "#", "I", "S", "#", "G", "O", "O", "D", "#", "#", "#", "#" },
                 new() { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
-            },
-            Numbers = new List<List<int>>
-            {
-                new() { 1, 2, 3, 0, 4, 5, 6, 7, 8, 0, 9, 10, 11, 12, 13, 0 },
-                new() { 14, 11, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                new() { 16, 5, 17, 18, 19, 0, 11, 20, 3, 10, 0, 1, 2, 3, 0, 0 },
-                new() { 21, 22, 23, 24, 0, 25, 11, 26, 0, 0, 0, 0, 0, 0, 0, 0 },
-                new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 21, 21, 0, 0, 0 },
-                new() { 24, 11, 5, 0, 13, 3, 3, 25, 0, 6, 19, 0, 21, 11, 20, 3 },
-                new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                new() { 1, 11, 0, 9, 3, 0, 11, 10, 0, 13, 11, 1, 0, 1, 11, 0 },
-                new() { 9, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                new() { 0, 0, 1, 2, 22, 1, 0, 6, 19, 0, 1, 2, 3, 0, 0, 0 },
-                new() { 4, 5, 3, 19, 1, 6, 11, 13, 0, 0, 0, 0, 0, 0, 0, 0 },
-                new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 22, 24, 0, 1, 2, 3 },
-                new() { 14, 11, 10, 7, 3, 0, 9, 3, 0, 12, 6, 1, 2, 0, 24, 11 },
-                new() { 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                new() { 21, 6, 14, 3, 0, 6, 19, 0, 26, 11, 11, 25, 0, 0, 0, 0 },
-                new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
-            },
-            LetterMapping = new Dictionary<int, string>
-            {
-                { 1, "T" }, { 2, "H" }, { 3, "E" }, { 4, "Q" }, { 5, "U" },
-                { 6, "I" }, { 7, "C" }, { 8, "K" }, { 9, "B" }, { 10, "R" },
-                { 11, "O" }, { 12, "W" }, { 13, "N" }, { 14, "F" }, { 15, "X" },
-                { 16, "J" }, { 17, "M" }, { 18, "P" }, { 19, "S" }, { 20, "V" },
-                { 21, "L" }, { 22, "A" }, { 23, "Z" }, { 24, "Y" }, { 25, "D" },
-                { 26, "G" }
-            },
-            InitiallyRevealed = new List<int> { 1, 3, 11 } // Reveal T, E, O at start
+            }
         };
 
         return puzzles;

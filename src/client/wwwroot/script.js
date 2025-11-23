@@ -7,7 +7,63 @@ class CryptogramPuzzle {
         this.grid = [];
         this.currentCell = null;
         this.userAnswers = {}; // number -> letter mapping from user
+        
+        // Generate numbers and letter mapping from grid
+        this.generateCryptogramData();
         this.init();
+    }
+
+    generateCryptogramData() {
+        // Extract unique letters from grid (excluding '#')
+        const uniqueLetters = new Set();
+        this.data.grid.forEach(row => {
+            row.forEach(cell => {
+                if (cell !== '#') {
+                    uniqueLetters.add(cell);
+                }
+            });
+        });
+
+        // Create a random letter-to-number mapping
+        const letters = Array.from(uniqueLetters);
+        const seed = this.data.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const shuffledNumbers = this.shuffleArray([...Array(letters.length).keys()].map(i => i + 1), seed);
+        
+        // Create letterMapping: letter -> number
+        const letterToNumber = {};
+        const numberToLetter = {};
+        letters.forEach((letter, index) => {
+            const number = shuffledNumbers[index];
+            letterToNumber[letter] = number;
+            numberToLetter[number] = letter;
+        });
+
+        // Generate numbers grid
+        this.data.numbers = this.data.grid.map(row =>
+            row.map(cell => cell === '#' ? 0 : letterToNumber[cell])
+        );
+
+        // Store the mapping (number -> letter)
+        this.data.letterMapping = numberToLetter;
+
+        // Reveal 25% of letters initially (at least 2)
+        const numbersToReveal = Math.max(2, Math.floor(letters.length * 0.25));
+        this.data.initiallyRevealed = shuffledNumbers.slice(0, numbersToReveal);
+    }
+
+    shuffleArray(array, seed) {
+        // Seeded shuffle for consistent results
+        const random = (seed) => {
+            const x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        };
+        
+        const result = [...array];
+        for (let i = result.length - 1; i > 0; i--) {
+            const j = Math.floor(random(seed + i) * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
     }
 
     init() {
