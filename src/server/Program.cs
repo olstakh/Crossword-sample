@@ -30,25 +30,28 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Serve static files from the client folder
-var clientPath = Path.Combine(Directory.GetCurrentDirectory(), "client", "wwwroot");
-// Fallback for local development
-if (!Directory.Exists(clientPath))
+// Serve static files from the client folder (skip in test environment)
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    clientPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot");
+    var clientPath = Path.Combine(Directory.GetCurrentDirectory(), "client", "wwwroot");
+    // Fallback for local development
+    if (!Directory.Exists(clientPath))
+    {
+        clientPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot");
+    }
+
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
+        RequestPath = ""
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
+        RequestPath = ""
+    });
 }
-
-app.UseDefaultFiles(new DefaultFilesOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
-    RequestPath = ""
-});
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
-    RequestPath = ""
-});
 
 app.UseCors("AllowAll");
 
@@ -57,3 +60,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make the Program class accessible for integration tests
+public partial class Program { }
