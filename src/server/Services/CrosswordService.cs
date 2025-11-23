@@ -1,4 +1,5 @@
 using CrossWords.Models;
+using System.Text.Json;
 
 namespace CrossWords.Services;
 
@@ -12,9 +13,11 @@ public interface ICrosswordService
 public class CrosswordService : ICrosswordService
 {
     private readonly Dictionary<string, CrosswordPuzzle> _cachedPuzzles;
+    private readonly string _puzzlesFilePath;
 
-    public CrosswordService()
+    public CrosswordService(string puzzlesFilePath)
     {
+        _puzzlesFilePath = puzzlesFilePath;
         _cachedPuzzles = InitializePuzzles();
     }
 
@@ -75,65 +78,26 @@ public class CrosswordService : ICrosswordService
     {
         var puzzles = new Dictionary<string, CrosswordPuzzle>();
 
-        // Puzzle 1 - Small puzzle
-        puzzles["puzzle1"] = new CrosswordPuzzle
+        try
         {
-            Id = "puzzle1",
-            Title = "Easy Cryptogram",
-            Size = new PuzzleSize { Rows = 5, Cols = 5 },
-            Grid = new List<List<string>>
-            {
-                new() { "C", "A", "T", "S", "#" },
-                new() { "O", "#", "O", "#", "D" },
-                new() { "D", "O", "G", "S", "#" },
-                new() { "E", "#", "#", "#", "A" },
-                new() { "#", "R", "A", "T", "S" }
-            }
-        };
+            // Load puzzles from JSON file
+            var jsonContent = File.ReadAllText(_puzzlesFilePath);
+            var puzzleList = JsonSerializer.Deserialize<List<CrosswordPuzzle>>(jsonContent);
 
-        // Puzzle 2 - Medium puzzle
-        puzzles["puzzle2"] = new CrosswordPuzzle
-        {
-            Id = "puzzle2",
-            Title = "Medium Cryptogram",
-            Size = new PuzzleSize { Rows = 6, Cols = 6 },
-            Grid = new List<List<string>>
+            if (puzzleList != null)
             {
-                new() { "B", "I", "R", "D", "S", "#" },
-                new() { "E", "#", "A", "#", "U", "N" },
-                new() { "A", "N", "T", "S", "#", "#" },
-                new() { "R", "#", "#", "H", "E", "N" },
-                new() { "S", "U", "N", "#", "#", "#" },
-                new() { "#", "P", "I", "G", "S", "#" }
+                foreach (var puzzle in puzzleList)
+                {
+                    puzzles[puzzle.Id] = puzzle;
+                }
             }
-        };
-
-        // Puzzle 3 - Big puzzle (16x16)
-        puzzles["puzzle3"] = new CrosswordPuzzle
+        }
+        catch (Exception ex)
         {
-            Id = "puzzle3",
-            Title = "Big Cryptogram Challenge",
-            Size = new PuzzleSize { Rows = 16, Cols = 16 },
-            Grid = new List<List<string>>
-            {
-                new() { "T", "H", "E", "#", "Q", "U", "I", "C", "K", "#", "B", "R", "O", "W", "N", "#" },
-                new() { "F", "O", "X", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                new() { "J", "U", "M", "P", "S", "#", "O", "V", "E", "R", "#", "T", "H", "E", "#", "#" },
-                new() { "L", "A", "Z", "Y", "#", "D", "O", "G", "#", "#", "#", "#", "#", "#", "#", "#" },
-                new() { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "A", "L", "L", "#", "#", "#" },
-                new() { "Y", "O", "U", "#", "N", "E", "E", "D", "#", "I", "S", "#", "L", "O", "V", "E" },
-                new() { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                new() { "T", "O", "#", "B", "E", "#", "O", "R", "#", "N", "O", "T", "#", "T", "O", "#" },
-                new() { "B", "E", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                new() { "#", "#", "T", "H", "A", "T", "#", "I", "S", "#", "T", "H", "E", "#", "#", "#" },
-                new() { "Q", "U", "E", "S", "T", "I", "O", "N", "#", "#", "#", "#", "#", "#", "#", "#" },
-                new() { "#", "#", "#", "#", "#", "#", "#", "#", "#", "M", "A", "Y", "#", "T", "H", "E" },
-                new() { "F", "O", "R", "C", "E", "#", "B", "E", "#", "W", "I", "T", "H", "#", "Y", "O" },
-                new() { "U", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                new() { "L", "I", "F", "E", "#", "I", "S", "#", "G", "O", "O", "D", "#", "#", "#", "#" },
-                new() { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
-            }
-        };
+            // Log the error and fall back to empty dictionary
+            // In a production app, you'd use proper logging here
+            Console.WriteLine($"Error loading puzzles from file: {ex.Message}");
+        }
 
         return puzzles;
     }

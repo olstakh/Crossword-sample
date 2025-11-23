@@ -9,7 +9,9 @@ public class CrosswordServiceTests
 
     public CrosswordServiceTests()
     {
-        _service = new CrosswordService();
+        // Use the puzzles.json file from the test project or server project
+        var puzzlesFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "puzzles.json");
+        _service = new CrosswordService(puzzlesFilePath);
     }
 
     [Fact]

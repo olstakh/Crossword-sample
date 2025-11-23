@@ -8,7 +8,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register cryptogram generator and crossword service
-builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
+var puzzlesFilePath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.json");
+builder.Services.AddSingleton<ICrosswordService>(sp => new CrosswordService(puzzlesFilePath));
 
 // Add CORS for development
 builder.Services.AddCors(options =>
