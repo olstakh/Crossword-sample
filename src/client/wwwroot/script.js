@@ -510,18 +510,67 @@ class CryptogramPuzzle {
     }
 }
 
+// Show user-friendly error message
+function showErrorMessage(title, message, onRetry = null) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'error-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'error-modal';
+    
+    modal.innerHTML = `
+        <h2>${title}</h2>
+        <p>${message}</p>
+        <div class="error-actions">
+            ${onRetry ? '<button class="btn-retry">Try Different Settings</button>' : ''}
+            <button class="btn-close">OK</button>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Setup event listeners
+    const closeBtn = modal.querySelector('.btn-close');
+    const retryBtn = modal.querySelector('.btn-retry');
+    
+    const closeModal = () => {
+        document.body.removeChild(overlay);
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    if (retryBtn && onRetry) {
+        retryBtn.addEventListener('click', () => {
+            closeModal();
+            onRetry();
+        });
+    }
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+}
+
 // Fetch puzzle data from the API
 async function fetchPuzzle(puzzleId = 'puzzle1') {
     try {
         const response = await fetch(`${API_BASE_URL}/api/crossword/puzzle/${puzzleId}`);
         if (!response.ok) {
+            if (response.status === 404) {
+                const errorData = await response.json();
+                const error = new Error(errorData.error || 'Puzzle not found');
+                error.status = 404;
+                throw error;
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         return data;
     } catch (error) {
         console.error('Error fetching puzzle:', error);
-        alert('Error loading puzzle. Please make sure the server is running.');
+        if (error.status !== 404) {
+            showErrorMessage('Connection Error', 'Unable to connect to the server. Please make sure the server is running.');
+        }
         throw error;
     }
 }
@@ -534,13 +583,23 @@ async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = n
         }
         const response = await fetch(url);
         if (!response.ok) {
+            if (response.status === 404) {
+                const errorData = await response.json();
+                const error = new Error(errorData.error || 'Puzzle not found');
+                error.status = 404;
+                error.requestedSize = size;
+                error.requestedLanguage = language;
+                throw error;
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         return data;
     } catch (error) {
         console.error('Error fetching puzzle:', error);
-        alert('Error loading puzzle. Please make sure the server is running.');
+        if (error.status !== 404) {
+            showErrorMessage('Connection Error', 'Unable to connect to the server. Please make sure the server is running.');
+        }
         throw error;
     }
 }
@@ -560,7 +619,31 @@ async function loadPuzzle() {
         
         if (size) {
             // Load by size and language
-            puzzleData = await fetchPuzzleBySize(size, language, seed);
+            try {
+                puzzleData = await fetchPuzzleBySize(size, language, seed);
+            } catch (error) {
+                if (error.status === 404) {
+                    // Show user-friendly error with option to try English
+                    const message = `${error.message}\n\nWould you like to try loading an English puzzle instead?`;
+                    showErrorMessage('Puzzle Not Available', message, async () => {
+                        // Fallback to English
+                        try {
+                            puzzleData = await fetchPuzzleBySize(size, 'English', seed);
+                            if (puzzleData) {
+                                document.getElementById('languageSelector').value = 'English';
+                                initializePuzzle(puzzleData, size);
+                            }
+                        } catch (fallbackError) {
+                            if (fallbackError.status === 404) {
+                                showErrorMessage('No Puzzles Available', 
+                                    'Sorry, no puzzles are available for this size. Please try a different size.');
+                            }
+                        }
+                    });
+                    return;
+                }
+                throw error;
+            }
             // Update radio buttons to match
             const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
             if (radioButton) {
@@ -568,37 +651,70 @@ async function loadPuzzle() {
             }
         } else if (puzzleId) {
             // Load by specific ID
-            puzzleData = await fetchPuzzle(puzzleId);
+            try {
+                puzzleData = await fetchPuzzle(puzzleId);
+            } catch (error) {
+                if (error.status === 404) {
+                    showErrorMessage('Puzzle Not Found', 
+                        `The puzzle "${puzzleId}" could not be found. Loading a default puzzle instead...`);
+                    // Fallback to default
+                    puzzleData = await fetchPuzzleBySize('medium', 'English');
+                } else {
+                    throw error;
+                }
+            }
         } else {
             // Default: load medium puzzle in selected language
-            puzzleData = await fetchPuzzleBySize('medium', language);
+            try {
+                puzzleData = await fetchPuzzleBySize('medium', language);
+            } catch (error) {
+                if (error.status === 404 && language !== 'English') {
+                    // Silently fallback to English for default load
+                    puzzleData = await fetchPuzzleBySize('medium', 'English');
+                    document.getElementById('languageSelector').value = 'English';
+                } else {
+                    throw error;
+                }
+            }
         }
         
-        // Update language selector to match
-        const languageSelector = document.getElementById('languageSelector');
-        if (languageSelector && puzzleData.language) {
-            languageSelector.value = puzzleData.language;
-        } else if (languageSelector) {
-            languageSelector.value = language;
+        if (puzzleData) {
+            initializePuzzle(puzzleData, size);
         }
-        
-        // Update page title if puzzle has a title
-        if (puzzleData.title) {
-            document.querySelector('h1').textContent = puzzleData.title;
-        }
-        
-        // Clear previous puzzle if exists
-        if (currentPuzzle) {
-            const gridElement = document.getElementById('crossword-grid');
-            const alphabetElement = document.getElementById('alphabet-row');
-            if (gridElement) gridElement.innerHTML = '';
-            if (alphabetElement) alphabetElement.innerHTML = '';
-        }
-        
-        currentPuzzle = new CryptogramPuzzle(puzzleData);
     } catch (error) {
         console.error('Failed to initialize cryptogram:', error);
     }
+}
+
+function initializePuzzle(puzzleData, size = null) {
+    // Update language selector to match
+    const languageSelector = document.getElementById('languageSelector');
+    if (languageSelector && puzzleData.language) {
+        languageSelector.value = puzzleData.language;
+    }
+    
+    // Update radio buttons if size provided
+    if (size) {
+        const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
+        if (radioButton) {
+            radioButton.checked = true;
+        }
+    }
+    
+    // Update page title if puzzle has a title
+    if (puzzleData.title) {
+        document.querySelector('h1').textContent = puzzleData.title;
+    }
+    
+    // Clear previous puzzle if exists
+    if (currentPuzzle) {
+        const gridElement = document.getElementById('crossword-grid');
+        const alphabetElement = document.getElementById('alphabet-row');
+        if (gridElement) gridElement.innerHTML = '';
+        if (alphabetElement) alphabetElement.innerHTML = '';
+    }
+    
+    currentPuzzle = new CryptogramPuzzle(puzzleData);
 }
 
 // Initialize the crossword puzzle when the page loads
