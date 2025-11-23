@@ -18,6 +18,24 @@
         </header>
         
         <main>
+            <aside class="size-selector">
+                <h3>Puzzle Size</h3>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="puzzleSize" value="small">
+                        <span>Small</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="puzzleSize" value="medium" checked>
+                        <span>Medium</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="puzzleSize" value="big">
+                        <span>Big</span>
+                    </label>
+                </div>
+                <button id="newPuzzleBtn">New Puzzle</button>
+            </aside>
             <div class="puzzle-section">
                 <div id="crossword-grid"></div>
                 <div class="alphabet-decoder">

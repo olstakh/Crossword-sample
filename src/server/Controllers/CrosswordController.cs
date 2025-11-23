@@ -65,4 +65,30 @@ public class CrosswordController : ControllerBase
     {
         return GetPuzzle("puzzle2");
     }
+
+    /// <summary>
+    /// Get a puzzle by size (small, medium, or big)
+    /// </summary>
+    /// <param name="size">Size of puzzle: small (5x5-8x8), medium (9x9-14x14), or big (15x15-20x20)</param>
+    /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
+    [HttpGet("puzzle/size/{size}")]
+    public ActionResult<CrosswordPuzzle> GetPuzzleBySize(string size, [FromQuery] string? seed = null)
+    {
+        try
+        {
+            var validSizes = new[] { "small", "medium", "big" };
+            if (!validSizes.Contains(size.ToLower()))
+            {
+                return BadRequest($"Invalid size. Must be one of: {string.Join(", ", validSizes)}");
+            }
+
+            var puzzle = _crosswordService.GetPuzzleBySize(size, seed);
+            return Ok(puzzle);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating puzzle of size {Size}", size);
+            return StatusCode(500, "Error generating puzzle");
+        }
+    }
 }

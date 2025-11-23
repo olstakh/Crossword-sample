@@ -470,22 +470,90 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
     }
 }
 
-// Initialize the crossword puzzle when the page loads
-document.addEventListener('DOMContentLoaded', async () => {
+async function fetchPuzzleBySize(size = 'medium', seed = null) {
     try {
-        // Get puzzle ID from URL parameter or use default
+        const url = seed 
+            ? `${API_BASE_URL}/api/crossword/puzzle/size/${size}?seed=${seed}`
+            : `${API_BASE_URL}/api/crossword/puzzle/size/${size}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching puzzle:', error);
+        alert('Error loading puzzle. Please make sure the server is running.');
+        throw error;
+    }
+}
+
+// Global reference to current puzzle instance
+let currentPuzzle = null;
+
+async function loadPuzzle() {
+    try {
         const urlParams = new URLSearchParams(window.location.search);
-        const puzzleId = urlParams.get('puzzle') || 'puzzle1';
+        const puzzleId = urlParams.get('puzzle');
+        const size = urlParams.get('size');
+        const seed = urlParams.get('seed');
         
-        const puzzleData = await fetchPuzzle(puzzleId);
+        let puzzleData;
+        
+        if (size) {
+            // Load by size
+            puzzleData = await fetchPuzzleBySize(size, seed);
+            // Update radio buttons to match
+            const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+        } else if (puzzleId) {
+            // Load by specific ID
+            puzzleData = await fetchPuzzle(puzzleId);
+        } else {
+            // Default: load medium puzzle
+            puzzleData = await fetchPuzzleBySize('medium');
+        }
         
         // Update page title if puzzle has a title
         if (puzzleData.title) {
             document.querySelector('h1').textContent = puzzleData.title;
         }
         
-        new CryptogramPuzzle(puzzleData);
+        // Clear previous puzzle if exists
+        if (currentPuzzle) {
+            const gridElement = document.getElementById('crossword-grid');
+            const alphabetElement = document.getElementById('alphabet-row');
+            if (gridElement) gridElement.innerHTML = '';
+            if (alphabetElement) alphabetElement.innerHTML = '';
+        }
+        
+        currentPuzzle = new CryptogramPuzzle(puzzleData);
     } catch (error) {
         console.error('Failed to initialize cryptogram:', error);
+    }
+}
+
+// Initialize the crossword puzzle when the page loads
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadPuzzle();
+    
+    // Setup new puzzle button
+    const newPuzzleBtn = document.getElementById('newPuzzleBtn');
+    
+    if (newPuzzleBtn) {
+        newPuzzleBtn.addEventListener('click', () => {
+            const selectedRadio = document.querySelector('input[name="puzzleSize"]:checked');
+            if (selectedRadio) {
+                const selectedSize = selectedRadio.value;
+                // Update URL and reload
+                const url = new URL(window.location);
+                url.searchParams.set('size', selectedSize);
+                url.searchParams.delete('puzzle'); // Remove puzzle param if exists
+                url.searchParams.delete('seed'); // Remove seed to get a new puzzle
+                window.location.href = url.toString();
+            }
+        });
     }
 });

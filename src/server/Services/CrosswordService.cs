@@ -5,6 +5,7 @@ namespace CrossWords.Services;
 public interface ICrosswordService
 {
     CrosswordPuzzle GetPuzzle(string id);
+    CrosswordPuzzle GetPuzzleBySize(string size, string? seed = null);
     List<string> GetAvailablePuzzleIds();
 }
 
@@ -21,6 +22,53 @@ public class CrosswordService : ICrosswordService
     {
         // Setting default puzzle here, since i need to change puzzle generator to be 2D
         return _cachedPuzzles.GetValueOrDefault(id) ?? _cachedPuzzles["puzzle1"];
+    }
+
+    public CrosswordPuzzle GetPuzzleBySize(string size, string? seed = null)
+    {
+        // Generate a deterministic puzzle based on size and seed
+        var puzzleId = $"{size}_{seed ?? DateTime.UtcNow.ToString("yyyyMMdd")}";
+        
+        if (_cachedPuzzles.TryGetValue(puzzleId, out var cachedPuzzle))
+        {
+            return cachedPuzzle;
+        }
+
+        // Generate new puzzle based on size
+        var puzzle = GeneratePuzzleBySize(size, puzzleId);
+        _cachedPuzzles[puzzleId] = puzzle;
+        return puzzle;
+    }
+
+    private CrosswordPuzzle GeneratePuzzleBySize(string size, string puzzleId)
+    {
+        var (minSize, maxSize) = size.ToLower() switch
+        {
+            "small" => (5, 8),
+            "medium" => (9, 14),
+            "big" => (15, 20),
+            _ => (5, 8) // default to small
+        };
+
+        // Use seed for deterministic random
+        var random = new Random(puzzleId.GetHashCode());
+        var gridSize = random.Next(minSize, maxSize + 1);
+
+        // For now, return one of the hardcoded puzzles scaled to match requested size category
+        // This is temporary until you implement the full 2D crossword generator
+        if (size.ToLower() == "small")
+        {
+            return _cachedPuzzles["puzzle1"];
+        }
+        else if (size.ToLower() == "medium")
+        {
+            return _cachedPuzzles["puzzle2"];
+        }
+        else
+        {
+            // For big, scale up puzzle2
+            return _cachedPuzzles["puzzle2"];
+        }
     }
 
     public List<string> GetAvailablePuzzleIds()
