@@ -511,6 +511,42 @@ class CryptogramPuzzle {
     }
 }
 
+// Show congratulations message in place of puzzle grid
+function showAllPuzzlesSolvedMessage(message, size, language) {
+    const gridElement = document.getElementById('crossword-grid');
+    const alphabetElement = document.getElementById('alphabet-row');
+    const puzzleSection = document.querySelector('.puzzle-section');
+    
+    if (gridElement) {
+        gridElement.innerHTML = `
+            <div class="all-solved-message">
+                <div class="celebration-icon">🎉🏆🎊</div>
+                <h2>Congratulations!</h2>
+                <p>${message}</p>
+                <div class="all-solved-actions">
+                    <p>Try:</p>
+                    <ul>
+                        <li>Selecting a different <strong>size category</strong></li>
+                        <li>Choosing a different <strong>language</strong></li>
+                        <li>Replaying your favorite puzzles!</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        gridElement.style.gridTemplateColumns = '1fr';
+        gridElement.style.gridTemplateRows = '1fr';
+    }
+    
+    if (alphabetElement) {
+        alphabetElement.innerHTML = '';
+    }
+    
+    // Fade in the message
+    if (puzzleSection) {
+        puzzleSection.style.opacity = '1';
+    }
+}
+
 // Show user-friendly error message
 function showErrorMessage(title, message, onRetry = null) {
     // Create modal overlay
@@ -768,14 +804,7 @@ async function loadNewPuzzle(size, language) {
         
         // Handle all-puzzles-solved case with congratulatory message
         if (error.status === 404 && error.isAllSolved) {
-            showErrorMessage(
-                'All Puzzles Completed! 🎉',
-                error.message,
-                () => {
-                    // User can choose to replay by changing settings
-                    console.log('User acknowledged completion message');
-                }
-            );
+            showAllPuzzlesSolvedMessage(error.message, size, language);
             return; // Don't re-throw, we handled it
         }
         
