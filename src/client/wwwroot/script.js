@@ -543,17 +543,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newPuzzleBtn = document.getElementById('newPuzzleBtn');
     
     if (newPuzzleBtn) {
-        newPuzzleBtn.addEventListener('click', () => {
+        console.log('New Puzzle button found, setting up event listener');
+        newPuzzleBtn.addEventListener('click', (e) => {
+            console.log('New Puzzle button clicked');
+            e.preventDefault();
             const selectedRadio = document.querySelector('input[name="puzzleSize"]:checked');
+            console.log('Selected radio:', selectedRadio);
             if (selectedRadio) {
                 const selectedSize = selectedRadio.value;
+                console.log('Selected size:', selectedSize);
                 // Update URL and reload
                 const url = new URL(window.location);
                 url.searchParams.set('size', selectedSize);
                 url.searchParams.delete('puzzle'); // Remove puzzle param if exists
                 url.searchParams.delete('seed'); // Remove seed to get a new puzzle
+                console.log('Navigating to:', url.toString());
                 window.location.href = url.toString();
             }
         });
+    } else {
+        console.error('New Puzzle button not found!');
     }
 });
