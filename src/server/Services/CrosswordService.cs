@@ -9,12 +9,12 @@ public interface ICrosswordService
 {
     CrosswordPuzzle GetPuzzle(string id);
     CrosswordPuzzle GetPuzzle(PuzzleRequest request);
-    List<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null);
+    IReadOnlyList<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null);
 }
 
 public class CrosswordService : ICrosswordService
 {
-    private readonly Dictionary<string, CrosswordPuzzle> _cachedPuzzles;
+    private readonly IReadOnlyDictionary<string, CrosswordPuzzle> _cachedPuzzles;
     private readonly ILogger<CrosswordService> _logger;
 
     public CrosswordService(IPuzzleRepository puzzleRepository, ILogger<CrosswordService> logger)
@@ -25,12 +25,11 @@ public class CrosswordService : ICrosswordService
 
     public CrosswordPuzzle GetPuzzle(string id)
     {
-        if (!_cachedPuzzles.TryGetValue(id, out var puzzle))
+        if (_cachedPuzzles.TryGetValue(id, out var puzzle))
         {
-            throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
+            return puzzle;
         }
-        
-        return puzzle;
+        throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
     }
 
     public CrosswordPuzzle GetPuzzle(PuzzleRequest request)
@@ -38,7 +37,7 @@ public class CrosswordService : ICrosswordService
         // Get puzzles filtered by language
         var languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == request.Language).ToList();
         
-        if (!languagePuzzles.Any())
+        if (languagePuzzles.Count == 0)
         {
             throw new PuzzleNotFoundException(
                 $"No puzzles found for language '{request.Language}'. Please try a different language.");
@@ -51,23 +50,18 @@ public class CrosswordService : ICrosswordService
             .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
             .ToList();
 
-        if (!matchingPuzzles.Any())
+        if (matchingPuzzles.Count == 0)
         {
             throw new PuzzleNotFoundException(
                 $"No puzzles found for language '{request.Language}' and size '{request.SizeCategory}'. Please try a different combination.");
         }
 
-        // Use seed for deterministic selection
-        var random = 
-            request.Seed == null
-            ? new Random()
-            : new Random(request.Seed.GetHashCode());
-        var selectedPuzzle = matchingPuzzles[random.Next(matchingPuzzles.Count)];
+        var selectedPuzzle = matchingPuzzles[Random.Shared.Next(matchingPuzzles.Count)];
         
         return selectedPuzzle;
     }
 
-    public List<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null)
+    public IReadOnlyList<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null)
     {
         return _cachedPuzzles.Values
             .Where(p => language.HasValue ? p.Language == language.Value : true)
@@ -77,16 +71,10 @@ public class CrosswordService : ICrosswordService
 
     private Dictionary<string, CrosswordPuzzle> InitializePuzzles(IPuzzleRepository puzzleRepository)
     {
-        var puzzles = new Dictionary<string, CrosswordPuzzle>();
-
         try
         {
-            var puzzleList = puzzleRepository.LoadAllPuzzles();
-
-            foreach (var puzzle in puzzleList)
-            {
-                puzzles[puzzle.Id] = puzzle;
-            }
+            return puzzleRepository.LoadAllPuzzles()
+                .ToDictionary(p => p.Id, p => p);
         }
         catch (Exception ex)
         {
@@ -94,6 +82,6 @@ public class CrosswordService : ICrosswordService
             _logger.LogError(ex, "Error initializing puzzles");
         }
 
-        return puzzles;
+        return new Dictionary<string, CrosswordPuzzle>();
     }
 }

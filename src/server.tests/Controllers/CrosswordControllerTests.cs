@@ -57,20 +57,6 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
     }
 
     [Fact]
-    public async Task GetDefaultPuzzle_ReturnsSuccess()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle", TestContext.Current.CancellationToken);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(puzzle);
-        Assert.NotEmpty(puzzle.Grid);
-    }
-
-    [Fact]
     public async Task GetPuzzleBySize_WithInvalidSize_ReturnsBadRequest()
     {
         // Act

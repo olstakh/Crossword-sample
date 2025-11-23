@@ -128,7 +128,6 @@ public class CrosswordServiceTests
         {
             SizeCategory = size,
             Language = PuzzleLanguage.English,
-            Seed = "test-seed"
         };
 
         // Act

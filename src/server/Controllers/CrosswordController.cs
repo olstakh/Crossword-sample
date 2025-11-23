@@ -60,15 +60,6 @@ public class CrosswordController : ControllerBase
     }
 
     /// <summary>
-    /// Get the default puzzle (puzzle1)
-    /// </summary>
-    [HttpGet("puzzle")]
-    public ActionResult<CrosswordPuzzle> GetDefaultPuzzle()
-    {
-        return GetPuzzle("puzzle2");
-    }
-
-    /// <summary>
     /// Get a puzzle by size (Small, Medium, or Big)
     /// </summary>
     /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), or Big (15x15-20x20)</param>
@@ -86,7 +77,6 @@ public class CrosswordController : ControllerBase
             {
                 SizeCategory = size,
                 Language = language,
-                Seed = seed
             };
             
             var puzzle = _crosswordService.GetPuzzle(request);
