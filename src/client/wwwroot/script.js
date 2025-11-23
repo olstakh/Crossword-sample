@@ -724,6 +724,11 @@ function initializePuzzle(puzzleData, size = null) {
 
 // Initialize the crossword puzzle when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
+    // Update stats UI if userAuth is available
+    if (typeof userAuth !== 'undefined') {
+        userAuth.updateProgressUI();
+    }
+    
     await loadPuzzle();
     
     // Setup new puzzle button
