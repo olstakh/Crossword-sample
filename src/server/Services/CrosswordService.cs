@@ -8,7 +8,9 @@ public interface ICrosswordService
 {
     CrosswordPuzzle GetPuzzle(string id);
     CrosswordPuzzle GetPuzzleBySize(PuzzleSizeCategory size, string? seed = null);
+    CrosswordPuzzle GetPuzzleBySizeAndLanguage(PuzzleSizeCategory size, PuzzleLanguage language, string? seed = null);
     List<string> GetAvailablePuzzleIds();
+    List<string> GetAvailablePuzzleIdsByLanguage(PuzzleLanguage language);
 }
 
 public class CrosswordService : ICrosswordService
@@ -44,6 +46,51 @@ public class CrosswordService : ICrosswordService
         var puzzle = GeneratePuzzleBySize(size, puzzleId);
         _cachedPuzzles[puzzleId] = puzzle;
         return puzzle;
+    }
+
+    public CrosswordPuzzle GetPuzzleBySizeAndLanguage(PuzzleSizeCategory size, PuzzleLanguage language, string? seed = null)
+    {
+        // Get puzzles filtered by language
+        var languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == language).ToList();
+        
+        if (!languagePuzzles.Any())
+        {
+            // Fallback to English if no puzzles in requested language
+            languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == PuzzleLanguage.English).ToList();
+        }
+
+        // Filter by size category
+        var (minSize, maxSize) = size switch
+        {
+            PuzzleSizeCategory.Small => (5, 8),
+            PuzzleSizeCategory.Medium => (9, 14),
+            PuzzleSizeCategory.Big => (15, 20),
+            _ => (5, 8)
+        };
+
+        var matchingPuzzles = languagePuzzles
+            .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
+            .ToList();
+
+        if (!matchingPuzzles.Any())
+        {
+            // Fallback to original behavior
+            return GetPuzzleBySize(size, seed);
+        }
+
+        // Use seed for deterministic selection
+        var random = new Random((seed ?? DateTime.UtcNow.ToString("yyyyMMdd")).GetHashCode());
+        var selectedPuzzle = matchingPuzzles[random.Next(matchingPuzzles.Count)];
+        
+        return selectedPuzzle;
+    }
+
+    public List<string> GetAvailablePuzzleIdsByLanguage(PuzzleLanguage language)
+    {
+        return _cachedPuzzles.Values
+            .Where(p => p.Language == language)
+            .Select(p => p.Id)
+            .ToList();
     }
 
     private CrosswordPuzzle GeneratePuzzleBySize(PuzzleSizeCategory size, string puzzleId)

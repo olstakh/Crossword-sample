@@ -526,11 +526,12 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
     }
 }
 
-async function fetchPuzzleBySize(size = 'medium', seed = null) {
+async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = null) {
     try {
-        const url = seed 
-            ? `${API_BASE_URL}/api/crossword/puzzle/size/${size}?seed=${seed}`
-            : `${API_BASE_URL}/api/crossword/puzzle/size/${size}`;
+        let url = `${API_BASE_URL}/api/crossword/puzzle/size/${size}?language=${language}`;
+        if (seed) {
+            url += `&seed=${seed}`;
+        }
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -552,13 +553,14 @@ async function loadPuzzle() {
         const urlParams = new URLSearchParams(window.location.search);
         const puzzleId = urlParams.get('puzzle');
         const size = urlParams.get('size');
+        const language = urlParams.get('language') || 'English';
         const seed = urlParams.get('seed');
         
         let puzzleData;
         
         if (size) {
-            // Load by size
-            puzzleData = await fetchPuzzleBySize(size, seed);
+            // Load by size and language
+            puzzleData = await fetchPuzzleBySize(size, language, seed);
             // Update radio buttons to match
             const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
             if (radioButton) {
@@ -568,8 +570,16 @@ async function loadPuzzle() {
             // Load by specific ID
             puzzleData = await fetchPuzzle(puzzleId);
         } else {
-            // Default: load medium puzzle
-            puzzleData = await fetchPuzzleBySize('medium');
+            // Default: load medium puzzle in selected language
+            puzzleData = await fetchPuzzleBySize('medium', language);
+        }
+        
+        // Update language selector to match
+        const languageSelector = document.getElementById('languageSelector');
+        if (languageSelector && puzzleData.language) {
+            languageSelector.value = puzzleData.language;
+        } else if (languageSelector) {
+            languageSelector.value = language;
         }
         
         // Update page title if puzzle has a title
@@ -604,13 +614,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
             const selectedRadio = document.querySelector('input[name="puzzleSize"]:checked');
+            const languageSelector = document.getElementById('languageSelector');
+            const selectedLanguage = languageSelector ? languageSelector.value : 'English';
             console.log('Selected radio:', selectedRadio);
+            console.log('Selected language:', selectedLanguage);
             if (selectedRadio) {
                 const selectedSize = selectedRadio.value;
                 console.log('Selected size:', selectedSize);
                 // Update URL and reload
                 const url = new URL(window.location);
                 url.searchParams.set('size', selectedSize);
+                url.searchParams.set('language', selectedLanguage);
                 url.searchParams.delete('puzzle'); // Remove puzzle param if exists
                 url.searchParams.delete('seed'); // Remove seed to get a new puzzle
                 console.log('Navigating to:', url.toString());

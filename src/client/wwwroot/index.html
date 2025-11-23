@@ -19,21 +19,35 @@
         
         <main>
             <aside class="size-selector">
-                <h3>Puzzle Size</h3>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="puzzleSize" value="small">
-                        <span>Small</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="puzzleSize" value="medium" checked>
-                        <span>Medium</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="puzzleSize" value="big">
-                        <span>Big</span>
-                    </label>
+                <h3>Puzzle Settings</h3>
+                
+                <div class="selector-group">
+                    <label class="selector-label">Language</label>
+                    <select id="languageSelector" class="language-dropdown">
+                        <option value="English" selected>English</option>
+                        <option value="Russian">Русский (Russian)</option>
+                        <option value="Ukrainian">Українська (Ukrainian)</option>
+                    </select>
                 </div>
+                
+                <div class="selector-group">
+                    <label class="selector-label">Size</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="puzzleSize" value="small">
+                            <span>Small</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="puzzleSize" value="medium" checked>
+                            <span>Medium</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="puzzleSize" value="big">
+                            <span>Big</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <button id="newPuzzleBtn">New Puzzle</button>
             </aside>
             <div class="puzzle-section">

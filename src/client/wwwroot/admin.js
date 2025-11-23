@@ -6,6 +6,7 @@ class PuzzleBuilder {
         this.currentCell = null;
         this.puzzleId = 'puzzle4';
         this.puzzleTitle = 'My Custom Puzzle';
+        this.puzzleLanguage = 'English';
         
         this.init();
     }
@@ -24,6 +25,11 @@ class PuzzleBuilder {
         
         document.getElementById('puzzleTitle').addEventListener('input', (e) => {
             this.puzzleTitle = e.target.value;
+            this.updateJsonPreview();
+        });
+        
+        document.getElementById('puzzleLanguage').addEventListener('change', (e) => {
+            this.puzzleLanguage = e.target.value;
             this.updateJsonPreview();
         });
         
@@ -272,6 +278,7 @@ class PuzzleBuilder {
         return {
             Id: this.puzzleId,
             Title: this.puzzleTitle,
+            Language: this.puzzleLanguage,
             Size: {
                 Rows: this.rows,
                 Cols: this.cols

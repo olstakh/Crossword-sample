@@ -21,11 +21,13 @@ public class CrosswordController : ControllerBase
     /// Get a list of available puzzle IDs
     /// </summary>
     [HttpGet("puzzles")]
-    public ActionResult<List<string>> GetPuzzleList()
+    public ActionResult<List<string>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
     {
         try
         {
-            var puzzleIds = _crosswordService.GetAvailablePuzzleIds();
+            var puzzleIds = language.HasValue 
+                ? _crosswordService.GetAvailablePuzzleIdsByLanguage(language.Value)
+                : _crosswordService.GetAvailablePuzzleIds();
             return Ok(puzzleIds);
         }
         catch (Exception ex)
@@ -70,13 +72,16 @@ public class CrosswordController : ControllerBase
     /// Get a puzzle by size (Small, Medium, or Big)
     /// </summary>
     /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), or Big (15x15-20x20)</param>
+    /// <param name="language">Language of the puzzle (English, Russian, Ukrainian)</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
     [HttpGet("puzzle/size/{size}")]
-    public ActionResult<CrosswordPuzzle> GetPuzzleBySize(PuzzleSizeCategory size, [FromQuery] string? seed = null)
+    public ActionResult<CrosswordPuzzle> GetPuzzleBySize(PuzzleSizeCategory size, [FromQuery] PuzzleLanguage? language = null, [FromQuery] string? seed = null)
     {
         try
         {
-            var puzzle = _crosswordService.GetPuzzleBySize(size, seed);
+            var puzzle = language.HasValue
+                ? _crosswordService.GetPuzzleBySizeAndLanguage(size, language.Value, seed)
+                : _crosswordService.GetPuzzleBySize(size, seed);
             return Ok(puzzle);
         }
         catch (Exception ex)

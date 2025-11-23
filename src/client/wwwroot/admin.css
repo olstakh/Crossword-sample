@@ -89,6 +89,30 @@ main {
     border-color: #667eea;
 }
 
+.form-group select,
+.language-dropdown {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.form-group select:hover,
+.language-dropdown:hover {
+    border-color: #667eea;
+}
+
+.form-group select:focus,
+.language-dropdown:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 /* Buttons */
 .btn-primary,
 .btn-secondary {
