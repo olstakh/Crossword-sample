@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CrossWords.Models;
 
 public class CrosswordPuzzle
@@ -15,6 +17,7 @@ public class PuzzleSize
     public int Cols { get; init; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum PuzzleLanguage
 {
     English,
