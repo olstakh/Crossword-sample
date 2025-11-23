@@ -60,13 +60,7 @@ public class CrosswordService : ICrosswordService
         }
 
         // Filter by size category
-        var (minSize, maxSize) = size switch
-        {
-            PuzzleSizeCategory.Small => (5, 8),
-            PuzzleSizeCategory.Medium => (9, 14),
-            PuzzleSizeCategory.Big => (15, 20),
-            _ => (5, 8)
-        };
+        var (minSize, maxSize) = size.GetSizeRange();
 
         var matchingPuzzles = languagePuzzles
             .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
@@ -95,13 +89,7 @@ public class CrosswordService : ICrosswordService
 
     private CrosswordPuzzle GeneratePuzzleBySize(PuzzleSizeCategory size, string puzzleId)
     {
-        var (minSize, maxSize) = size switch
-        {
-            PuzzleSizeCategory.Small => (5, 8),
-            PuzzleSizeCategory.Medium => (9, 14),
-            PuzzleSizeCategory.Big => (15, 20),
-            _ => (5, 8) // default to small
-        };
+        var (minSize, maxSize) = size.GetSizeRange();
 
         // Use seed for deterministic random
         var random = new Random(puzzleId.GetHashCode());
@@ -120,8 +108,7 @@ public class CrosswordService : ICrosswordService
 
     public List<string> GetAvailablePuzzleIds()
     {
-        // Return suggested puzzle IDs - any string can be used as an ID
-        return new List<string> { "puzzle1", "puzzle2", "puzzle3" };
+        return _cachedPuzzles.Keys.ToList();
     }
 
     private Dictionary<string, CrosswordPuzzle> InitializePuzzles()

@@ -31,3 +31,17 @@ public enum PuzzleSizeCategory
     Medium,
     Big
 }
+
+internal static class PuzzleSizeCategoryExtensions
+{
+    public static (int minSize, int maxSize) GetSizeRange(this PuzzleSizeCategory sizeCategory)
+    {
+        return sizeCategory switch
+        {
+            PuzzleSizeCategory.Small => (5, 8),
+            PuzzleSizeCategory.Medium => (9, 14),
+            PuzzleSizeCategory.Big => (15, 20),
+            _ => throw new ArgumentOutOfRangeException(nameof(sizeCategory), "Invalid puzzle size category")
+        };
+    }
+}
