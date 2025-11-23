@@ -50,16 +50,8 @@ public class CrosswordService : ICrosswordService
 
         if (!matchingPuzzles.Any())
         {
-            // Fallback to any puzzle in size range
-            matchingPuzzles = _cachedPuzzles.Values
-                .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
-                .ToList();
-        }
-
-        if (!matchingPuzzles.Any())
-        {
             // Final fallback to first available puzzle
-            return _cachedPuzzles.Values.First();
+            return languagePuzzles.First();    
         }
 
         // Use seed for deterministic selection

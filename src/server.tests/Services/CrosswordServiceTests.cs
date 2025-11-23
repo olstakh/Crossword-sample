@@ -73,6 +73,7 @@ public class CrosswordServiceTests
         // Verify size is within expected range
         var (minSize, maxSize) = size.GetSizeRange();
         Assert.InRange(result.Size.Rows, minSize, maxSize);
+        Assert.InRange(result.Size.Cols, minSize, maxSize);
     }
 
     [Fact]

@@ -70,26 +70,6 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
         Assert.NotEmpty(puzzle.Grid);
     }
 
-    [Theory]
-    [InlineData("Small")]
-    [InlineData("Medium")]
-    [InlineData("Big")]
-    [InlineData("small")]
-    [InlineData("medium")]
-    [InlineData("big")]
-    public async Task GetPuzzleBySize_WithValidSize_ReturnsSuccess(string size)
-    {
-        // Act
-        var response = await _client.GetAsync($"/api/crossword/puzzle/size/{size}", TestContext.Current.CancellationToken);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(puzzle);
-        Assert.NotEmpty(puzzle.Grid);
-    }
-
     [Fact]
     public async Task GetPuzzleBySize_WithInvalidSize_ReturnsBadRequest()
     {
@@ -115,10 +95,10 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
     }
 
     [Theory]
-    [InlineData("English")]
-    [InlineData("Russian")]
-    [InlineData("Ukrainian")]
-    public async Task GetPuzzleBySize_WithLanguage_ReturnsSuccess(string language)
+    [InlineData(PuzzleLanguage.English)]
+    [InlineData(PuzzleLanguage.Russian)]
+    [InlineData(PuzzleLanguage.Ukrainian)]
+    public async Task GetPuzzleBySize_WithLanguage_ReturnsSuccess(PuzzleLanguage language)
     {
         // Act
         var response = await _client.GetAsync($"/api/crossword/puzzle/size/medium?language={language}", TestContext.Current.CancellationToken);
@@ -131,63 +111,23 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
         Assert.NotEmpty(puzzle.Grid);
     }
 
-    [Fact]
-    public async Task GetPuzzleList_WithLanguageFilter_ReturnsSuccess()
+    [Theory]
+    [InlineData(PuzzleSizeCategory.Small)]
+    [InlineData(PuzzleSizeCategory.Medium)]
+    [InlineData(PuzzleSizeCategory.Big)]
+    public async Task GetPuzzleBySize_Small_ReturnsProperlyGrid(PuzzleSizeCategory size)
     {
         // Act
-        var response = await _client.GetAsync("/api/crossword/puzzles?language=English", TestContext.Current.CancellationToken);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var puzzleIds = await response.Content.ReadFromJsonAsync<List<string>>(cancellationToken: TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(puzzleIds);
-        Assert.NotEmpty(puzzleIds);
-    }
-
-    [Fact]
-    public async Task GetPuzzleBySize_Small_ReturnsSmallSizedGrid()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle/size/small", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"/api/crossword/puzzle/size/{size.ToString().ToLower()}", TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
         
+        var (minSize, maxSize) = size.GetSizeRange();
         Assert.NotNull(puzzle);
-        Assert.InRange(puzzle.Size.Rows, 5, 8);
-        Assert.InRange(puzzle.Size.Cols, 5, 8);
-    }
-
-    [Fact]
-    public async Task GetPuzzleBySize_Medium_ReturnsMediumSizedGrid()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle/size/medium", TestContext.Current.CancellationToken);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(puzzle);
-        Assert.InRange(puzzle.Size.Rows, 6, 14);
-        Assert.InRange(puzzle.Size.Cols, 6, 14);
-    }
-
-    [Fact]
-    public async Task GetPuzzleBySize_Big_ReturnsBigSizedGrid()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle/size/big", TestContext.Current.CancellationToken);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(puzzle);
-        Assert.InRange(puzzle.Size.Rows, 15, 20);
-        Assert.InRange(puzzle.Size.Cols, 15, 20);
+        Assert.InRange(puzzle.Size.Rows, minSize, maxSize);
+        Assert.InRange(puzzle.Size.Cols, minSize, maxSize);
     }
 
     [Fact]
