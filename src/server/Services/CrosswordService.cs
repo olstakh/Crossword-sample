@@ -132,7 +132,15 @@ public class CrosswordService : ICrosswordService
         {
             // Load puzzles from JSON file
             var jsonContent = File.ReadAllText(_puzzlesFilePath);
-            var puzzleList = JsonSerializer.Deserialize<List<CrosswordPuzzle>>(jsonContent);
+            
+            // Configure JSON options to handle enum as strings
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+            };
+            
+            var puzzleList = JsonSerializer.Deserialize<List<CrosswordPuzzle>>(jsonContent, options);
 
             if (puzzleList != null)
             {
