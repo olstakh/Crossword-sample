@@ -13,8 +13,11 @@ public class CrosswordServiceTests
     {
         // Use the puzzles.json file from the test project or server project
         var puzzlesFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "puzzles.json");
-        var logger = NullLogger<CrosswordService>.Instance;
-        _service = new CrosswordService(puzzlesFilePath, logger);
+        var repositoryLogger = NullLogger<FilePuzzleRepository>.Instance;
+        var repository = new FilePuzzleRepository(puzzlesFilePath, repositoryLogger);
+        
+        var serviceLogger = NullLogger<CrosswordService>.Instance;
+        _service = new CrosswordService(repository, serviceLogger);
     }
 
     [Fact]

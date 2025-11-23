@@ -14,14 +14,12 @@ public interface ICrosswordService
 public class CrosswordService : ICrosswordService
 {
     private readonly Dictionary<string, CrosswordPuzzle> _cachedPuzzles;
-    private readonly string _puzzlesFilePath;
     private readonly ILogger<CrosswordService> _logger;
 
-    public CrosswordService(string puzzlesFilePath, ILogger<CrosswordService> logger)
+    public CrosswordService(IPuzzleRepository puzzleRepository, ILogger<CrosswordService> logger)
     {
-        _puzzlesFilePath = puzzlesFilePath;
         _logger = logger;
-        _cachedPuzzles = InitializePuzzles();
+        _cachedPuzzles = InitializePuzzles(puzzleRepository);
     }
 
     public CrosswordPuzzle GetPuzzle(string id)
@@ -74,28 +72,23 @@ public class CrosswordService : ICrosswordService
         return _cachedPuzzles.Keys.ToList();
     }
 
-    private Dictionary<string, CrosswordPuzzle> InitializePuzzles()
+    private Dictionary<string, CrosswordPuzzle> InitializePuzzles(IPuzzleRepository puzzleRepository)
     {
         var puzzles = new Dictionary<string, CrosswordPuzzle>();
 
         try
         {
-            // Load puzzles from JSON file
-            var jsonContent = File.ReadAllText(_puzzlesFilePath);
-            var puzzleList = JsonSerializer.Deserialize<List<CrosswordPuzzle>>(jsonContent);
+            var puzzleList = puzzleRepository.LoadAllPuzzles();
 
-            if (puzzleList != null)
+            foreach (var puzzle in puzzleList)
             {
-                foreach (var puzzle in puzzleList)
-                {
-                    puzzles[puzzle.Id] = puzzle;
-                }
+                puzzles[puzzle.Id] = puzzle;
             }
         }
         catch (Exception ex)
         {
             // Log the error and fall back to empty dictionary
-            _logger.LogError(ex, "Error loading puzzles from file: {FilePath}", _puzzlesFilePath);
+            _logger.LogError(ex, "Error initializing puzzles");
         }
 
         return puzzles;

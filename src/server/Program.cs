@@ -9,11 +9,12 @@ builder.Services.AddSwaggerGen();
 
 // Register cryptogram generator and crossword service
 var puzzlesFilePath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.json");
-builder.Services.AddSingleton<ICrosswordService>(sp => 
+builder.Services.AddSingleton<IPuzzleRepository>(sp => 
 {
-    var logger = sp.GetRequiredService<ILogger<CrosswordService>>();
-    return new CrosswordService(puzzlesFilePath, logger);
+    var logger = sp.GetRequiredService<ILogger<FilePuzzleRepository>>();
+    return new FilePuzzleRepository(puzzlesFilePath, logger);
 });
+builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
 
 // Add CORS for development
 builder.Services.AddCors(options =>
