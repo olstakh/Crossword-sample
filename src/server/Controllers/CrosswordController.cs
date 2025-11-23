@@ -13,8 +13,8 @@ public class CrosswordController : ControllerBase
 
     public CrosswordController(ICrosswordService crosswordService, ILogger<CrosswordController> logger)
     {
-        _crosswordService = crosswordService;
-        _logger = logger;
+        _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
