@@ -5,6 +5,7 @@ class UserAuth {
     constructor() {
         this.userId = this.getOrCreateUserId();
         this.solvedPuzzles = new Set();
+        this.totalSolved = 0;
         this.loadProgress();
     }
 
@@ -47,7 +48,8 @@ class UserAuth {
             if (response.ok) {
                 const progress = await response.json();
                 this.solvedPuzzles = new Set(progress.solvedPuzzleIds || []);
-                console.log(`Loaded progress: ${this.solvedPuzzles.size} puzzles solved`);
+                this.totalSolved = progress.totalPuzzlesSolved || this.solvedPuzzles.size;
+                console.log(`Loaded progress: ${this.totalSolved} puzzles solved`);
                 
                 // Update UI to show stats
                 this.updateProgressUI();
@@ -78,7 +80,8 @@ class UserAuth {
             
             if (response.ok) {
                 console.log(`Puzzle ${puzzleId} marked as solved`);
-                this.updateProgressUI();
+                // Reload progress from server to get accurate count
+                await this.loadProgress();
                 this.showCongratulations();
             }
         } catch (error) {
@@ -122,7 +125,7 @@ class UserAuth {
             statsElement.innerHTML = `
                 <div class="stats-badge">
                     <span class="stats-icon">🏆</span>
-                    <span class="stats-count">${this.solvedPuzzles.size}</span>
+                    <span class="stats-count">${this.totalSolved}</span>
                     <span class="stats-label">Solved</span>
                 </div>
             `;
@@ -142,7 +145,7 @@ class UserAuth {
                 <span class="toast-icon">🎉</span>
                 <div class="toast-text">
                     <strong>Puzzle Solved!</strong>
-                    <span class="toast-count">Total: ${this.solvedPuzzles.size} puzzle${this.solvedPuzzles.size !== 1 ? 's' : ''}</span>
+                    <span class="toast-count">Total: ${this.totalSolved} puzzle${this.totalSolved !== 1 ? 's' : ''}</span>
                 </div>
             </div>
         `;

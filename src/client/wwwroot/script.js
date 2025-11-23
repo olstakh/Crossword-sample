@@ -582,7 +582,14 @@ async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = n
         if (seed) {
             url += `&seed=${seed}`;
         }
-        const response = await fetch(url);
+        
+        // Add userId header if userAuth is available
+        const headers = {};
+        if (typeof userAuth !== 'undefined' && userAuth.userId) {
+            headers['X-User-Id'] = userAuth.userId;
+        }
+        
+        const response = await fetch(url, { headers });
         if (!response.ok) {
             if (response.status === 404) {
                 const errorData = await response.json();
@@ -590,6 +597,7 @@ async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = n
                 error.status = 404;
                 error.requestedSize = size;
                 error.requestedLanguage = language;
+                error.isAllSolved = errorData.error && errorData.error.includes('solved all');
                 throw error;
             }
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -757,6 +765,20 @@ async function loadNewPuzzle(size, language) {
         if (puzzleSection) {
             puzzleSection.style.opacity = '1';
         }
+        
+        // Handle all-puzzles-solved case with congratulatory message
+        if (error.status === 404 && error.isAllSolved) {
+            showErrorMessage(
+                'All Puzzles Completed! 🎉',
+                error.message,
+                () => {
+                    // User can choose to replay by changing settings
+                    console.log('User acknowledged completion message');
+                }
+            );
+            return; // Don't re-throw, we handled it
+        }
+        
         throw error;
     }
 }
@@ -841,7 +863,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await loadNewPuzzle(selectedSize, selectedLanguage);
                 } catch (error) {
                     console.error('Error loading new puzzle:', error);
-                    showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
+                    
+                    // Only show generic error if it's not the all-solved case (which loadNewPuzzle already handled)
+                    if (!(error.status === 404 && error.isAllSolved)) {
+                        showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
+                    }
                 } finally {
                     // Re-enable button
                     newPuzzleBtn.disabled = false;

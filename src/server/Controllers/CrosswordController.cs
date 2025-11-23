@@ -69,7 +69,8 @@ public class CrosswordController : ControllerBase
     public ActionResult<CrosswordPuzzle> GetPuzzleBySize(
         PuzzleSizeCategory size = PuzzleSizeCategory.Medium, 
         [FromQuery] PuzzleLanguage language = PuzzleLanguage.English, 
-        [FromQuery] string? seed = null)
+        [FromQuery] string? seed = null,
+        [FromHeader(Name = "X-User-Id")] string? userId = null)
     {
         try
         {
@@ -77,6 +78,7 @@ public class CrosswordController : ControllerBase
             {
                 SizeCategory = size,
                 Language = language,
+                UserId = userId
             };
             
             var puzzle = _crosswordService.GetPuzzle(request);

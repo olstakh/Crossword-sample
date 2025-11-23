@@ -36,6 +36,7 @@ public class PuzzleRequest
 {
     public PuzzleSizeCategory SizeCategory { get; init; } = PuzzleSizeCategory.Medium;
     public PuzzleLanguage Language { get; init; } = PuzzleLanguage.English;
+    public string? UserId { get; init; }
 }
 
 internal static class PuzzleSizeCategoryExtensions

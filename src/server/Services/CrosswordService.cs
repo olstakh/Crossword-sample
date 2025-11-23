@@ -16,10 +16,15 @@ public class CrosswordService : ICrosswordService
 {
     private readonly IReadOnlyDictionary<string, CrosswordPuzzle> _cachedPuzzles;
     private readonly ILogger<CrosswordService> _logger;
+    private readonly IUserProgressRepository _userProgressRepository;
 
-    public CrosswordService(IPuzzleRepository puzzleRepository, ILogger<CrosswordService> logger)
+    public CrosswordService(
+        IPuzzleRepository puzzleRepository, 
+        ILogger<CrosswordService> logger,
+        IUserProgressRepository userProgressRepository)
     {
         _logger = logger;
+        _userProgressRepository = userProgressRepository;
         _cachedPuzzles = InitializePuzzles(puzzleRepository);
     }
 
@@ -54,6 +59,23 @@ public class CrosswordService : ICrosswordService
         {
             throw new PuzzleNotFoundException(
                 $"No puzzles found for language '{request.Language}' and size '{request.SizeCategory}'. Please try a different combination.");
+        }
+
+        // If userId provided, filter out solved puzzles
+        if (!string.IsNullOrWhiteSpace(request.UserId))
+        {
+            var solvedPuzzleIds = _userProgressRepository.GetSolvedPuzzles(request.UserId);
+            var unsolvedPuzzles = matchingPuzzles
+                .Where(p => !solvedPuzzleIds.Contains(p.Id))
+                .ToList();
+
+            if (unsolvedPuzzles.Count == 0)
+            {
+                throw new PuzzleNotFoundException(
+                    $"Congratulations! You've solved all {matchingPuzzles.Count} puzzles in '{request.Language}' for size '{request.SizeCategory}'. Try a different language or size category!");
+            }
+
+            matchingPuzzles = unsolvedPuzzles;
         }
 
         var selectedPuzzle = matchingPuzzles[Random.Shared.Next(matchingPuzzles.Count)];
