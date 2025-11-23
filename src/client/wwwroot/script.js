@@ -217,10 +217,6 @@ class CryptogramPuzzle {
                 this.handleKeydown(e);
             });
         });
-
-        document.getElementById('checkBtn').addEventListener('click', () => this.checkAnswers());
-        document.getElementById('revealBtn').addEventListener('click', () => this.revealAnswers());
-        document.getElementById('clearBtn').addEventListener('click', () => this.clearGrid());
     }
 
     selectCell(cell) {
@@ -722,6 +718,49 @@ function initializePuzzle(puzzleData, size = null) {
     currentPuzzle = new CryptogramPuzzle(puzzleData);
 }
 
+// Load a new puzzle without page reload (with smooth transition)
+async function loadNewPuzzle(size, language) {
+    const puzzleSection = document.querySelector('.puzzle-section');
+    
+    // Fade out
+    if (puzzleSection) {
+        puzzleSection.style.opacity = '0';
+        puzzleSection.style.transition = 'opacity 0.3s ease-out';
+    }
+    
+    // Wait for fade out
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    try {
+        // Fetch new puzzle
+        const seed = Date.now().toString(); // Use timestamp for variety
+        const puzzleData = await fetchPuzzleBySize(size, language, seed);
+        
+        // Update URL without reload (optional - keeps URL in sync)
+        const url = new URL(window.location);
+        url.searchParams.set('size', size);
+        url.searchParams.set('language', language);
+        url.searchParams.set('seed', seed);
+        url.searchParams.delete('puzzle');
+        window.history.pushState({}, '', url.toString());
+        
+        // Initialize new puzzle
+        initializePuzzle(puzzleData, size);
+        
+        // Fade in
+        if (puzzleSection) {
+            await new Promise(resolve => setTimeout(resolve, 50)); // Small delay
+            puzzleSection.style.opacity = '1';
+        }
+    } catch (error) {
+        // Restore opacity on error
+        if (puzzleSection) {
+            puzzleSection.style.opacity = '1';
+        }
+        throw error;
+    }
+}
+
 // Initialize the crossword puzzle when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
     // Update stats UI if userAuth is available
@@ -730,6 +769,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     await loadPuzzle();
+    
+    // Setup button event listeners once (they reference currentPuzzle)
+    const checkBtn = document.getElementById('checkBtn');
+    const revealBtn = document.getElementById('revealBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    if (checkBtn) {
+        checkBtn.addEventListener('click', () => {
+            if (currentPuzzle) currentPuzzle.checkAnswers();
+        });
+    }
+    
+    if (revealBtn) {
+        revealBtn.addEventListener('click', () => {
+            if (currentPuzzle) currentPuzzle.revealAnswers();
+        });
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (currentPuzzle) currentPuzzle.clearGrid();
+        });
+    }
     
     // Setup new puzzle button
     const newPuzzleBtn = document.getElementById('newPuzzleBtn');
@@ -748,50 +810,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const selectedSize = selectedRadio.value;
                 console.log('Selected size:', selectedSize);
                 
-                // Try to load an unsolved puzzle if userAuth is available
-                if (typeof userAuth !== 'undefined') {
-                    try {
+                // Disable button and show loading state
+                newPuzzleBtn.disabled = true;
+                const originalText = newPuzzleBtn.textContent;
+                newPuzzleBtn.textContent = 'Loading...';
+                
+                try {
+                    // Try to load an unsolved puzzle if userAuth is available
+                    if (typeof userAuth !== 'undefined') {
                         const available = await userAuth.getAvailablePuzzles(selectedLanguage);
                         if (available && available.unsolvedPuzzleIds.length > 0) {
                             console.log(`Found ${available.unsolvedPuzzleIds.length} unsolved puzzles`);
-                            // Update URL and reload with new seed to get different puzzle
-                            const url = new URL(window.location);
-                            url.searchParams.set('size', selectedSize);
-                            url.searchParams.set('language', selectedLanguage);
-                            url.searchParams.delete('puzzle');
-                            url.searchParams.set('seed', Date.now().toString()); // Use timestamp as seed
-                            console.log('Navigating to:', url.toString());
-                            window.location.href = url.toString();
+                            // Fetch new puzzle without reload
+                            await loadNewPuzzle(selectedSize, selectedLanguage);
                             return;
                         } else if (available && available.totalSolved > 0) {
                             // All puzzles solved for this language
                             showErrorMessage(
                                 'All Puzzles Completed! 🎉',
                                 `Congratulations! You've solved all ${available.totalSolved} available puzzles in ${selectedLanguage}. Try a different language or replay puzzles!`,
-                                () => {
-                                    const url = new URL(window.location);
-                                    url.searchParams.set('size', selectedSize);
-                                    url.searchParams.set('language', selectedLanguage);
-                                    url.searchParams.delete('puzzle');
-                                    url.searchParams.set('seed', Date.now().toString());
-                                    window.location.href = url.toString();
+                                async () => {
+                                    await loadNewPuzzle(selectedSize, selectedLanguage);
                                 }
                             );
                             return;
                         }
-                    } catch (error) {
-                        console.error('Error checking unsolved puzzles:', error);
                     }
+                    
+                    // Fallback: Load puzzle normally
+                    await loadNewPuzzle(selectedSize, selectedLanguage);
+                } catch (error) {
+                    console.error('Error loading new puzzle:', error);
+                    showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
+                } finally {
+                    // Re-enable button
+                    newPuzzleBtn.disabled = false;
+                    newPuzzleBtn.textContent = originalText;
                 }
-                
-                // Fallback: Update URL and reload normally
-                const url = new URL(window.location);
-                url.searchParams.set('size', selectedSize);
-                url.searchParams.set('language', selectedLanguage);
-                url.searchParams.delete('puzzle');
-                url.searchParams.delete('seed');
-                console.log('Navigating to:', url.toString());
-                window.location.href = url.toString();
             }
         });
     } else {
