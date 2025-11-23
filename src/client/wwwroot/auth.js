@@ -133,45 +133,34 @@ class UserAuth {
      * Show congratulations message when puzzle is solved
      */
     showCongratulations() {
-        const modal = document.createElement('div');
-        modal.className = 'congrats-overlay';
+        // Create toast notification
+        const toast = document.createElement('div');
+        toast.className = 'congrats-toast';
         
-        modal.innerHTML = `
-            <div class="congrats-modal">
-                <h2>🎉 Congratulations!</h2>
-                <p>You've successfully solved this puzzle!</p>
-                <p class="congrats-stats">Total puzzles solved: <strong>${this.solvedPuzzles.size}</strong></p>
-                <div class="congrats-actions">
-                    <button class="btn-next-puzzle">Try Another Puzzle</button>
-                    <button class="btn-close">Close</button>
+        toast.innerHTML = `
+            <div class="toast-content">
+                <span class="toast-icon">🎉</span>
+                <div class="toast-text">
+                    <strong>Puzzle Solved!</strong>
+                    <span class="toast-count">Total: ${this.solvedPuzzles.size} puzzle${this.solvedPuzzles.size !== 1 ? 's' : ''}</span>
                 </div>
             </div>
         `;
         
-        document.body.appendChild(modal);
+        document.body.appendChild(toast);
         
         // Animate in
-        setTimeout(() => modal.style.opacity = '1', 10);
+        setTimeout(() => toast.classList.add('show'), 10);
         
-        // Setup event listeners
-        const closeBtn = modal.querySelector('.btn-close');
-        const nextBtn = modal.querySelector('.btn-next-puzzle');
-        
-        const closeModal = () => {
-            modal.style.opacity = '0';
-            setTimeout(() => document.body.removeChild(modal), 300);
-        };
-        
-        closeBtn.addEventListener('click', closeModal);
-        nextBtn.addEventListener('click', () => {
-            closeModal();
-            // Trigger new puzzle load
-            document.getElementById('newPuzzleBtn')?.click();
-        });
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
     }
 
     /**
