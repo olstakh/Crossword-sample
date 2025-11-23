@@ -62,12 +62,8 @@ class PuzzleBuilder {
             this.downloadJson();
         });
         
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (this.currentCell && !e.target.matches('input[type="text"], input[type="number"]')) {
-                this.handleKeydown(e);
-            }
-        });
+        // Note: Keyboard handling is done in handleCellKeydown, not here
+        // to avoid double-triggering arrow key navigation
     }
     
     createGrid() {
