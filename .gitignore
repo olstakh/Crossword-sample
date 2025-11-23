@@ -60,3 +60,6 @@ nunit-*.xml
 *.sarif
 # User data (should not be committed)
 src/server/Data/user-progress.json
+src/server/Data/user-progress.db
+src/server/Data/user-progress.db-shm
+src/server/Data/user-progress.db-wal

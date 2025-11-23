@@ -17,11 +17,11 @@ builder.Services.AddSingleton<IPuzzleRepository>(sp =>
 builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
 
 // Register user progress repository and service
-var userProgressFilePath = Path.Combine(builder.Environment.ContentRootPath, "Data", "user-progress.json");
+var userProgressDbPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "user-progress.db");
 builder.Services.AddSingleton<IUserProgressRepository>(sp =>
 {
-    var logger = sp.GetRequiredService<ILogger<FileUserProgressRepository>>();
-    return new FileUserProgressRepository(userProgressFilePath, logger);
+    var logger = sp.GetRequiredService<ILogger<SqliteUserProgressRepository>>();
+    return new SqliteUserProgressRepository(userProgressDbPath, logger);
 });
 builder.Services.AddSingleton<IUserProgressService, UserProgressService>();
 
