@@ -147,8 +147,10 @@ class PuzzleBuilder {
         const row = parseInt(cell.dataset.row);
         const col = parseInt(cell.dataset.col);
         
-        // Check if it's a letter
-        if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+        // Check if it's a letter (Latin or Cyrillic)
+        // Latin: A-Z, a-z
+        // Cyrillic: А-Я, а-я, Ґ, ґ, Є, є, І, і, Ї, ї (Ukrainian), Ё, ё (Russian)
+        if (e.key.length === 1 && e.key.match(/[a-zA-Zа-яА-ЯёЁґҐєЄіІїЇ]/)) {
             e.preventDefault();
             const letter = e.key.toUpperCase();
             this.setCellValue(row, col, letter);
