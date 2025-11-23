@@ -58,3 +58,5 @@ nunit-*.xml
 
 # SARIF
 *.sarif
+# User data (should not be committed)
+src/server/Data/user-progress.json

@@ -15,6 +15,14 @@ builder.Services.AddSingleton<IPuzzleRepository>(sp =>
     return new FilePuzzleRepository(puzzlesFilePath, logger);
 });
 builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
+
+// Register user progress repository and service
+var userProgressFilePath = Path.Combine(builder.Environment.ContentRootPath, "Data", "user-progress.json");
+builder.Services.AddSingleton<IUserProgressRepository>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<FileUserProgressRepository>>();
+    return new FileUserProgressRepository(userProgressFilePath, logger);
+});
 builder.Services.AddSingleton<IUserProgressService, UserProgressService>();
 
 // Add CORS for development
