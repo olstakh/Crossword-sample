@@ -58,7 +58,10 @@ public class CrosswordService : ICrosswordService
         }
 
         // Use seed for deterministic selection
-        var random = new Random((request.Seed ?? DateTime.UtcNow.ToString("yyyyMMdd")).GetHashCode());
+        var random = 
+            request.Seed == null
+            ? new Random()
+            : new Random(request.Seed.GetHashCode());
         var selectedPuzzle = matchingPuzzles[random.Next(matchingPuzzles.Count)];
         
         return selectedPuzzle;
@@ -66,15 +69,10 @@ public class CrosswordService : ICrosswordService
 
     public List<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null)
     {
-        if (language.HasValue)
-        {
-            return _cachedPuzzles.Values
-                .Where(p => p.Language == language.Value)
-                .Select(p => p.Id)
-                .ToList();
-        }
-        
-        return _cachedPuzzles.Keys.ToList();
+        return _cachedPuzzles.Values
+            .Where(p => language.HasValue ? p.Language == language.Value : true)
+            .Select(p => p.Id)
+            .ToList();
     }
 
     private Dictionary<string, CrosswordPuzzle> InitializePuzzles(IPuzzleRepository puzzleRepository)
