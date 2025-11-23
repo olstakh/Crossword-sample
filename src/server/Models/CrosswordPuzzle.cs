@@ -16,3 +16,10 @@ public class PuzzleSize
     public int Rows { get; set; }
     public int Cols { get; set; }
 }
+
+public enum PuzzleSizeCategory
+{
+    Small,
+    Medium,
+    Big
+}

@@ -5,7 +5,7 @@ namespace CrossWords.Services;
 public interface ICrosswordService
 {
     CrosswordPuzzle GetPuzzle(string id);
-    CrosswordPuzzle GetPuzzleBySize(string size, string? seed = null);
+    CrosswordPuzzle GetPuzzleBySize(PuzzleSizeCategory size, string? seed = null);
     List<string> GetAvailablePuzzleIds();
 }
 
@@ -24,7 +24,7 @@ public class CrosswordService : ICrosswordService
         return _cachedPuzzles.GetValueOrDefault(id) ?? _cachedPuzzles["puzzle1"];
     }
 
-    public CrosswordPuzzle GetPuzzleBySize(string size, string? seed = null)
+    public CrosswordPuzzle GetPuzzleBySize(PuzzleSizeCategory size, string? seed = null)
     {
         // Generate a deterministic puzzle based on size and seed
         var puzzleId = $"{size}_{seed ?? DateTime.UtcNow.ToString("yyyyMMdd")}";
@@ -40,13 +40,13 @@ public class CrosswordService : ICrosswordService
         return puzzle;
     }
 
-    private CrosswordPuzzle GeneratePuzzleBySize(string size, string puzzleId)
+    private CrosswordPuzzle GeneratePuzzleBySize(PuzzleSizeCategory size, string puzzleId)
     {
-        var (minSize, maxSize) = size.ToLower() switch
+        var (minSize, maxSize) = size switch
         {
-            "small" => (5, 8),
-            "medium" => (9, 14),
-            "big" => (15, 20),
+            PuzzleSizeCategory.Small => (5, 8),
+            PuzzleSizeCategory.Medium => (9, 14),
+            PuzzleSizeCategory.Big => (15, 20),
             _ => (5, 8) // default to small
         };
 
@@ -56,19 +56,13 @@ public class CrosswordService : ICrosswordService
 
         // For now, return one of the hardcoded puzzles scaled to match requested size category
         // This is temporary until you implement the full 2D crossword generator
-        if (size.ToLower() == "small")
+        return size switch
         {
-            return _cachedPuzzles["puzzle1"];
-        }
-        else if (size.ToLower() == "medium")
-        {
-            return _cachedPuzzles["puzzle2"];
-        }
-        else
-        {
-            // For big, scale up puzzle2
-            return _cachedPuzzles["puzzle2"];
-        }
+            PuzzleSizeCategory.Small => _cachedPuzzles["puzzle1"],
+            PuzzleSizeCategory.Medium => _cachedPuzzles["puzzle2"],
+            PuzzleSizeCategory.Big => _cachedPuzzles["puzzle2"],
+            _ => _cachedPuzzles["puzzle1"]
+        };
     }
 
     public List<string> GetAvailablePuzzleIds()
