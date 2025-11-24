@@ -9,6 +9,7 @@ class CryptogramPuzzle {
         this.userAnswers = {}; // number -> letter mapping from user
         this.language = data.language || 'English';
         this.inputMode = localStorage.getItem('inputMode') || 'keyboard';
+        this.difficultyMode = localStorage.getItem('difficultyMode') || 'easy';
         
         // Generate numbers and letter mapping from grid
         this.generateCryptogramData();
@@ -234,14 +235,21 @@ class CryptogramPuzzle {
 
                     if (value) {
                         const number = parseInt(e.target.dataset.number);
-                        this.userAnswers[number] = value;
-                        this.updateAllCells();
+                        if (this.difficultyMode === 'easy') {
+                            // Easy mode: update all cells with same number
+                            this.userAnswers[number] = value;
+                            this.updateAllCells();
+                        }
+                        // Hard mode: cell already has value from input event
                         this.checkNumberComplete(number);
                         this.moveToNextCell();
                     } else {
                         const number = parseInt(e.target.dataset.number);
-                        delete this.userAnswers[number];
-                        this.updateAllCells();
+                        if (this.difficultyMode === 'easy') {
+                            delete this.userAnswers[number];
+                            this.updateAllCells();
+                        }
+                        // Hard mode: cell already cleared from input event
                         this.updateAlphabetDecoder();
                     }
                 }
@@ -262,8 +270,6 @@ class CryptogramPuzzle {
     }
 
     showLetterPopup(input) {
-        console.log('showLetterPopup called for input:', input);
-        
         // Remove any existing popup
         const existingPopup = document.querySelector('.letter-popup-overlay');
         if (existingPopup) {
@@ -296,9 +302,14 @@ class CryptogramPuzzle {
             button.textContent = letter;
             button.addEventListener('click', () => {
                 const number = parseInt(input.dataset.number);
-                this.userAnswers[number] = letter;
-                input.value = letter;
-                this.updateAllCells();
+                if (this.difficultyMode === 'easy') {
+                    // Easy mode: update all cells with same number
+                    this.userAnswers[number] = letter;
+                    this.updateAllCells();
+                } else {
+                    // Hard mode: only update current cell
+                    input.value = letter;
+                }
                 this.checkNumberComplete(number);
                 overlay.remove();
             });
@@ -313,9 +324,14 @@ class CryptogramPuzzle {
         clearButton.textContent = '⌫ Clear';
         clearButton.addEventListener('click', () => {
             const number = parseInt(input.dataset.number);
-            delete this.userAnswers[number];
-            input.value = '';
-            this.updateAllCells();
+            if (this.difficultyMode === 'easy') {
+                // Easy mode: clear all cells with same number
+                delete this.userAnswers[number];
+                this.updateAllCells();
+            } else {
+                // Hard mode: only clear current cell
+                input.value = '';
+            }
             this.updateAlphabetDecoder();
             overlay.remove();
         });
@@ -378,15 +394,30 @@ class CryptogramPuzzle {
         this.updateInputMode();
     }
 
+    setDifficultyMode(mode) {
+        this.difficultyMode = mode;
+        localStorage.setItem('difficultyMode', mode);
+    }
+
     updateAllCells() {
-        // Update all cells with the same number
-        const inputs = document.querySelectorAll('.cell:not(.black) input:not([readonly])');
-        inputs.forEach(input => {
-            const number = parseInt(input.dataset.number);
-            if (this.userAnswers[number]) {
-                input.value = this.userAnswers[number];
-            }
-        });
+        // Update all cells with the same number (only in easy mode)
+        if (this.difficultyMode === 'easy') {
+            const inputs = document.querySelectorAll('.cell:not(.black) input');
+            inputs.forEach(input => {
+                // Skip originally readonly cells (revealed letters)
+                const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+                if (originallyReadonly) return;
+                
+                const number = parseInt(input.dataset.number);
+                if (this.userAnswers[number]) {
+                    input.value = this.userAnswers[number];
+                } else {
+                    // Clear cells if number was deleted from userAnswers
+                    input.value = '';
+                }
+            });
+        }
+        // In hard mode, don't update other cells
     }
 
     checkNumberComplete(number) {
@@ -394,17 +425,26 @@ class CryptogramPuzzle {
         const inputs = document.querySelectorAll(`input[data-number="${number}"]:not([readonly])`);
         let allCorrect = true;
         let allFilled = true;
+        let allSameLetter = true;
+        let firstLetter = null;
 
         inputs.forEach(input => {
             if (!input.value) {
                 allFilled = false;
-            } else if (input.value.toUpperCase() !== input.dataset.answer) {
-                allCorrect = false;
+            } else {
+                if (firstLetter === null) {
+                    firstLetter = input.value.toUpperCase();
+                } else if (input.value.toUpperCase() !== firstLetter) {
+                    allSameLetter = false;
+                }
+                if (input.value.toUpperCase() !== input.dataset.answer) {
+                    allCorrect = false;
+                }
             }
         });
 
-        if (allFilled && allCorrect) {
-            // Reveal in alphabet decoder
+        // Only reveal in alphabet decoder if all cells have same letter and are correct
+        if (allFilled && allSameLetter && allCorrect) {
             this.revealInAlphabet(number);
         } else {
             this.updateAlphabetDecoder();
@@ -423,13 +463,43 @@ class CryptogramPuzzle {
     }
 
     updateAlphabetDecoder() {
-        const alphabetCells = document.querySelectorAll('.alphabet-cell:not(.revealed)');
+        const alphabetCells = document.querySelectorAll('.alphabet-cell');
         alphabetCells.forEach(cell => {
             const number = parseInt(cell.dataset.number);
             const letterDiv = cell.querySelector('.alphabet-letter');
             
-            if (this.userAnswers[number]) {
-                letterDiv.textContent = this.userAnswers[number];
+            // Check if this number was initially revealed
+            if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(number)) {
+                const letter = this.data.letterMapping[number.toString()] || this.data.letterMapping[number];
+                letterDiv.textContent = letter || '?';
+                cell.classList.add('revealed');
+                return;
+            }
+            
+            // Check all cells with this number in the actual grid
+            const inputs = document.querySelectorAll(`input[data-number="${number}"]`);
+            const originallyReadonly = inputs[0]?.getAttribute('data-originally-readonly') === 'true';
+            if (originallyReadonly) return; // Skip if this was originally readonly
+            
+            let allFilled = true;
+            let allSame = true;
+            let firstValue = null;
+            
+            inputs.forEach(input => {
+                if (!input.value) {
+                    allFilled = false;
+                } else {
+                    if (firstValue === null) {
+                        firstValue = input.value.toUpperCase();
+                    } else if (input.value.toUpperCase() !== firstValue) {
+                        allSame = false;
+                    }
+                }
+            });
+            
+            // Only reveal if all cells are filled and have the same letter
+            if (allFilled && allSame && firstValue) {
+                letterDiv.textContent = firstValue;
                 letterDiv.classList.remove('hidden');
             } else {
                 letterDiv.textContent = '?';
@@ -627,11 +697,15 @@ class CryptogramPuzzle {
     }
 
     clearGrid() {
-        const inputs = document.querySelectorAll('.cell:not(.black) input:not([readonly])');
+        // Clear all cells that were not originally readonly (revealed letters)
+        const inputs = document.querySelectorAll('.cell:not(.black) input');
         inputs.forEach(input => {
-            input.value = '';
-            const cell = input.parentElement;
-            cell.classList.remove('correct', 'incorrect');
+            const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+            if (!originallyReadonly) {
+                input.value = '';
+                const cell = input.parentElement;
+                cell.classList.remove('correct', 'incorrect');
+            }
         });
 
         // Reset user answers except initially revealed
@@ -646,21 +720,7 @@ class CryptogramPuzzle {
         }
 
         // Reset alphabet decoder
-        const alphabetCells = document.querySelectorAll('.alphabet-cell');
-        alphabetCells.forEach(cell => {
-            const number = parseInt(cell.dataset.number);
-            const letterDiv = cell.querySelector('.alphabet-letter');
-            
-            if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(number)) {
-                const letter = this.data.letterMapping[number.toString()] || this.data.letterMapping[number];
-                letterDiv.textContent = letter || '?';
-                cell.classList.add('revealed');
-            } else {
-                letterDiv.textContent = '?';
-                letterDiv.classList.add('hidden');
-                cell.classList.remove('revealed');
-            }
-        });
+        this.updateAlphabetDecoder();
     }
 }
 
@@ -1106,6 +1166,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newMode = e.target.checked ? 'mouse' : 'keyboard';
             if (currentPuzzle) {
                 currentPuzzle.setInputMode(newMode);
+            }
+        });
+    }
+
+    // Setup difficulty mode toggle
+    const difficultyModeToggle = document.getElementById('difficultyModeToggle');
+    if (difficultyModeToggle) {
+        // Initialize toggle state from localStorage
+        const savedDifficulty = localStorage.getItem('difficultyMode') || 'easy';
+        difficultyModeToggle.checked = (savedDifficulty === 'hard');
+        
+        // Handle toggle changes
+        difficultyModeToggle.addEventListener('change', (e) => {
+            const newMode = e.target.checked ? 'hard' : 'easy';
+            if (currentPuzzle) {
+                currentPuzzle.setDifficultyMode(newMode);
             }
         });
     }

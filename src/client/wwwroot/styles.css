@@ -73,11 +73,20 @@ h1 {
     margin-bottom: 20px;
 }
 
-/* Input Mode Toggle */
-.input-mode-toggle {
+/* Toggles Container */
+.toggles-container {
     display: flex;
     justify-content: center;
+    gap: 30px;
     margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+/* Input Mode Toggle */
+.input-mode-toggle,
+.difficulty-mode-toggle {
+    display: flex;
+    justify-content: center;
 }
 
 .toggle-label {
@@ -131,6 +140,15 @@ h1 {
 
 .toggle-label:hover .toggle-slider {
     opacity: 0.9;
+}
+
+/* Difficulty Toggle - Different Colors */
+.difficulty-slider {
+    background-color: #27ae60;
+}
+
+.toggle-checkbox:checked + .difficulty-slider {
+    background-color: #c0392b;
 }
 
 .controls {
@@ -518,6 +536,11 @@ main {
     .user-stats {
         position: static;
         transform: none;
+    }
+
+    .toggles-container {
+        flex-direction: column;
+        gap: 15px;
     }
     
     .cell {

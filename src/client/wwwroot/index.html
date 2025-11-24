@@ -13,13 +13,23 @@
                 <h1>Cryptogram Puzzle</h1>
                 <div id="userStats" class="user-stats"></div>
             </div>
-            <div class="input-mode-toggle">
-                <label class="toggle-label">
-                    <span class="toggle-text">⌨️ Keyboard</span>
-                    <input type="checkbox" id="inputModeToggle" class="toggle-checkbox">
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-text">🖱️ Mouse</span>
-                </label>
+            <div class="toggles-container">
+                <div class="input-mode-toggle">
+                    <label class="toggle-label">
+                        <span class="toggle-text">⌨️ Keyboard</span>
+                        <input type="checkbox" id="inputModeToggle" class="toggle-checkbox">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">🖱️ Mouse</span>
+                    </label>
+                </div>
+                <div class="difficulty-mode-toggle">
+                    <label class="toggle-label">
+                        <span class="toggle-text">😊 Easy</span>
+                        <input type="checkbox" id="difficultyModeToggle" class="toggle-checkbox">
+                        <span class="toggle-slider difficulty-slider"></span>
+                        <span class="toggle-text">💪 Hard</span>
+                    </label>
+                </div>
             </div>
             <div class="controls">
                 <button id="checkBtn">Check Answers</button>
