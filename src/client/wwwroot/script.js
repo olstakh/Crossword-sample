@@ -668,6 +668,17 @@ async function loadPuzzle() {
                 puzzleData = await fetchPuzzleBySize(size, language, seed);
             } catch (error) {
                 if (error.status === 404) {
+                    // Check if this is all-solved case
+                    if (error.isAllSolved) {
+                        showAllPuzzlesSolvedMessage(error.message, size, language);
+                        // Update radio buttons to match
+                        const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
+                        if (radioButton) {
+                            radioButton.checked = true;
+                        }
+                        return;
+                    }
+                    
                     // Show user-friendly error with option to try English
                     const message = `${error.message}\n\nWould you like to try loading an English puzzle instead?`;
                     showErrorMessage('Puzzle Not Available', message, async () => {
@@ -680,8 +691,12 @@ async function loadPuzzle() {
                             }
                         } catch (fallbackError) {
                             if (fallbackError.status === 404) {
-                                showErrorMessage('No Puzzles Available', 
-                                    'Sorry, no puzzles are available for this size. Please try a different size.');
+                                if (fallbackError.isAllSolved) {
+                                    showAllPuzzlesSolvedMessage(fallbackError.message, size, 'English');
+                                } else {
+                                    showErrorMessage('No Puzzles Available', 
+                                        'Sorry, no puzzles are available for this size. Please try a different size.');
+                                }
                             }
                         }
                     });
@@ -713,10 +728,28 @@ async function loadPuzzle() {
             try {
                 puzzleData = await fetchPuzzleBySize('medium', language);
             } catch (error) {
-                if (error.status === 404 && language !== 'English') {
-                    // Silently fallback to English for default load
-                    puzzleData = await fetchPuzzleBySize('medium', 'English');
-                    document.getElementById('languageSelector').value = 'English';
+                if (error.status === 404) {
+                    // Check if all-solved
+                    if (error.isAllSolved) {
+                        showAllPuzzlesSolvedMessage(error.message, 'medium', language);
+                        return;
+                    }
+                    
+                    // Try fallback to English
+                    if (language !== 'English') {
+                        try {
+                            puzzleData = await fetchPuzzleBySize('medium', 'English');
+                            document.getElementById('languageSelector').value = 'English';
+                        } catch (fallbackError) {
+                            if (fallbackError.isAllSolved) {
+                                showAllPuzzlesSolvedMessage(fallbackError.message, 'medium', 'English');
+                                return;
+                            }
+                            throw fallbackError;
+                        }
+                    } else {
+                        throw error;
+                    }
                 } else {
                     throw error;
                 }
