@@ -7,6 +7,8 @@ class CryptogramPuzzle {
         this.grid = [];
         this.currentCell = null;
         this.userAnswers = {}; // number -> letter mapping from user
+        this.language = data.language || 'English';
+        this.inputMode = localStorage.getItem('inputMode') || 'keyboard';
         
         // Generate numbers and letter mapping from grid
         this.generateCryptogramData();
@@ -66,10 +68,20 @@ class CryptogramPuzzle {
         return result;
     }
 
+    getAlphabetForLanguage() {
+        const alphabets = {
+            'English': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+            'Russian': 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'.split(''),
+            'Ukrainian': 'АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ'.split('')
+        };
+        return alphabets[this.language] || alphabets['English'];
+    }
+
     init() {
         this.renderGrid();
         this.renderAlphabetDecoder();
         this.setupEventListeners();
+        this.updateInputMode();
         
         // Initialize with revealed letters
         if (this.data.initiallyRevealed) {
@@ -184,37 +196,61 @@ class CryptogramPuzzle {
     }
 
     setupEventListeners() {
-        const cells = document.querySelectorAll('.cell:not(.black) input');
+        const cells = document.querySelectorAll('.cell:not(.black)');
 
-        cells.forEach(input => {
+        cells.forEach(cell => {
+            const input = cell.querySelector('input');
+            if (!input) return;
+
+            // Store original readonly state
+            if (!input.hasAttribute('data-originally-readonly')) {
+                input.setAttribute('data-originally-readonly', input.readOnly);
+            }
+
+            // Handle click events for mouse mode
+            cell.addEventListener('click', (e) => {
+                const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+                if (this.inputMode === 'mouse' && !originallyReadonly) {
+                    this.selectCell(cell);
+                    this.showLetterPopup(input);
+                }
+            });
+
             input.addEventListener('focus', (e) => {
-                const cell = e.target.parentElement;
-                this.selectCell(cell);
+                if (this.inputMode === 'keyboard') {
+                    this.selectCell(cell);
+                }
             });
 
             input.addEventListener('input', (e) => {
-                let value = e.target.value.toUpperCase();
-                
-                // Only allow letters A-Z
-                value = value.replace(/[^A-Z]/g, '');
-                e.target.value = value;
+                if (this.inputMode === 'keyboard') {
+                    let value = e.target.value.toUpperCase();
+                    
+                    // Allow letters from the current language's alphabet
+                    const alphabet = this.getAlphabetForLanguage().join('');
+                    const regex = new RegExp(`[^${alphabet}]`, 'g');
+                    value = value.replace(regex, '');
+                    e.target.value = value;
 
-                if (value) {
-                    const number = parseInt(e.target.dataset.number);
-                    this.userAnswers[number] = value;
-                    this.updateAllCells();
-                    this.checkNumberComplete(number);
-                    this.moveToNextCell();
-                } else {
-                    const number = parseInt(e.target.dataset.number);
-                    delete this.userAnswers[number];
-                    this.updateAllCells();
-                    this.updateAlphabetDecoder();
+                    if (value) {
+                        const number = parseInt(e.target.dataset.number);
+                        this.userAnswers[number] = value;
+                        this.updateAllCells();
+                        this.checkNumberComplete(number);
+                        this.moveToNextCell();
+                    } else {
+                        const number = parseInt(e.target.dataset.number);
+                        delete this.userAnswers[number];
+                        this.updateAllCells();
+                        this.updateAlphabetDecoder();
+                    }
                 }
             });
 
             input.addEventListener('keydown', (e) => {
-                this.handleKeydown(e);
+                if (this.inputMode === 'keyboard') {
+                    this.handleKeydown(e);
+                }
             });
         });
     }
@@ -223,6 +259,123 @@ class CryptogramPuzzle {
         document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
         this.currentCell = cell;
         cell.classList.add('selected');
+    }
+
+    showLetterPopup(input) {
+        console.log('showLetterPopup called for input:', input);
+        
+        // Remove any existing popup
+        const existingPopup = document.querySelector('.letter-popup-overlay');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'letter-popup-overlay';
+
+        // Create popup
+        const popup = document.createElement('div');
+        popup.className = 'letter-popup';
+
+        // Add title
+        const title = document.createElement('h3');
+        title.textContent = 'Select a Letter';
+        title.className = 'letter-popup-title';
+        popup.appendChild(title);
+
+        // Create alphabet grid
+        const alphabetGrid = document.createElement('div');
+        alphabetGrid.className = 'letter-popup-grid';
+
+        const alphabet = this.getAlphabetForLanguage();
+
+        alphabet.forEach(letter => {
+            const button = document.createElement('button');
+            button.className = 'letter-popup-button';
+            button.textContent = letter;
+            button.addEventListener('click', () => {
+                const number = parseInt(input.dataset.number);
+                this.userAnswers[number] = letter;
+                input.value = letter;
+                this.updateAllCells();
+                this.checkNumberComplete(number);
+                overlay.remove();
+            });
+            alphabetGrid.appendChild(button);
+        });
+
+        popup.appendChild(alphabetGrid);
+
+        // Add clear button
+        const clearButton = document.createElement('button');
+        clearButton.className = 'letter-popup-button letter-popup-clear';
+        clearButton.textContent = '⌫ Clear';
+        clearButton.addEventListener('click', () => {
+            const number = parseInt(input.dataset.number);
+            delete this.userAnswers[number];
+            input.value = '';
+            this.updateAllCells();
+            this.updateAlphabetDecoder();
+            overlay.remove();
+        });
+        alphabetGrid.appendChild(clearButton);
+
+        // Add close button
+        const closeButton = document.createElement('button');
+        closeButton.className = 'letter-popup-close';
+        closeButton.textContent = '✕';
+        closeButton.addEventListener('click', () => {
+            overlay.remove();
+        });
+        popup.appendChild(closeButton);
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+            }
+        });
+
+        // Close on Escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                overlay.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    }
+
+    updateInputMode() {
+        // Update all inputs based on current mode
+        const cells = document.querySelectorAll('.cell:not(.black) input');
+        cells.forEach(input => {
+            const wasReadOnly = input.getAttribute('data-originally-readonly') === 'true';
+            
+            if (this.inputMode === 'mouse') {
+                if (!wasReadOnly) {
+                    input.readOnly = true;
+                    input.style.cursor = 'pointer';
+                    input.parentElement.style.cursor = 'pointer';
+                }
+            } else {
+                if (!wasReadOnly) {
+                    input.readOnly = false;
+                    input.style.cursor = 'text';
+                    input.parentElement.style.cursor = 'default';
+                }
+            }
+        });
+    }
+
+    setInputMode(mode) {
+        this.inputMode = mode;
+        localStorage.setItem('inputMode', mode);
+        this.updateInputMode();
     }
 
     updateAllCells() {
@@ -939,5 +1092,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     } else {
         console.error('New Puzzle button not found!');
+    }
+
+    // Setup input mode toggle
+    const inputModeToggle = document.getElementById('inputModeToggle');
+    if (inputModeToggle) {
+        // Initialize toggle state from localStorage
+        const savedMode = localStorage.getItem('inputMode') || 'keyboard';
+        inputModeToggle.checked = (savedMode === 'mouse');
+        
+        // Handle toggle changes
+        inputModeToggle.addEventListener('change', (e) => {
+            const newMode = e.target.checked ? 'mouse' : 'keyboard';
+            if (currentPuzzle) {
+                currentPuzzle.setInputMode(newMode);
+            }
+        });
     }
 });
