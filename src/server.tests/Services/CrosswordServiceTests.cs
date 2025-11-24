@@ -10,7 +10,8 @@ namespace CrossWords.Tests.Services;
 public class CrosswordServiceTests
 {
     private readonly CrosswordService _service;
-    private readonly Mock<IPuzzleRepository> _mockRepository;
+    private readonly Mock<IPuzzleRepository> _mockPuzzleRepository;
+    private readonly Mock<IUserProgressRepository> _mockUserRepository;
 
     public CrosswordServiceTests()
     {
@@ -81,11 +82,14 @@ public class CrosswordServiceTests
         };
 
         // Setup mock repository
-        _mockRepository = new Mock<IPuzzleRepository>(MockBehavior.Strict);
-        _mockRepository.Setup(r => r.LoadAllPuzzles()).Returns(mockPuzzles);
+        _mockPuzzleRepository = new Mock<IPuzzleRepository>(MockBehavior.Strict);
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(mockPuzzles);
+
+        _mockUserRepository = new Mock<IUserProgressRepository>(MockBehavior.Strict);
+        _mockUserRepository.Setup(u => u.GetSolvedPuzzles(It.IsAny<string>())).Returns(new HashSet<string>());
         
         var serviceLogger = NullLogger<CrosswordService>.Instance;
-        _service = new CrosswordService(_mockRepository.Object, serviceLogger);
+        _service = new CrosswordService(_mockPuzzleRepository.Object, _mockUserRepository.Object, serviceLogger);
     }
 
     [Fact]

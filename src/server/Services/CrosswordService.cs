@@ -19,9 +19,9 @@ public class CrosswordService : ICrosswordService
     private readonly IUserProgressRepository _userProgressRepository;
 
     public CrosswordService(
-        IPuzzleRepository puzzleRepository, 
-        ILogger<CrosswordService> logger,
-        IUserProgressRepository userProgressRepository)
+        IPuzzleRepository puzzleRepository,
+        IUserProgressRepository userProgressRepository, 
+        ILogger<CrosswordService> logger)
     {
         _logger = logger;
         _userProgressRepository = userProgressRepository;
@@ -42,12 +42,6 @@ public class CrosswordService : ICrosswordService
         // Get puzzles filtered by language
         var languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == request.Language).ToList();
         
-        if (languagePuzzles.Count == 0)
-        {
-            throw new PuzzleNotFoundException(
-                $"No puzzles found for language '{request.Language}'. Please try a different language.");
-        }
-
         // Filter by size category
         var (minSize, maxSize) = request.SizeCategory.GetSizeRange();
 
