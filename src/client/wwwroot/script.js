@@ -847,9 +847,9 @@ async function loadNewPuzzle(size, language) {
 
 // Initialize the crossword puzzle when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    // Update stats UI if userAuth is available
+    // Initialize userAuth and wait for progress to load
     if (typeof userAuth !== 'undefined') {
-        userAuth.updateProgressUI();
+        await userAuth.init();
     }
     
     await loadPuzzle();

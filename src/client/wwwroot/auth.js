@@ -6,7 +6,16 @@ class UserAuth {
         this.userId = this.getOrCreateUserId();
         this.solvedPuzzles = new Set();
         this.totalSolved = 0;
-        this.loadProgress();
+        this.progressLoaded = false;
+    }
+
+    /**
+     * Initialize and load progress from server
+     * Must be called after construction
+     */
+    async init() {
+        await this.loadProgress();
+        return this;
     }
 
     /**
@@ -49,6 +58,7 @@ class UserAuth {
                 const progress = await response.json();
                 this.solvedPuzzles = new Set(progress.solvedPuzzleIds || []);
                 this.totalSolved = progress.totalPuzzlesSolved || this.solvedPuzzles.size;
+                this.progressLoaded = true;
                 console.log(`Loaded progress: ${this.totalSolved} puzzles solved`);
                 
                 // Update UI to show stats
@@ -182,5 +192,5 @@ class UserAuth {
     }
 }
 
-// Global user auth instance
-const userAuth = new UserAuth();
+// Global user auth instance - will be initialized async
+let userAuth = new UserAuth();
