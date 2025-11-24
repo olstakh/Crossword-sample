@@ -421,34 +421,8 @@ class CryptogramPuzzle {
     }
 
     checkNumberComplete(number) {
-        // Check if all instances of this number are correctly filled
-        const inputs = document.querySelectorAll(`input[data-number="${number}"]:not([readonly])`);
-        let allCorrect = true;
-        let allFilled = true;
-        let allSameLetter = true;
-        let firstLetter = null;
-
-        inputs.forEach(input => {
-            if (!input.value) {
-                allFilled = false;
-            } else {
-                if (firstLetter === null) {
-                    firstLetter = input.value.toUpperCase();
-                } else if (input.value.toUpperCase() !== firstLetter) {
-                    allSameLetter = false;
-                }
-                if (input.value.toUpperCase() !== input.dataset.answer) {
-                    allCorrect = false;
-                }
-            }
-        });
-
-        // Only reveal in alphabet decoder if all cells have same letter and are correct
-        if (allFilled && allSameLetter && allCorrect) {
-            this.revealInAlphabet(number);
-        } else {
-            this.updateAlphabetDecoder();
-        }
+        // Simply update the alphabet decoder - it will check all cells and show what user typed
+        this.updateAlphabetDecoder();
     }
 
     revealInAlphabet(number) {
