@@ -605,7 +605,9 @@ class CryptogramPuzzle {
             const cell = input.parentElement;
             cell.classList.remove('correct', 'incorrect');
 
-            if (input.readOnly) {
+            // Check if cell was originally readonly (revealed), not current readonly state (which is true in mouse mode)
+            const wasOriginallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+            if (wasOriginallyReadonly) {
                 cell.classList.add('correct');
                 return;
             }
