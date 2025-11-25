@@ -645,7 +645,9 @@ class CryptogramPuzzle {
     revealAnswers() {
         const inputs = document.querySelectorAll('.cell:not(.black) input');
         inputs.forEach(input => {
-            if (!input.readOnly) {
+            // Check if cell was originally readonly (revealed), not current readonly state (which is true in mouse mode)
+            const wasOriginallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+            if (!wasOriginallyReadonly) {
                 input.value = input.dataset.answer;
                 const number = parseInt(input.dataset.number);
                 this.userAnswers[number] = input.dataset.answer;
