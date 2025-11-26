@@ -8,11 +8,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register cryptogram generator and crossword service
-var puzzlesFilePath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.json");
+var puzzlesDbPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.db");
 builder.Services.AddSingleton<IPuzzleRepository>(sp => 
 {
-    var logger = sp.GetRequiredService<ILogger<FilePuzzleRepository>>();
-    return new FilePuzzleRepository(puzzlesFilePath, logger);
+    var logger = sp.GetRequiredService<ILogger<SqlitePuzzleRepository>>();
+    return new SqlitePuzzleRepository(puzzlesDbPath, logger);
 });
 builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
 
@@ -37,6 +37,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Migrate existing puzzles from JSON to SQLite if needed
+var puzzlesJsonPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.json");
+CrossWords.Utilities.PuzzleMigration.MigrateFromJsonToSqlite(
+    puzzlesJsonPath, 
+    puzzlesDbPath, 
+    app.Logger);
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

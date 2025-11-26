@@ -290,6 +290,26 @@ main {
     flex: 1;
 }
 
+.save-status {
+    margin-top: 15px;
+    padding: 12px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.save-status.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.save-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
 /* Footer */
 footer {
     text-align: center;

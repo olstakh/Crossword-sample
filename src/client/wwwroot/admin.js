@@ -54,6 +54,10 @@ class PuzzleBuilder {
             this.fillSampleData();
         });
         
+        document.getElementById('savePuzzleBtn').addEventListener('click', () => {
+            this.savePuzzleToDatabase();
+        });
+        
         document.getElementById('copyJsonBtn').addEventListener('click', () => {
             this.copyJson();
         });
@@ -292,6 +296,68 @@ class PuzzleBuilder {
         const previewElement = document.getElementById('jsonPreview');
         if (previewElement) {
             previewElement.textContent = jsonString;
+        }
+    }
+    
+    async savePuzzleToDatabase() {
+        const puzzleObj = this.getPuzzleObject();
+        const statusDiv = document.getElementById('saveStatus');
+        const btn = document.getElementById('savePuzzleBtn');
+        const originalText = btn.textContent;
+        
+        // Validate puzzle has content
+        const hasContent = this.grid.some(row => row.some(cell => cell !== '#'));
+        if (!hasContent) {
+            this.showStatus('Please add some letters to the puzzle before saving.', 'error');
+            return;
+        }
+        
+        try {
+            btn.disabled = true;
+            btn.textContent = '⏳ Saving...';
+            statusDiv.style.display = 'none';
+            
+            const response = await fetch('/api/admin/puzzles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(puzzleObj)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                btn.textContent = '✓ Saved!';
+                btn.classList.add('success');
+                this.showStatus(`Puzzle "${this.puzzleTitle}" saved successfully!`, 'success');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('success');
+                    btn.disabled = false;
+                }, 2000);
+            } else {
+                throw new Error(result.error || 'Failed to save puzzle');
+            }
+        } catch (err) {
+            console.error('Failed to save puzzle:', err);
+            btn.textContent = originalText;
+            btn.disabled = false;
+            this.showStatus(`Error: ${err.message}`, 'error');
+        }
+    }
+    
+    showStatus(message, type) {
+        const statusDiv = document.getElementById('saveStatus');
+        statusDiv.textContent = message;
+        statusDiv.className = `save-status ${type}`;
+        statusDiv.style.display = 'block';
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
         }
     }
     
