@@ -3,7 +3,7 @@ using CrossWords.Services.Abstractions;
 
 namespace CrossWords.Services;
 
-public class UserProgressService : IUserProgressService
+internal class UserProgressService : IUserProgressService
 {
     private readonly ICrosswordService _crosswordService;
     private readonly IUserProgressRepository _repository;

@@ -10,7 +10,7 @@ namespace CrossWords.Services;
 /// SQLite-based implementation of puzzle repository
 /// Stores puzzles in a single SQLite database file
 /// </summary>
-public class SqlitePuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersister, IDisposable
+internal class SqlitePuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersister, IDisposable
 {
     private readonly string _connectionString;
     private readonly ILogger<SqlitePuzzleRepository> _logger;

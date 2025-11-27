@@ -13,25 +13,8 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Register cryptogram generator and crossword service
-var puzzlesDbPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.db");
-builder.Services.AddSingleton<SqlitePuzzleRepository>(sp => 
-{
-    var logger = sp.GetRequiredService<ILogger<SqlitePuzzleRepository>>();
-    return new SqlitePuzzleRepository(puzzlesDbPath, logger);
-});
-builder.Services.AddSingleton<IPuzzleRepository>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
-builder.Services.AddSingleton<IPuzzleRepositoryPersister>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
-builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
-
-// Register user progress repository and service
-var userProgressDbPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "user-progress.db");
-builder.Services.AddSingleton<IUserProgressRepository>(sp =>
-{
-    var logger = sp.GetRequiredService<ILogger<SqliteUserProgressRepository>>();
-    return new SqliteUserProgressRepository(userProgressDbPath, logger);
-});
-builder.Services.AddSingleton<IUserProgressService, UserProgressService>();
+builder.Services.AddPuzzleServices(builder.Environment.ContentRootPath);
+builder.Services.AddUserServices(builder.Environment.ContentRootPath);
 
 // Add CORS for development
 builder.Services.AddCors(options =>

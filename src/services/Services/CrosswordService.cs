@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CrossWords.Services;
 
-public class CrosswordService : ICrosswordService
+internal class CrosswordService : ICrosswordService
 {
     private readonly IReadOnlyDictionary<string, CrosswordPuzzle> _cachedPuzzles;
     private readonly ILogger<CrosswordService> _logger;
