@@ -30,35 +30,17 @@ public class AdminController : ControllerBase
     {
         try
         {
-            if (string.IsNullOrEmpty(puzzle.Id))
-            {
-                return BadRequest(new { error = "Puzzle ID is required" });
-            }
-
-            if (string.IsNullOrEmpty(puzzle.Title))
-            {
-                return BadRequest(new { error = "Puzzle title is required" });
-            }
-
-            if (puzzle.Grid == null || !puzzle.Grid.Any())
-            {
-                return BadRequest(new { error = "Puzzle grid is required" });
-            }
-
-            // Validate grid dimensions match Size
-            if (puzzle.Grid.Count != puzzle.Size.Rows)
-            {
-                return BadRequest(new { error = "Grid row count doesn't match Size.Rows" });
-            }
-
-            if (puzzle.Grid.Any(row => row.Count != puzzle.Size.Cols))
-            {
-                return BadRequest(new { error = "Grid column count doesn't match Size.Cols" });
-            }
+            puzzle.Validate();
 
             _puzzlePersister.AddPuzzle(puzzle);
             _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id);
+            
             return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
+        }
+        catch (PuzzleValidationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error adding puzzle via admin API");
+            return BadRequest(new { error = "Puzzle validation failed", details = ex.Message });
         }
         catch (Exception ex)
         {

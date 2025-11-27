@@ -9,6 +9,25 @@ public class CrosswordPuzzle
     public PuzzleLanguage Language { get; init; } = PuzzleLanguage.English;
     public PuzzleSize Size { get; init; } = new();
     public List<List<string>> Grid { get; init; } = new(); // Letters in the solution, "#" for black cells
+
+    /// <exception cref="PuzzleValidationException">Thrown when the puzzle data is invalid.</exception>
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(Id))
+            throw new PuzzleValidationException("Puzzle ID cannot be null or empty.");
+
+        if (string.IsNullOrWhiteSpace(Title))
+            throw new PuzzleValidationException("Puzzle title cannot be null or empty.");
+
+        if (Size.Rows <= 0 || Size.Cols <= 0)
+            throw new PuzzleValidationException("Puzzle size must have positive number of rows and columns.");
+
+        if (Grid.Count != Size.Rows)
+            throw new PuzzleValidationException($"Grid row count does not match specified size rows {Size.Rows}.");
+
+        if (Grid.Any(row => row.Count != Size.Cols))
+            throw new PuzzleValidationException($"Grid column count does not match specified size cols {Size.Cols}.");
+    }
 }
 
 public class PuzzleSize
