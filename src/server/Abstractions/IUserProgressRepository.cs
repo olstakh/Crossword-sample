@@ -1,4 +1,4 @@
-namespace CrossWords.Services;
+namespace CrossWords.Abstractions;
 
 /// <summary>
 /// Repository interface for persisting user progress

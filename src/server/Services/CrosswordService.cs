@@ -1,16 +1,10 @@
 using CrossWords.Models;
 using CrossWords.Exceptions;
+using CrossWords.Abstractions;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 namespace CrossWords.Services;
-
-public interface ICrosswordService
-{
-    CrosswordPuzzle GetPuzzle(string id);
-    CrosswordPuzzle GetPuzzle(PuzzleRequest request);
-    IReadOnlyList<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null);
-}
 
 public class CrosswordService : ICrosswordService
 {

@@ -1,5 +1,6 @@
 using CrossWords.Models;
 using CrossWords.Services;
+using CrossWords.Abstractions;
 using CrossWords.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

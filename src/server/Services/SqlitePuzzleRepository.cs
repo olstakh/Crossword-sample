@@ -1,4 +1,5 @@
 using CrossWords.Models;
+using CrossWords.Abstractions;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;

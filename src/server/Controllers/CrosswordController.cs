@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using CrossWords.Services;
+using CrossWords.Abstractions;
 using CrossWords.Models;
 using CrossWords.Exceptions;
 

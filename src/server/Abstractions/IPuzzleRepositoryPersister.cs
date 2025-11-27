@@ -1,6 +1,6 @@
 using CrossWords.Models;
 
-namespace CrossWords.Services;
+namespace CrossWords.Abstractions;
 
 /// <summary>
 /// Repository interface for persisting puzzles (add/delete operations)
