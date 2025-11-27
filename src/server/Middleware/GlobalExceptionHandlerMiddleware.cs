@@ -10,6 +10,11 @@ namespace CrossWords.Middleware;
 /// </summary>
 public class GlobalExceptionHandlerMiddleware
 {
+    private static readonly JsonSerializerOptions s_options = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionHandlerMiddleware> _logger;
 
@@ -81,12 +86,7 @@ public class GlobalExceptionHandlerMiddleware
         }
 
         context.Response.StatusCode = (int)statusCode;
-        
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, options));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, s_options));
     }
 }

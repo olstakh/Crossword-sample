@@ -78,6 +78,28 @@ public class CrosswordServiceTests
                     new List<string> { "L", "I", "F", "E", "#", "I", "S", "#", "G", "O", "O", "D", "#", "#", "#", "#" },
                     new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
                 }
+            },
+            new CrosswordPuzzle
+            {
+                Id = "puzzle4",
+                Title = "Another Medium Puzzle",
+                Language = PuzzleLanguage.English,
+                Size = new PuzzleSize { Rows = 12, Cols = 12 },
+                Grid = new List<List<string>>
+                {
+                    new List<string> { "W", "O", "R", "L", "D", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "P", "E", "A", "C", "E", "#" },
+                    new List<string> { "H", "A", "P", "P", "Y", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "T", "I", "M", "E", "#", "#" },
+                    new List<string> { "L", "O", "V", "E", "#", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "H", "O", "P", "E", "#", "#", "#" },
+                    new List<string> { "D", "R", "E", "A", "M", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "S", "T", "A", "R", "#", "#" },
+                    new List<string> { "S", "M", "I", "L", "E", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "M", "O", "O", "N", "#", "#" },
+                    new List<string> { "H", "E", "A", "R", "T", "#", "#", "#", "#", "#", "#", "#" },
+                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
+                }
             }
         };
 
@@ -231,5 +253,81 @@ public class CrosswordServiceTests
                 Assert.Equal(puzzle.Size.Cols, row.Count);
             }
         }
+    }
+
+    [Fact]
+    public void GetPuzzle_WithUserId_ExcludesSolvedPuzzles()
+    {
+        // Arrange - Mark puzzle2 as solved, should return puzzle4 for Medium category
+        var solvedPuzzles = new HashSet<string> { "puzzle2" };
+        _mockUserRepository.Setup(u => u.GetSolvedPuzzles("user123")).Returns(solvedPuzzles);
+
+        var request = new PuzzleRequest
+        {
+            SizeCategory = PuzzleSizeCategory.Medium,
+            Language = PuzzleLanguage.English,
+            UserId = "user123"
+        };
+
+        // Act
+        var result = _service.GetPuzzle(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("puzzle4", result.Id); // Should return puzzle4 since puzzle2 is solved
+        Assert.Equal(PuzzleLanguage.English, result.Language);
+    }
+
+    [Fact]
+    public void GetPuzzle_WithUserIdAndAllPuzzlesSolved_ThrowsPuzzleNotFoundException()
+    {
+        // Arrange - Mark both medium puzzles as solved
+        var solvedPuzzles = new HashSet<string> { "puzzle2", "puzzle4" };
+        _mockUserRepository.Setup(u => u.GetSolvedPuzzles("user123")).Returns(solvedPuzzles);
+
+        var request = new PuzzleRequest
+        {
+            SizeCategory = PuzzleSizeCategory.Medium,
+            Language = PuzzleLanguage.English,
+            UserId = "user123"
+        };
+
+        // Act & Assert
+        var exception = Assert.Throws<PuzzleNotFoundException>(() => _service.GetPuzzle(request));
+        Assert.Contains("solved all", exception.Message);
+        Assert.Contains("English", exception.Message);
+    }
+
+    [Fact]
+    public void GetPuzzle_WithoutUserId_ReturnsAnyPuzzle()
+    {
+        // Arrange
+        var request = new PuzzleRequest
+        {
+            SizeCategory = PuzzleSizeCategory.Medium,
+            Language = PuzzleLanguage.English
+        };
+
+        // Act
+        var result = _service.GetPuzzle(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(PuzzleLanguage.English, result.Language);
+    }
+
+    [Fact]
+    public void GetPuzzle_WithInvalidLanguage_ThrowsPuzzleNotFoundException()
+    {
+        // Arrange
+        var request = new PuzzleRequest
+        {
+            SizeCategory = PuzzleSizeCategory.Medium,
+            Language = PuzzleLanguage.Russian // No Russian puzzles in mock data
+        };
+
+        // Act & Assert
+        var exception = Assert.Throws<PuzzleNotFoundException>(() => _service.GetPuzzle(request));
+        Assert.Contains("Russian", exception.Message);
     }
 }
