@@ -41,12 +41,12 @@ public class CrosswordController : ControllerBase
     /// <summary>
     /// Get a puzzle by size (Small, Medium, or Big)
     /// </summary>
-    /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), or Big (15x15-20x20)</param>
+    /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), Big (15x15-20x20), or Any (all sizes)</param>
     /// <param name="language">Language of the puzzle (English, Russian, Ukrainian)</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
-    [HttpGet("puzzle/size/{size}")]
+    [HttpGet("puzzle")]
     public ActionResult<CrosswordPuzzle> GetPuzzleBySize(
-        PuzzleSizeCategory size = PuzzleSizeCategory.Medium, 
+        [FromQuery] PuzzleSizeCategory size = PuzzleSizeCategory.Any, 
         [FromQuery] PuzzleLanguage language = PuzzleLanguage.English, 
         [FromQuery] string? seed = null,
         [FromHeader(Name = "X-User-Id")] string? userId = null)

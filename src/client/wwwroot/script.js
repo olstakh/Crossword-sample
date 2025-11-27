@@ -805,7 +805,7 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
 
 async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = null) {
     try {
-        let url = `${API_BASE_URL}/api/crossword/puzzle/size/${size}?language=${language}`;
+        let url = `${API_BASE_URL}/api/crossword/puzzle?size=${size}&language=${language}`;
         if (seed) {
             url += `&seed=${seed}`;
         }
