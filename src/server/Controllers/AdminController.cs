@@ -53,6 +53,44 @@ public class AdminController : ControllerBase
     }
 
     /// <summary>
+    /// Delete multiple puzzles from the database
+    /// </summary>
+    [HttpPost("puzzles/delete-bulk")]
+    public IActionResult DeletePuzzles([FromBody] DeletePuzzlesRequest request)
+    {
+        if (request.PuzzleIds == null || request.PuzzleIds.Count == 0)
+        {
+            return BadRequest(new { error = "At least one puzzle ID is required" });
+        }
+
+        var deletedIds = new List<string>();
+        var errors = new List<string>();
+
+        foreach (var puzzleId in request.PuzzleIds)
+        {
+            try
+            {
+                _puzzlePersister.DeletePuzzle(puzzleId);
+                deletedIds.Add(puzzleId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting puzzle {PuzzleId}", puzzleId);
+                errors.Add($"{puzzleId}: {ex.Message}");
+            }
+        }
+
+        _logger.LogInformation("Bulk deleted {Count} puzzles via admin API", deletedIds.Count);
+        
+        return Ok(new 
+        { 
+            message = $"Successfully deleted {deletedIds.Count} puzzle(s)", 
+            deletedIds, 
+            errors 
+        });
+    }
+
+    /// <summary>
     /// Get all puzzles (for admin view)
     /// </summary>
     [HttpGet("puzzles")]

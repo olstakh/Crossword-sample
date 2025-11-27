@@ -30,3 +30,11 @@ public class AvailablePuzzlesResponse
     public int TotalAvailable { get; init; }
     public int TotalSolved { get; init; }
 }
+
+/// <summary>
+/// Request to delete multiple puzzles
+/// </summary>
+public class DeletePuzzlesRequest
+{
+    public List<string> PuzzleIds { get; init; } = new();
+}

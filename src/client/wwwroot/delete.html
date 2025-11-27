@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Puzzles - Admin Panel</title>
+    <link rel="stylesheet" href="delete.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Puzzle Management</h1>
+            <p class="subtitle">View and delete existing puzzles</p>
+            <nav class="admin-nav">
+                <a href="admin.html" class="nav-link">Create Puzzles</a>
+                <a href="delete.html" class="nav-link active">Manage Puzzles</a>
+                <a href="index.html" class="nav-link">Play Puzzles</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="panel-section">
+                <div class="controls-bar">
+                    <button id="deleteSelectedBtn" class="btn-danger" disabled>Delete Selected</button>
+                    <button id="refreshBtn" class="btn-secondary">Refresh List</button>
+                    <span id="selectionCount" class="selection-info">0 selected</span>
+                </div>
+                
+                <div id="messageBox" class="message-box hidden"></div>
+                
+                <div class="table-container">
+                    <table id="puzzlesTable">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column">
+                                    <input type="checkbox" id="selectAllCheckbox" title="Select All">
+                                </th>
+                                <th class="id-column">Puzzle ID</th>
+                                <th class="title-column">Title</th>
+                                <th class="language-column">Language</th>
+                                <th class="size-column">Rows</th>
+                                <th class="size-column">Columns</th>
+                                <th class="actions-column">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="puzzlesTableBody">
+                            <tr class="loading-row">
+                                <td colspan="7" class="loading-cell">Loading puzzles...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="delete.js"></script>
+</body>
+</html>
