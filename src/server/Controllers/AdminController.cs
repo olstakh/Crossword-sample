@@ -9,11 +9,16 @@ namespace CrossWords.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IPuzzleRepository _puzzleRepository;
+    private readonly IPuzzleRepositoryPersister _puzzlePersister;
     private readonly ILogger<AdminController> _logger;
 
-    public AdminController(IPuzzleRepository puzzleRepository, ILogger<AdminController> logger)
+    public AdminController(
+        IPuzzleRepository puzzleRepository, 
+        IPuzzleRepositoryPersister puzzlePersister,
+        ILogger<AdminController> logger)
     {
         _puzzleRepository = puzzleRepository;
+        _puzzlePersister = puzzlePersister;
         _logger = logger;
     }
 
@@ -51,17 +56,9 @@ public class AdminController : ControllerBase
                 return BadRequest(new { error = "Grid column count doesn't match Size.Cols" });
             }
 
-            // Check if repository supports adding puzzles
-            if (_puzzleRepository is SqlitePuzzleRepository sqliteRepo)
-            {
-                sqliteRepo.AddPuzzle(puzzle);
-                _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id);
-                return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
-            }
-            else
-            {
-                return StatusCode(501, new { error = "Current repository does not support adding puzzles. Please use SQLite repository." });
-            }
+            _puzzlePersister.AddPuzzle(puzzle);
+            _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id);
+            return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
         }
         catch (Exception ex)
         {
@@ -83,17 +80,9 @@ public class AdminController : ControllerBase
                 return BadRequest(new { error = "Puzzle ID is required" });
             }
 
-            // Check if repository supports deleting puzzles
-            if (_puzzleRepository is SqlitePuzzleRepository sqliteRepo)
-            {
-                sqliteRepo.DeletePuzzle(puzzleId);
-                _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId);
-                return Ok(new { message = "Puzzle deleted successfully", puzzleId });
-            }
-            else
-            {
-                return StatusCode(501, new { error = "Current repository does not support deleting puzzles. Please use SQLite repository." });
-            }
+            _puzzlePersister.DeletePuzzle(puzzleId);
+            _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId);
+            return Ok(new { message = "Puzzle deleted successfully", puzzleId });
         }
         catch (Exception ex)
         {
