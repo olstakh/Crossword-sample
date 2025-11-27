@@ -24,16 +24,8 @@ public class CrosswordController : ControllerBase
     [HttpGet("puzzles")]
     public ActionResult<List<string>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
     {
-        try
-        {
-            var puzzleIds = _crosswordService.GetAvailablePuzzleIds(language);
-            return Ok(puzzleIds);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving puzzle list");
-            return StatusCode(500, "Error retrieving puzzle list");
-        }
+        var puzzleIds = _crosswordService.GetAvailablePuzzleIds(language);
+        return Ok(puzzleIds);
     }
 
     /// <summary>
@@ -42,21 +34,8 @@ public class CrosswordController : ControllerBase
     [HttpGet("puzzle/{id}")]
     public ActionResult<CrosswordPuzzle> GetPuzzle(string id)
     {
-        try
-        {
-            var puzzle = _crosswordService.GetPuzzle(id);
-            return Ok(puzzle);
-        }
-        catch (PuzzleNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Puzzle not found: {PuzzleId}", id);
-            return NotFound(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving puzzle {PuzzleId}", id);
-            return StatusCode(500, new { error = "An unexpected error occurred while retrieving the puzzle." });
-        }
+        var puzzle = _crosswordService.GetPuzzle(id);
+        return Ok(puzzle);
     }
 
     /// <summary>
@@ -72,27 +51,14 @@ public class CrosswordController : ControllerBase
         [FromQuery] string? seed = null,
         [FromHeader(Name = "X-User-Id")] string? userId = null)
     {
-        try
+        var request = new PuzzleRequest
         {
-            var request = new PuzzleRequest
-            {
-                SizeCategory = size,
-                Language = language,
-                UserId = userId
-            };
-            
-            var puzzle = _crosswordService.GetPuzzle(request);
-            return Ok(puzzle);
-        }
-        catch (PuzzleNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Puzzle not found for size {Size} and language {Language}", size, language);
-            return NotFound(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating puzzle of size {Size}", size);
-            return StatusCode(500, new { error = "An unexpected error occurred while generating the puzzle." });
-        }
+            SizeCategory = size,
+            Language = language,
+            UserId = userId
+        };
+        
+        var puzzle = _crosswordService.GetPuzzle(request);
+        return Ok(puzzle);
     }
 }

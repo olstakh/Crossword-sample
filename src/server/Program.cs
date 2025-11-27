@@ -1,4 +1,5 @@
 using CrossWords.Services;
+using CrossWords.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Add global exception handling middleware
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Serve static files from the client folder (skip in test environment)
 if (!app.Environment.IsEnvironment("Testing"))

@@ -28,25 +28,12 @@ public class AdminController : ControllerBase
     [HttpPost("puzzles")]
     public IActionResult AddPuzzle([FromBody] CrosswordPuzzle puzzle)
     {
-        try
-        {
-            puzzle.Validate();
+        puzzle.Validate();
 
-            _puzzlePersister.AddPuzzle(puzzle);
-            _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id);
-            
-            return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
-        }
-        catch (PuzzleValidationException ex)
-        {
-            _logger.LogWarning(ex, "Validation error adding puzzle via admin API");
-            return BadRequest(new { error = "Puzzle validation failed", details = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding puzzle via admin API");
-            return StatusCode(500, new { error = "Failed to add puzzle", details = ex.Message });
-        }
+        _puzzlePersister.AddPuzzle(puzzle);
+        _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id);
+        
+        return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
     }
 
     /// <summary>
@@ -55,22 +42,14 @@ public class AdminController : ControllerBase
     [HttpDelete("puzzles/{puzzleId}")]
     public IActionResult DeletePuzzle(string puzzleId)
     {
-        try
+        if (string.IsNullOrEmpty(puzzleId))
         {
-            if (string.IsNullOrEmpty(puzzleId))
-            {
-                return BadRequest(new { error = "Puzzle ID is required" });
-            }
+            return BadRequest(new { error = "Puzzle ID is required" });
+        }
 
-            _puzzlePersister.DeletePuzzle(puzzleId);
-            _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId);
-            return Ok(new { message = "Puzzle deleted successfully", puzzleId });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting puzzle via admin API");
-            return StatusCode(500, new { error = "Failed to delete puzzle", details = ex.Message });
-        }
+        _puzzlePersister.DeletePuzzle(puzzleId);
+        _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId);
+        return Ok(new { message = "Puzzle deleted successfully", puzzleId });
     }
 
     /// <summary>
@@ -79,15 +58,7 @@ public class AdminController : ControllerBase
     [HttpGet("puzzles")]
     public IActionResult GetAllPuzzles()
     {
-        try
-        {
-            var puzzles = _puzzleRepository.LoadAllPuzzles();
-            return Ok(puzzles);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading puzzles via admin API");
-            return StatusCode(500, new { error = "Failed to load puzzles", details = ex.Message });
-        }
+        var puzzles = _puzzleRepository.LoadAllPuzzles();
+        return Ok(puzzles);
     }
 }
