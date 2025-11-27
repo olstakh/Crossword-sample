@@ -79,8 +79,7 @@ public static class ServiceCollectionExtensions
     internal static IServiceCollection AddInMemoryRepositories(this IServiceCollection services)
     {
         services.AddSingleton<IPuzzleRepository, Testing.InMemoryPuzzleRepository>();
-        services.AddSingleton<IPuzzleRepositoryPersister>(sp => 
-            (Testing.InMemoryPuzzleRepository)sp.GetRequiredService<IPuzzleRepository>());
+        services.AddSingleton<IPuzzleRepositoryPersister, Testing.InMemoryPuzzleRepository>();
         services.AddSingleton<IUserProgressRepository, Testing.InMemoryUserProgressRepository>();
         return services;
     }
