@@ -41,13 +41,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Migrate existing puzzles from JSON to SQLite if needed
-var puzzlesJsonPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "puzzles.json");
-CrossWords.Utilities.PuzzleMigration.MigrateFromJsonToSqlite(
-    puzzlesJsonPath, 
-    puzzlesDbPath, 
-    app.Logger);
-
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {

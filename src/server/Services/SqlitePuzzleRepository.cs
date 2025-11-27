@@ -13,7 +13,10 @@ public class SqlitePuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersis
 {
     private readonly string _connectionString;
     private readonly ILogger<SqlitePuzzleRepository> _logger;
-    private readonly JsonSerializerOptions _jsonOptions;
+    private static readonly JsonSerializerOptions s_jsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public SqlitePuzzleRepository(string dbFilePath, ILogger<SqlitePuzzleRepository> logger)
     {
@@ -28,11 +31,6 @@ public class SqlitePuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersis
         }
         
         _connectionString = $"Data Source={dbFilePath}";
-        
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
         
         InitializeDatabase();
     }
@@ -108,7 +106,7 @@ public class SqlitePuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersis
                 var cols = reader.GetInt32(4);
                 var gridJson = reader.GetString(5);
 
-                var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, _jsonOptions);
+                var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, s_jsonOptions);
 
                 if (grid != null)
                 {
@@ -154,7 +152,7 @@ public class SqlitePuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersis
             command.Parameters.AddWithValue("$language", puzzle.Language.ToString());
             command.Parameters.AddWithValue("$rows", puzzle.Size.Rows);
             command.Parameters.AddWithValue("$cols", puzzle.Size.Cols);
-            command.Parameters.AddWithValue("$gridJson", JsonSerializer.Serialize(puzzle.Grid, _jsonOptions));
+            command.Parameters.AddWithValue("$gridJson", JsonSerializer.Serialize(puzzle.Grid, s_jsonOptions));
             command.Parameters.AddWithValue("$createdAt", DateTime.UtcNow.ToString("O"));
 
             command.ExecuteNonQuery();

@@ -48,12 +48,13 @@ public enum PuzzleSizeCategory
 {
     Small,
     Medium,
-    Big
+    Big,
+    Any
 }
 
 public class PuzzleRequest
 {
-    public PuzzleSizeCategory SizeCategory { get; init; } = PuzzleSizeCategory.Medium;
+    public PuzzleSizeCategory SizeCategory { get; init; } = PuzzleSizeCategory.Any;
     public PuzzleLanguage Language { get; init; } = PuzzleLanguage.English;
     public string? UserId { get; init; }
 }
@@ -64,6 +65,7 @@ internal static class PuzzleSizeCategoryExtensions
     {
         return sizeCategory switch
         {
+            PuzzleSizeCategory.Any => (1, 1000),
             PuzzleSizeCategory.Small => (5, 8),
             PuzzleSizeCategory.Medium => (9, 14),
             PuzzleSizeCategory.Big => (15, 20),
