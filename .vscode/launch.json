@@ -5,6 +5,7 @@
       "name": "Docker .NET Attach",
       "type": "coreclr",
       "request": "attach",
+      "justMyCode": false,
       "processId": "${command:pickRemoteProcess}",
       "pipeTransport": {
         "pipeProgram": "docker",
@@ -21,6 +22,7 @@
       "name": "Docker .NET Launch",
       "type": "coreclr",
       "request": "launch",
+      "justMyCode": false,
       "preLaunchTask": "docker-run-debug",
       "program": "/app/src/server/bin/Debug/net9.0/CrossWords.dll",
       "args": [],
@@ -42,6 +44,7 @@
       "name": ".NET Core Launch (web - local)",
       "type": "coreclr",
       "request": "launch",
+      "justMyCode": false,
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/src/server/bin/Debug/net9.0/CrossWords.dll",
       "args": [],
