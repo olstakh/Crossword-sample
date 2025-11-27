@@ -1,5 +1,7 @@
 using CrossWords.Services;
 using CrossWords.Services.Abstractions;
+using CrossWords.Services.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -8,21 +10,85 @@ namespace CrossWords.Services.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Add core crossword services (business logic)
-    /// Use this for shared services regardless of storage implementation
+    /// Add crossword services based on configuration
+    /// This is the recommended method - it reads from appsettings.json
     /// </summary>
-    public static IServiceCollection AddCrosswordServices(this IServiceCollection services)
+    public static IServiceCollection AddCrosswordServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? contentRootPath = null)
     {
+        var storageConfig = configuration
+            .GetSection(StorageConfiguration.SectionName)
+            .Get<StorageConfiguration>() ?? new StorageConfiguration();
+
+        // Bind configuration for later use
+        services.Configure<StorageConfiguration>(
+            configuration.GetSection(StorageConfiguration.SectionName));
+
+        // Register business logic services
         services.AddSingleton<ICrosswordService, CrosswordService>();
         services.AddSingleton<IUserProgressService, UserProgressService>();
+
+        // Register storage based on provider
+        switch (storageConfig.Provider.ToLowerInvariant())
+        {
+            case "inmemory":
+                services.AddInMemoryRepositories();
+                break;
+
+            case "sqlite":
+                if (storageConfig.Sqlite == null)
+                {
+                    throw new InvalidOperationException(
+                        "Sqlite configuration is required when Provider is 'Sqlite'");
+                }
+
+                var puzzlesPath = Path.IsPathRooted(storageConfig.Sqlite.PuzzlesDbPath)
+                    ? storageConfig.Sqlite.PuzzlesDbPath
+                    : Path.Combine(contentRootPath ?? Directory.GetCurrentDirectory(), 
+                        storageConfig.Sqlite.PuzzlesDbPath);
+
+                var userProgressPath = Path.IsPathRooted(storageConfig.Sqlite.UserProgressDbPath)
+                    ? storageConfig.Sqlite.UserProgressDbPath
+                    : Path.Combine(contentRootPath ?? Directory.GetCurrentDirectory(), 
+                        storageConfig.Sqlite.UserProgressDbPath);
+
+                services.AddSqlitePuzzleRepository(puzzlesPath);
+                services.AddSqliteUserProgressRepository(userProgressPath);
+                break;
+
+            case "sqlserver":
+                // Future: Add SQL Server support
+                throw new NotImplementedException("SQL Server provider not yet implemented");
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown storage provider: {storageConfig.Provider}. " +
+                    $"Supported providers: InMemory, Sqlite, SqlServer");
+        }
+
+        return services;
+    }
+
+    #region Individual Repository Registration Methods
+    
+    /// <summary>
+    /// Add in-memory repositories (for testing or development)
+    /// </summary>
+    internal static IServiceCollection AddInMemoryRepositories(this IServiceCollection services)
+    {
+        services.AddSingleton<IPuzzleRepository, Testing.InMemoryPuzzleRepository>();
+        services.AddSingleton<IPuzzleRepositoryPersister>(sp => 
+            (Testing.InMemoryPuzzleRepository)sp.GetRequiredService<IPuzzleRepository>());
+        services.AddSingleton<IUserProgressRepository, Testing.InMemoryUserProgressRepository>();
         return services;
     }
 
     /// <summary>
     /// Add SQLite-based puzzle repository
-    /// Use this for production or when persistent storage is needed
     /// </summary>
-    public static IServiceCollection AddSqlitePuzzleRepository(this IServiceCollection services, string dbFilePath)
+    internal static IServiceCollection AddSqlitePuzzleRepository(this IServiceCollection services, string dbFilePath)
     {
         services.AddSingleton<SqlitePuzzleRepository>(sp => 
         {
@@ -36,9 +102,8 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Add SQLite-based user progress repository
-    /// Use this for production or when persistent storage is needed
     /// </summary>
-    public static IServiceCollection AddSqliteUserProgressRepository(this IServiceCollection services, string dbFilePath)
+    internal static IServiceCollection AddSqliteUserProgressRepository(this IServiceCollection services, string dbFilePath)
     {
         services.AddSingleton<IUserProgressRepository>(sp =>
         {
@@ -48,52 +113,5 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>
-    /// Convenience method: Add all services with SQLite repositories for production use
-    /// </summary>
-    public static IServiceCollection AddCrosswordServicesWithSqlite(
-        this IServiceCollection services, 
-        string contentPath)
-    {
-        var puzzlesDbPath = Path.Combine(contentPath, "Data", "puzzles.db");
-        var userProgressDbPath = Path.Combine(contentPath, "Data", "user-progress.db");
-
-        return services
-            .AddSqlitePuzzleRepository(puzzlesDbPath)
-            .AddSqliteUserProgressRepository(userProgressDbPath)
-            .AddCrosswordServices();
-    }
-
-    /// <summary>
-    /// Add in-memory puzzle repository for testing
-    /// Caller provides the implementation instance or factory
-    /// </summary>
-    public static IServiceCollection AddPuzzleRepository<TRepository>(
-        this IServiceCollection services,
-        Func<IServiceProvider, TRepository> implementationFactory)
-        where TRepository : class, IPuzzleRepository
-    {
-        services.AddSingleton<IPuzzleRepository>(implementationFactory);
-        
-        // If it also implements persister, register that too
-        if (typeof(IPuzzleRepositoryPersister).IsAssignableFrom(typeof(TRepository)))
-        {
-            services.AddSingleton<IPuzzleRepositoryPersister>(sp => 
-                (IPuzzleRepositoryPersister)sp.GetRequiredService<IPuzzleRepository>());
-        }
-        
-        return services;
-    }
-
-    /// <summary>
-    /// Add user progress repository with custom implementation
-    /// </summary>
-    public static IServiceCollection AddUserProgressRepository<TRepository>(
-        this IServiceCollection services,
-        Func<IServiceProvider, TRepository> implementationFactory)
-        where TRepository : class, IUserProgressRepository
-    {
-        services.AddSingleton<IUserProgressRepository>(implementationFactory);
-        return services;
-    }
+    #endregion
 }

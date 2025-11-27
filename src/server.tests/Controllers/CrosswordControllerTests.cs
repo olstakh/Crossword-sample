@@ -2,25 +2,17 @@ using System.Net;
 using System.Net.Http.Json;
 using CrossWords.Models;
 using CrossWords.Services.Models;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
+using CrossWords.Tests.Helpers;
 
 namespace CrossWords.Tests.Controllers;
 
-public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Program>>
+public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public CrosswordControllerTests(WebApplicationFactory<Program> factory)
+    public CrosswordControllerTests(TestWebApplicationFactory factory)
     {
-        // Create a custom factory that skips static file serving for tests
-        var customFactory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseEnvironment("Testing");
-        });
-        
-        _client = customFactory.CreateClient();
+        _client = factory.CreateClient();
     }
 
     [Fact]
