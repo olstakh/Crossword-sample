@@ -1,5 +1,4 @@
-using CrossWords.Services;
-using CrossWords.Services.Abstractions;
+using CrossWords.Services.Extensions;
 using CrossWords.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,8 +12,8 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddPuzzleServices(builder.Environment.ContentRootPath);
-builder.Services.AddUserServices(builder.Environment.ContentRootPath);
+// Register all crossword services with SQLite storage
+builder.Services.AddCrosswordServicesWithSqlite(builder.Environment.ContentRootPath);
 
 // Add CORS for development
 builder.Services.AddCors(options =>
