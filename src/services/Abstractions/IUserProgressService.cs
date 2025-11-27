@@ -1,10 +1,9 @@
-using CrossWords.Models;
+using CrossWords.Services.Models;
 
-namespace CrossWords.Abstractions;
+namespace CrossWords.Services.Abstractions;
 
 /// <summary>
 /// Service for managing user progress and solved puzzles
-/// Uses in-memory storage (can be replaced with database later)
 /// </summary>
 public interface IUserProgressService
 {

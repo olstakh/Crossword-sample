@@ -1,5 +1,5 @@
-using CrossWords.Models;
-using CrossWords.Abstractions;
+using CrossWords.Services.Models;
+using CrossWords.Services.Abstractions;
 
 namespace CrossWords.Services;
 

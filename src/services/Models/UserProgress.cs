@@ -1,4 +1,4 @@
-namespace CrossWords.Models;
+namespace CrossWords.Services.Models;
 
 /// <summary>
 /// Represents a user's progress and solved puzzles
@@ -12,15 +12,6 @@ public class UserProgress
 }
 
 /// <summary>
-/// Request to record a solved puzzle
-/// </summary>
-public class RecordSolvedPuzzleRequest
-{
-    public string PuzzleId { get; init; } = string.Empty;
-    public string UserId { get; init; } = string.Empty;
-}
-
-/// <summary>
 /// Response with available puzzles excluding solved ones
 /// </summary>
 public class AvailablePuzzlesResponse
@@ -29,12 +20,4 @@ public class AvailablePuzzlesResponse
     public List<string> SolvedPuzzleIds { get; init; } = new();
     public int TotalAvailable { get; init; }
     public int TotalSolved { get; init; }
-}
-
-/// <summary>
-/// Request to delete multiple puzzles
-/// </summary>
-public class DeletePuzzlesRequest
-{
-    public List<string> PuzzleIds { get; init; } = new();
 }

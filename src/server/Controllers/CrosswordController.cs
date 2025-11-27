@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using CrossWords.Services;
-using CrossWords.Abstractions;
-using CrossWords.Models;
-using CrossWords.Exceptions;
+using CrossWords.Services.Abstractions;
+using CrossWords.Services.Models;
+using CrossWords.Services.Exceptions;
 
 namespace CrossWords.Controllers;
 

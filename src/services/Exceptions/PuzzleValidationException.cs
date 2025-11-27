@@ -1,4 +1,6 @@
-internal class PuzzleValidationException : Exception
+namespace CrossWords.Services.Exceptions;
+
+public class PuzzleValidationException : Exception
 {
     public PuzzleValidationException(string message) : base(message) { }
 

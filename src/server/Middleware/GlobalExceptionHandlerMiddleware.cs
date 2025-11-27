@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using CrossWords.Exceptions;
+using CrossWords.Services.Exceptions;
 
 namespace CrossWords.Middleware;
 

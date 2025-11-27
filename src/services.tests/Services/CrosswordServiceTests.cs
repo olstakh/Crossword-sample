@@ -1,12 +1,12 @@
-using CrossWords.Models;
+using CrossWords.Services.Models;
 using CrossWords.Services;
-using CrossWords.Abstractions;
-using CrossWords.Exceptions;
+using CrossWords.Services.Abstractions;
+using CrossWords.Services.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
-namespace CrossWords.Tests.Services;
+namespace CrossWords.Services.Tests;
 
 public class CrosswordServiceTests
 {

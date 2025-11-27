@@ -1,6 +1,6 @@
-using CrossWords.Models;
+using CrossWords.Services.Models;
 
-namespace CrossWords.Abstractions;
+namespace CrossWords.Services.Abstractions;
 
 public interface ICrosswordService
 {

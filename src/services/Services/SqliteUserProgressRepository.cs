@@ -1,4 +1,4 @@
-using CrossWords.Abstractions;
+using CrossWords.Services.Abstractions;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 

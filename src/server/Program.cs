@@ -1,5 +1,5 @@
 using CrossWords.Services;
-using CrossWords.Abstractions;
+using CrossWords.Services.Abstractions;
 using CrossWords.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);

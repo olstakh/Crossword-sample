@@ -1,5 +1,6 @@
 using CrossWords.Models;
-using CrossWords.Abstractions;
+using CrossWords.Services.Models;
+using CrossWords.Services.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CrossWords.Controllers;

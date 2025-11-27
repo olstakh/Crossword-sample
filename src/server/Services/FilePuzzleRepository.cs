@@ -1,5 +1,5 @@
-using CrossWords.Models;
-using CrossWords.Abstractions;
+using CrossWords.Services.Models;
+using CrossWords.Services.Abstractions;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 

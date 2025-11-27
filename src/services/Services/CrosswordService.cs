@@ -1,7 +1,6 @@
-using CrossWords.Models;
-using CrossWords.Exceptions;
-using CrossWords.Abstractions;
-using System.Text.Json;
+using CrossWords.Services.Models;
+using CrossWords.Services.Exceptions;
+using CrossWords.Services.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace CrossWords.Services;

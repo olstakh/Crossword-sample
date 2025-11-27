@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CrossWords.Models;
+using CrossWords.Services.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;

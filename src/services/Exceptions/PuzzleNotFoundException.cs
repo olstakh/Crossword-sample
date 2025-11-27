@@ -1,4 +1,4 @@
-namespace CrossWords.Exceptions;
+namespace CrossWords.Services.Exceptions;
 
 public class PuzzleNotFoundException : Exception
 {

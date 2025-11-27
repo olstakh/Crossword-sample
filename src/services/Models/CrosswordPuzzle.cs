@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using CrossWords.Services.Exceptions;
 
-namespace CrossWords.Models;
+namespace CrossWords.Services.Models;
 
 public class CrosswordPuzzle
 {
