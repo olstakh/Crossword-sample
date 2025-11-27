@@ -20,7 +20,7 @@ public static class ServiceCollectionExtensions
     {
         var storageConfig = configuration
             .GetSection(StorageConfiguration.SectionName)
-            .Get<StorageConfiguration>() ?? new StorageConfiguration();
+            .Get<StorageConfiguration>() ?? throw new ConfigurationSectionException(StorageConfiguration.SectionName);
 
         // Bind configuration for later use
         services.Configure<StorageConfiguration>(

@@ -3,6 +3,7 @@ using CrossWords.Services.Models;
 using CrossWords.Services.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -16,8 +17,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Use Testing environment which loads appsettings.Testing.json
+        // Use Testing environment
         builder.UseEnvironment("Testing");
+
+        // Override configuration to use InMemory storage for tests
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            // Add test-specific configuration that overrides server's appsettings
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Storage:Provider"] = "InMemory"
+            });
+        });
 
         // Replace in-memory repository registration with one that has seeded data
         builder.ConfigureServices((context, services) =>
