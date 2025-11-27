@@ -43,10 +43,11 @@ public class UserProgressService : IUserProgressService
     public UserProgress GetUserProgress(string userId)
     {
         var solvedIds = _repository.GetSolvedPuzzles(userId).ToList();
+        var availablePuzzleIds = _crosswordService.GetAvailablePuzzleIds();
         return new UserProgress
         {
             UserId = userId,
-            SolvedPuzzleIds = solvedIds,
+            SolvedPuzzleIds = solvedIds.Intersect(availablePuzzleIds).ToList(),
             TotalPuzzlesSolved = solvedIds.Count,
             LastPlayed = DateTime.UtcNow
         };

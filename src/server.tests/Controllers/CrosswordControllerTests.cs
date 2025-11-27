@@ -34,11 +34,10 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
         
         Assert.NotNull(puzzleIds);
         Assert.NotEmpty(puzzleIds);
-        Assert.Contains("puzzle1", puzzleIds);
+        Assert.Contains("puzzle2", puzzleIds);
     }
 
     [Theory]
-    [InlineData("puzzle1")]
     [InlineData("puzzle2")]
     [InlineData("puzzle3")]
     public async Task GetPuzzle_WithValidId_ReturnsSuccessAndPuzzle(string puzzleId)
@@ -133,7 +132,7 @@ public class CrosswordControllerTests : IClassFixture<WebApplicationFactory<Prog
     public async Task Puzzle_GridContainsValidData()
     {
         // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle/puzzle1", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/crossword/puzzle/puzzle2", TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
