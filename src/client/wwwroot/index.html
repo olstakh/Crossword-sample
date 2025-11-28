@@ -3,39 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crossword Puzzle</title>
+    <title>Cryptogram Puzzle</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Crossword Puzzle</h1>
+            <div class="header-content">
+                <h1>Cryptogram Puzzle</h1>
+                <div id="userStats" class="user-stats"></div>
+            </div>
+            <div class="toggles-container">
+                <div class="input-mode-toggle">
+                    <label class="toggle-label">
+                        <span class="toggle-text">⌨️ Keyboard</span>
+                        <input type="checkbox" id="inputModeToggle" class="toggle-checkbox">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">🖱️ Mouse</span>
+                    </label>
+                </div>
+                <div class="difficulty-mode-toggle">
+                    <label class="toggle-label">
+                        <span class="toggle-text">😊 Easy</span>
+                        <input type="checkbox" id="difficultyModeToggle" class="toggle-checkbox">
+                        <span class="toggle-slider difficulty-slider"></span>
+                        <span class="toggle-text">💪 Hard</span>
+                    </label>
+                </div>
+            </div>
             <div class="controls">
                 <button id="checkBtn">Check Answers</button>
-                <button id="revealBtn">Reveal Answers</button>
+                <button id="revealBtn">Reveal Solution</button>
                 <button id="clearBtn">Clear Grid</button>
             </div>
         </header>
         
         <main>
-            <div class="puzzle-section">
-                <div id="crossword-grid"></div>
-            </div>
-            
-            <div class="clues-section">
-                <div class="clues-column">
-                    <h2>Across</h2>
-                    <div id="across-clues" class="clues-list"></div>
+            <aside class="size-selector">
+                <h3>Puzzle Settings</h3>
+                
+                <div class="selector-group">
+                    <label class="selector-label">Language</label>
+                    <select id="languageSelector" class="language-dropdown">
+                        <option value="English" selected>English</option>
+                        <option value="Russian">Русский (Russian)</option>
+                        <option value="Ukrainian">Українська (Ukrainian)</option>
+                    </select>
                 </div>
                 
-                <div class="clues-column">
-                    <h2>Down</h2>
-                    <div id="down-clues" class="clues-list"></div>
+                <div class="selector-group">
+                    <label class="selector-label">Size</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="puzzleSize" value="small">
+                            <span>Small</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="puzzleSize" value="medium" checked>
+                            <span>Medium</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="puzzleSize" value="big">
+                            <span>Big</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="newPuzzleBtn">New Puzzle</button>
+            </aside>
+            <div class="puzzle-section">
+                <div id="crossword-grid"></div>
+                <div class="alphabet-decoder">
+                    <h2>Letter Decoder</h2>
+                    <div id="alphabet-row"></div>
                 </div>
             </div>
         </main>
     </div>
     
+    <script src="auth.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

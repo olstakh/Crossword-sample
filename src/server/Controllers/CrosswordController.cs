@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using CrossWords.Services;
-using CrossWords.Models;
+using CrossWords.Services.Abstractions;
+using CrossWords.Services.Models;
+using CrossWords.Services.Exceptions;
 
 namespace CrossWords.Controllers;
 
@@ -13,26 +15,18 @@ public class CrosswordController : ControllerBase
 
     public CrosswordController(ICrosswordService crosswordService, ILogger<CrosswordController> logger)
     {
-        _crosswordService = crosswordService;
-        _logger = logger;
+        _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
     /// Get a list of available puzzle IDs
     /// </summary>
     [HttpGet("puzzles")]
-    public ActionResult<List<string>> GetPuzzleList()
+    public ActionResult<List<string>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
     {
-        try
-        {
-            var puzzleIds = _crosswordService.GetAvailablePuzzleIds();
-            return Ok(puzzleIds);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving puzzle list");
-            return StatusCode(500, "Error retrieving puzzle list");
-        }
+        var puzzleIds = _crosswordService.GetAvailablePuzzleIds(language);
+        return Ok(puzzleIds);
     }
 
     /// <summary>
@@ -41,28 +35,37 @@ public class CrosswordController : ControllerBase
     [HttpGet("puzzle/{id}")]
     public ActionResult<CrosswordPuzzle> GetPuzzle(string id)
     {
-        try
-        {
-            var puzzle = _crosswordService.GetPuzzle(id);
-            if (puzzle == null)
-            {
-                return NotFound($"Puzzle with ID '{id}' not found");
-            }
-            return Ok(puzzle);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving puzzle {PuzzleId}", id);
-            return StatusCode(500, "Error retrieving puzzle");
-        }
+        var puzzle = _crosswordService.GetPuzzle(id);
+        return Ok(puzzle);
     }
 
     /// <summary>
-    /// Get the default puzzle (puzzle1)
+    /// Get a puzzle by size (Small, Medium, or Big)
     /// </summary>
+    /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), Big (15x15-20x20), or Any (all sizes)</param>
+    /// <param name="language">Language of the puzzle (English, Russian, Ukrainian)</param>
+    /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
     [HttpGet("puzzle")]
-    public ActionResult<CrosswordPuzzle> GetDefaultPuzzle()
+    public ActionResult<CrosswordPuzzle> GetPuzzle(
+        [FromQuery] PuzzleSizeCategory size = PuzzleSizeCategory.Any, 
+        [FromQuery] PuzzleLanguage language = PuzzleLanguage.English, 
+        [FromQuery] string? seed = null,
+        [FromHeader(Name = "X-User-Id")] string? userId = null)
     {
-        return GetPuzzle("puzzle2");
+        var request = new PuzzleRequest
+        {
+            SizeCategory = size,
+            Language = language,
+            UserId = userId
+        };
+        
+        var puzzle = _crosswordService.GetPuzzles(request).ToList();
+        if (puzzle.Count == 0)
+        {
+            // Should this be a 404 instead?
+            throw new PuzzleNotFoundException(
+                $"No puzzles found for language '{language}' and size '{size}', you probably solved all. Please try a different combination.");
+        }
+        return Ok(puzzle[Random.Shared.Next(puzzle.Count)]);
     }
 }

@@ -4,8 +4,8 @@ WORKDIR /src
 
 # Copy csproj and restore dependencies
 COPY ["src/server/CrossWords.csproj", "src/server/"]
-COPY ["src/server/Directory.Packages.props", "src/server/"]
-COPY ["src/server/global.json", "src/server/"]
+COPY ["Directory.Packages.props", "."]
+COPY ["global.json", "."]
 RUN dotnet restore "src/server/CrossWords.csproj"
 
 # Copy everything else and build

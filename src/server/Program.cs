@@ -1,14 +1,24 @@
-using CrossWords.Services;
+using CrossWords.Services.Extensions;
+using CrossWords.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Register crossword service
-builder.Services.AddSingleton<ICrosswordService, CrosswordService>();
+// Register crossword services based on configuration (appsettings.json)
+builder.Services.AddCrosswordServices(
+    builder.Configuration, 
+    builder.Environment.ContentRootPath);
 
 // Add CORS for development
 builder.Services.AddCors(options =>
@@ -30,20 +40,31 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Serve static files from the client folder
-app.UseDefaultFiles(new DefaultFilesOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot")),
-    RequestPath = ""
-});
+// Add global exception handling middleware
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-app.UseStaticFiles(new StaticFileOptions
+// Serve static files from the client folder (skip in test environment)
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot")),
-    RequestPath = ""
-});
+    var clientPath = Path.Combine(Directory.GetCurrentDirectory(), "client", "wwwroot");
+    // Fallback for local development
+    if (!Directory.Exists(clientPath))
+    {
+        clientPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "client", "wwwroot");
+    }
+
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
+        RequestPath = ""
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(clientPath),
+        RequestPath = ""
+    });
+}
 
 app.UseCors("AllowAll");
 
@@ -52,3 +73,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make the Program class accessible for integration tests
+public partial class Program { }
