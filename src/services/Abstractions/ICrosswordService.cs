@@ -5,6 +5,6 @@ namespace CrossWords.Services.Abstractions;
 public interface ICrosswordService
 {
     CrosswordPuzzle GetPuzzle(string id);
-    CrosswordPuzzle GetPuzzle(PuzzleRequest request);
+    IEnumerable<CrosswordPuzzle> GetPuzzles(PuzzleRequest request);
     IReadOnlyList<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null);
 }

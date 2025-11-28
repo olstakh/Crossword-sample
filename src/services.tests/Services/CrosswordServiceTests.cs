@@ -5,138 +5,42 @@ using CrossWords.Services.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Neovolve.Logging.Xunit;
 
 namespace CrossWords.Services.Tests;
 
 public class CrosswordServiceTests
 {
     private readonly CrosswordService _service;
-    private readonly Mock<IPuzzleRepository> _mockPuzzleRepository;
-    private readonly Mock<IUserProgressRepository> _mockUserRepository;
+    private readonly Mock<IPuzzleRepository> _mockPuzzleRepository = new(MockBehavior.Strict);
+    private readonly Mock<IUserProgressRepository> _mockUserRepository = new(MockBehavior.Strict);
 
-    public CrosswordServiceTests()
+    public CrosswordServiceTests(ITestOutputHelper output)
     {
-        // Create mock puzzles
-        var mockPuzzles = new List<CrosswordPuzzle>
-        {
-            new CrosswordPuzzle
-            {
-                Id = "puzzle1",
-                Title = "Easy Cryptogram",
-                Language = PuzzleLanguage.English,
-                Size = new PuzzleSize { Rows = 5, Cols = 5 },
-                Grid = new List<List<string>>
-                {
-                    new List<string> { "C", "A", "T", "S", "#" },
-                    new List<string> { "O", "#", "O", "#", "D" },
-                    new List<string> { "D", "O", "G", "S", "#" },
-                    new List<string> { "E", "#", "#", "#", "A" },
-                    new List<string> { "#", "R", "A", "T", "S" }
-                }
-            },
-            new CrosswordPuzzle
-            {
-                Id = "puzzle2",
-                Title = "Medium Cryptogram",
-                Language = PuzzleLanguage.English,
-                Size = new PuzzleSize { Rows = 10, Cols = 10 },
-                Grid = new List<List<string>>
-                {
-                    new List<string> { "B", "I", "R", "D", "S", "#", "C", "A", "T", "#" },
-                    new List<string> { "E", "#", "A", "#", "U", "N", "#", "O", "#", "D" },
-                    new List<string> { "A", "N", "T", "S", "#", "#", "D", "O", "G", "#" },
-                    new List<string> { "R", "#", "#", "H", "E", "N", "#", "#", "#", "S" },
-                    new List<string> { "S", "U", "N", "#", "#", "#", "F", "O", "X", "#" },
-                    new List<string> { "#", "P", "I", "G", "S", "#", "#", "W", "#", "#" },
-                    new List<string> { "M", "O", "U", "S", "E", "#", "B", "A", "T", "#" },
-                    new List<string> { "#", "#", "C", "#", "#", "L", "I", "O", "N", "#" },
-                    new List<string> { "F", "I", "S", "H", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "B", "E", "A", "R", "#", "#" }
-                }
-            },
-            new CrosswordPuzzle
-            {
-                Id = "puzzle3",
-                Title = "Big Cryptogram Challenge",
-                Language = PuzzleLanguage.English,
-                Size = new PuzzleSize { Rows = 16, Cols = 16 },
-                Grid = new List<List<string>>
-                {
-                    new List<string> { "T", "H", "E", "#", "Q", "U", "I", "C", "K", "#", "B", "R", "O", "W", "N", "#" },
-                    new List<string> { "F", "O", "X", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "J", "U", "M", "P", "S", "#", "O", "V", "E", "R", "#", "T", "H", "E", "#", "#" },
-                    new List<string> { "L", "A", "Z", "Y", "#", "D", "O", "G", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "A", "L", "L", "#", "#", "#" },
-                    new List<string> { "Y", "O", "U", "#", "N", "E", "E", "D", "#", "I", "S", "#", "L", "O", "V", "E" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "T", "O", "#", "B", "E", "#", "O", "R", "#", "N", "O", "T", "#", "T", "O", "#" },
-                    new List<string> { "B", "E", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "T", "H", "A", "T", "#", "I", "S", "#", "T", "H", "E", "#", "#", "#" },
-                    new List<string> { "Q", "U", "E", "S", "T", "I", "O", "N", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "M", "A", "Y", "#", "T", "H", "E" },
-                    new List<string> { "F", "O", "R", "C", "E", "#", "B", "E", "#", "W", "I", "T", "H", "#", "Y", "O" },
-                    new List<string> { "U", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "L", "I", "F", "E", "#", "I", "S", "#", "G", "O", "O", "D", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
-                }
-            },
-            new CrosswordPuzzle
-            {
-                Id = "puzzle4",
-                Title = "Another Medium Puzzle",
-                Language = PuzzleLanguage.English,
-                Size = new PuzzleSize { Rows = 12, Cols = 12 },
-                Grid = new List<List<string>>
-                {
-                    new List<string> { "W", "O", "R", "L", "D", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "P", "E", "A", "C", "E", "#" },
-                    new List<string> { "H", "A", "P", "P", "Y", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "T", "I", "M", "E", "#", "#" },
-                    new List<string> { "L", "O", "V", "E", "#", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "H", "O", "P", "E", "#", "#", "#" },
-                    new List<string> { "D", "R", "E", "A", "M", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "S", "T", "A", "R", "#", "#" },
-                    new List<string> { "S", "M", "I", "L", "E", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "M", "O", "O", "N", "#", "#" },
-                    new List<string> { "H", "E", "A", "R", "T", "#", "#", "#", "#", "#", "#", "#" },
-                    new List<string> { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" }
-                }
-            }
-        };
-
-        // Setup mock repository
-        _mockPuzzleRepository = new Mock<IPuzzleRepository>(MockBehavior.Strict);
-        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(mockPuzzles);
-
-        _mockUserRepository = new Mock<IUserProgressRepository>(MockBehavior.Strict);
-        _mockUserRepository.Setup(u => u.GetSolvedPuzzles(It.IsAny<string>())).Returns(new HashSet<string>());
-        
-        var serviceLogger = NullLogger<CrosswordService>.Instance;
-        _service = new CrosswordService(_mockPuzzleRepository.Object, _mockUserRepository.Object, serviceLogger);
+        _service = new CrosswordService(_mockPuzzleRepository.Object, _mockUserRepository.Object, output.BuildLoggerFor<CrosswordService>());
     }
 
     [Fact]
     public void GetPuzzle_WithValidId_ReturnsPuzzle()
     {
         // Arrange
-        var puzzleId = "puzzle1";
+        var puzzle = GenerateMockPuzzle("puzzle1");
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(new[] { puzzle }).Verifiable();
 
         // Act
-        var result = _service.GetPuzzle(puzzleId);
+        var result = _service.GetPuzzle("puzzle1");
+        _ = _service.GetPuzzle("puzzle1"); // Call again to test caching
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(puzzleId, result.Id);
-        Assert.Equal("Easy Cryptogram", result.Title);
-        Assert.Equal(5, result.Size.Rows);
-        Assert.Equal(5, result.Size.Cols);
-        Assert.NotEmpty(result.Grid);
+        Assert.Equal(puzzle, result);
+        _mockPuzzleRepository.Verify(r => r.LoadAllPuzzles(), Times.Once); // Ensure LoadAllPuzzles called only once due to caching
     }
 
     [Fact]
     public void GetPuzzle_WithInvalidId_ThrowsException()
-    {
+    {        
         // Arrange
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns([]);
         var puzzleId = "nonexistent";
 
         // Act & Assert
@@ -148,8 +52,15 @@ public class CrosswordServiceTests
     [InlineData(PuzzleSizeCategory.Small)]
     [InlineData(PuzzleSizeCategory.Medium)]
     [InlineData(PuzzleSizeCategory.Big)]
-    public void GetPuzzle_WithPuzzleRequest_ReturnsCorrectSizedPuzzle(PuzzleSizeCategory size)
+    public void GetPuzzles_WithPuzzleRequest_ReturnsCorrectSizedPuzzle(PuzzleSizeCategory size)
     {
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(new[]
+        {
+            GenerateMockPuzzle(PuzzleSizeCategory.Small.ToString(), PuzzleLanguage.English, PuzzleSizeCategory.Small),
+            GenerateMockPuzzle(PuzzleSizeCategory.Medium.ToString(), PuzzleLanguage.English, PuzzleSizeCategory.Medium),
+            GenerateMockPuzzle(PuzzleSizeCategory.Big.ToString(), PuzzleLanguage.English, PuzzleSizeCategory.Big),
+        });
+
         // Arrange
         var request = new PuzzleRequest
         {
@@ -158,177 +69,123 @@ public class CrosswordServiceTests
         };
 
         // Act
-        var result = _service.GetPuzzle(request);
+        var result = _service.GetPuzzles(request);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result.Grid);
-        
+        var puzzle = Assert.Single(result);
+
         // Verify size is within expected range
         var (minSize, maxSize) = size.GetSizeRange();
-        Assert.InRange(result.Size.Rows, minSize, maxSize);
-        Assert.InRange(result.Size.Cols, minSize, maxSize);
+        Assert.InRange(puzzle.Size.Rows, minSize, maxSize);
+        Assert.InRange(puzzle.Size.Cols, minSize, maxSize);
+        Assert.Equal(size.ToString(), puzzle.Id);
+    }
+
+    [Theory]
+    [InlineData(PuzzleLanguage.English)]
+    [InlineData(PuzzleLanguage.Russian)]
+    [InlineData(PuzzleLanguage.Ukrainian)]
+    public void GetPuzzles_WithPuzzleRequest_ReturnsCorrectLanguagePuzzle(PuzzleLanguage language)
+    {
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(new[]
+        {
+            GenerateMockPuzzle(PuzzleLanguage.English.ToString(), PuzzleLanguage.English, PuzzleSizeCategory.Any),
+            GenerateMockPuzzle(PuzzleLanguage.Russian.ToString(), PuzzleLanguage.Russian, PuzzleSizeCategory.Any),
+            GenerateMockPuzzle(PuzzleLanguage.Ukrainian.ToString(), PuzzleLanguage.Ukrainian, PuzzleSizeCategory.Any),
+        });
+
+        // Arrange
+        var request = new PuzzleRequest
+        {
+            SizeCategory = PuzzleSizeCategory.Any,
+            Language = language,
+        };
+
+        // Act
+        var result = _service.GetPuzzles(request);
+
+        // Assert
+        var puzzle = Assert.Single(result);
+
+        // Verify size is within expected range
+        Assert.Equal(language.ToString(), puzzle.Id);
+        Assert.Equal(language, puzzle.Language);
     }
 
     [Fact]
-    public void GetPuzzle_WithPuzzleRequest_UsesDefaultValues()
+    public void GetPuzzles_WithPuzzleRequest_ReturnsUserSpecificPuzzles()
     {
         // Arrange
-        var request = new PuzzleRequest(); // Uses defaults: Medium, English
+        var puzzle1 = GenerateMockPuzzle("puzzle1");
+        var puzzle2 = GenerateMockPuzzle("puzzle2");
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(new[] { puzzle1, puzzle2 });
+
+        var solvedPuzzles = new HashSet<string> { "puzzle1" };
+        _mockUserRepository.Setup(u => u.GetSolvedPuzzles("user123")).Returns(solvedPuzzles);
+
+        var request = new PuzzleRequest
+        {
+            SizeCategory = PuzzleSizeCategory.Any,
+            Language = PuzzleLanguage.English,
+            UserId = "user123"
+        };
 
         // Act
-        var result = _service.GetPuzzle(request);
+        var result = _service.GetPuzzles(request);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result.Grid);
-        Assert.Equal(PuzzleLanguage.English, result.Language);
+        var puzzle = Assert.Single(result);
+        Assert.Equal(puzzle2, puzzle);
     }
 
     [Fact]
     public void GetAvailablePuzzleIds_ReturnsAllPuzzles()
     {
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(new[]
+        {
+            GenerateMockPuzzle("puzzle1", PuzzleLanguage.English),
+            GenerateMockPuzzle("puzzle2", PuzzleLanguage.Russian),
+            GenerateMockPuzzle("puzzle3", PuzzleLanguage.English),
+        });
+
         // Act
         var result = _service.GetAvailablePuzzleIds();
 
         // Assert
         Assert.NotNull(result);
-        Assert.Contains("puzzle1", result);
-        Assert.Contains("puzzle2", result);
-        Assert.Contains("puzzle3", result);
-        Assert.True(result.Count >= 3);
+        Assert.Equal(new[] { "puzzle1", "puzzle2", "puzzle3" }, result.Order());
     }
 
     [Fact]
-    public void GetAvailablePuzzleIds_WithLanguageFilter_ReturnsFilteredPuzzles()
+    public void GetAvailablePuzzleIds_ReturnsLanguageSpecificPuzzles()
     {
+        _mockPuzzleRepository.Setup(r => r.LoadAllPuzzles()).Returns(new[]
+        {
+            GenerateMockPuzzle("puzzle1", PuzzleLanguage.English),
+            GenerateMockPuzzle("puzzle2", PuzzleLanguage.Russian),
+            GenerateMockPuzzle("puzzle3", PuzzleLanguage.English),
+        });
+
         // Act
         var result = _service.GetAvailablePuzzleIds(PuzzleLanguage.English);
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotEmpty(result);
-    }
+        Assert.Equal(new[] { "puzzle1", "puzzle3" }, result.Order());
+    }    
 
-    [Fact]
-    public void Puzzle_Grid_ContainsOnlyValidCharacters()
+    private CrosswordPuzzle GenerateMockPuzzle(string id, PuzzleLanguage language = PuzzleLanguage.English, PuzzleSizeCategory sizeCategory = PuzzleSizeCategory.Any)
     {
-        // Arrange
-        var puzzles = new[] { "puzzle1", "puzzle2", "puzzle3" };
-
-        foreach (var puzzleId in puzzles)
+        var (rows, cols) = sizeCategory.GetSizeRange();
+        return new CrosswordPuzzle
         {
-            // Act
-            var puzzle = _service.GetPuzzle(puzzleId);
-
-            // Assert
-            foreach (var row in puzzle.Grid)
-            {
-                foreach (var cell in row)
-                {
-                    // Each cell should be either "#" or a single uppercase letter
-                    Assert.True(
-                        cell == "#" || (cell.Length == 1 && char.IsLetter(cell[0]) && char.IsUpper(cell[0])),
-                        $"Invalid cell value: {cell} in puzzle {puzzleId}"
-                    );
-                }
-            }
-        }
-    }
-
-    [Fact]
-    public void Puzzle_Grid_SizeMatchesMetadata()
-    {
-        // Arrange
-        var puzzles = new[] { "puzzle1", "puzzle2", "puzzle3" };
-
-        foreach (var puzzleId in puzzles)
-        {
-            // Act
-            var puzzle = _service.GetPuzzle(puzzleId);
-
-            // Assert
-            Assert.Equal(puzzle.Size.Rows, puzzle.Grid.Count);
-            foreach (var row in puzzle.Grid)
-            {
-                Assert.Equal(puzzle.Size.Cols, row.Count);
-            }
-        }
-    }
-
-    [Fact]
-    public void GetPuzzle_WithUserId_ExcludesSolvedPuzzles()
-    {
-        // Arrange - Mark puzzle2 as solved, should return puzzle4 for Medium category
-        var solvedPuzzles = new HashSet<string> { "puzzle2" };
-        _mockUserRepository.Setup(u => u.GetSolvedPuzzles("user123")).Returns(solvedPuzzles);
-
-        var request = new PuzzleRequest
-        {
-            SizeCategory = PuzzleSizeCategory.Medium,
-            Language = PuzzleLanguage.English,
-            UserId = "user123"
+            Id = id,
+            Title = $"Mock Puzzle {id}",
+            Language = language,
+            Size = new PuzzleSize { Rows = rows, Cols = cols },
+            Grid = Enumerable.Range(0, rows)
+                .Select(_ => Enumerable.Range(0, cols).Select(__ => "A").ToList())
+                .ToList()
         };
-
-        // Act
-        var result = _service.GetPuzzle(request);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("puzzle4", result.Id); // Should return puzzle4 since puzzle2 is solved
-        Assert.Equal(PuzzleLanguage.English, result.Language);
-    }
-
-    [Fact]
-    public void GetPuzzle_WithUserIdAndAllPuzzlesSolved_ThrowsPuzzleNotFoundException()
-    {
-        // Arrange - Mark both medium puzzles as solved
-        var solvedPuzzles = new HashSet<string> { "puzzle2", "puzzle4" };
-        _mockUserRepository.Setup(u => u.GetSolvedPuzzles("user123")).Returns(solvedPuzzles);
-
-        var request = new PuzzleRequest
-        {
-            SizeCategory = PuzzleSizeCategory.Medium,
-            Language = PuzzleLanguage.English,
-            UserId = "user123"
-        };
-
-        // Act & Assert
-        var exception = Assert.Throws<PuzzleNotFoundException>(() => _service.GetPuzzle(request));
-        Assert.Contains("solved all", exception.Message);
-        Assert.Contains("English", exception.Message);
-    }
-
-    [Fact]
-    public void GetPuzzle_WithoutUserId_ReturnsAnyPuzzle()
-    {
-        // Arrange
-        var request = new PuzzleRequest
-        {
-            SizeCategory = PuzzleSizeCategory.Medium,
-            Language = PuzzleLanguage.English
-        };
-
-        // Act
-        var result = _service.GetPuzzle(request);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(PuzzleLanguage.English, result.Language);
-    }
-
-    [Fact]
-    public void GetPuzzle_WithInvalidLanguage_ThrowsPuzzleNotFoundException()
-    {
-        // Arrange
-        var request = new PuzzleRequest
-        {
-            SizeCategory = PuzzleSizeCategory.Medium,
-            Language = PuzzleLanguage.Russian // No Russian puzzles in mock data
-        };
-
-        // Act & Assert
-        var exception = Assert.Throws<PuzzleNotFoundException>(() => _service.GetPuzzle(request));
-        Assert.Contains("Russian", exception.Message);
     }
 }

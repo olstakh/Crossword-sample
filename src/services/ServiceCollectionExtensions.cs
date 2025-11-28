@@ -58,10 +58,6 @@ public static class ServiceCollectionExtensions
                 services.AddSqliteUserProgressRepository(userProgressPath);
                 break;
 
-            case "sqlserver":
-                // Future: Add SQL Server support
-                throw new NotImplementedException("SQL Server provider not yet implemented");
-
             default:
                 throw new InvalidOperationException(
                     $"Unknown storage provider: {storageConfig.Provider}. " +

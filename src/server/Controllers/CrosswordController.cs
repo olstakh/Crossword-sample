@@ -46,7 +46,7 @@ public class CrosswordController : ControllerBase
     /// <param name="language">Language of the puzzle (English, Russian, Ukrainian)</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
     [HttpGet("puzzle")]
-    public ActionResult<CrosswordPuzzle> GetPuzzleBySize(
+    public ActionResult<CrosswordPuzzle> GetPuzzle(
         [FromQuery] PuzzleSizeCategory size = PuzzleSizeCategory.Any, 
         [FromQuery] PuzzleLanguage language = PuzzleLanguage.English, 
         [FromQuery] string? seed = null,
@@ -59,7 +59,13 @@ public class CrosswordController : ControllerBase
             UserId = userId
         };
         
-        var puzzle = _crosswordService.GetPuzzle(request);
-        return Ok(puzzle);
+        var puzzle = _crosswordService.GetPuzzles(request).ToList();
+        if (puzzle.Count == 0)
+        {
+            // Should this be a 404 instead?
+            throw new PuzzleNotFoundException(
+                $"No puzzles found for language '{language}' and size '{size}', you probably solved all. Please try a different combination.");
+        }
+        return Ok(puzzle[Random.Shared.Next(puzzle.Count)]);
     }
 }

@@ -7,72 +7,50 @@ namespace CrossWords.Services;
 
 internal class CrosswordService : ICrosswordService
 {
-    private readonly IReadOnlyDictionary<string, CrosswordPuzzle> _cachedPuzzles;
+    private readonly Lazy<IReadOnlyDictionary<string, CrosswordPuzzle>> _cachedPuzzles;
     private readonly ILogger<CrosswordService> _logger;
     private readonly IUserProgressRepository _userProgressRepository;
+
+    private IReadOnlyDictionary<string, CrosswordPuzzle> CachedPuzzles => _cachedPuzzles.Value;
 
     public CrosswordService(
         IPuzzleRepository puzzleRepository,
         IUserProgressRepository userProgressRepository, 
         ILogger<CrosswordService> logger)
     {
-        _logger = logger;
-        _userProgressRepository = userProgressRepository;
-        _cachedPuzzles = InitializePuzzles(puzzleRepository);
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userProgressRepository = userProgressRepository ?? throw new ArgumentNullException(nameof(userProgressRepository));
+        
+        _cachedPuzzles = new(() => InitializePuzzles(puzzleRepository), LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     public CrosswordPuzzle GetPuzzle(string id)
     {
-        if (_cachedPuzzles.TryGetValue(id, out var puzzle))
+        if (CachedPuzzles.TryGetValue(id, out var puzzle))
         {
             return puzzle;
         }
         throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
     }
 
-    public CrosswordPuzzle GetPuzzle(PuzzleRequest request)
+    public IEnumerable<CrosswordPuzzle> GetPuzzles(PuzzleRequest request)
     {
-        // Get puzzles filtered by language
-        var languagePuzzles = _cachedPuzzles.Values.Where(p => p.Language == request.Language).ToList();
-        
-        // Filter by size category
         var (minSize, maxSize) = request.SizeCategory.GetSizeRange();
 
-        var matchingPuzzles = languagePuzzles
+        var solvedPuzzleIds =
+            request.UserId != null
+                ? _userProgressRepository.GetSolvedPuzzles(request.UserId)
+                : new HashSet<string>();
+
+        return CachedPuzzles.Values
+            .Where(p => p.Language == request.Language)
             .Where(p => p.Size.Rows >= minSize && p.Size.Rows <= maxSize)
-            .ToList();
-
-        if (matchingPuzzles.Count == 0)
-        {
-            throw new PuzzleNotFoundException(
-                $"No puzzles found for language '{request.Language}' and size '{request.SizeCategory}'. Please try a different combination.");
-        }
-
-        // If userId provided, filter out solved puzzles
-        if (!string.IsNullOrWhiteSpace(request.UserId))
-        {
-            var solvedPuzzleIds = _userProgressRepository.GetSolvedPuzzles(request.UserId);
-            var unsolvedPuzzles = matchingPuzzles
-                .Where(p => !solvedPuzzleIds.Contains(p.Id))
-                .ToList();
-
-            if (unsolvedPuzzles.Count == 0)
-            {
-                throw new PuzzleNotFoundException(
-                    $"Congratulations! You've solved all {matchingPuzzles.Count} puzzles in '{request.Language}' for size '{request.SizeCategory}'. Try a different language or size category!");
-            }
-
-            matchingPuzzles = unsolvedPuzzles;
-        }
-
-        var selectedPuzzle = matchingPuzzles[Random.Shared.Next(matchingPuzzles.Count)];
-        
-        return selectedPuzzle;
+            .Where(p => !solvedPuzzleIds.Contains(p.Id));
     }
 
     public IReadOnlyList<string> GetAvailablePuzzleIds(PuzzleLanguage? language = null)
     {
-        return _cachedPuzzles.Values
+        return CachedPuzzles.Values
             .Where(p => language.HasValue ? p.Language == language.Value : true)
             .Select(p => p.Id)
             .ToList();
