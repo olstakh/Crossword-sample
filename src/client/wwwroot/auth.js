@@ -53,7 +53,11 @@ class UserAuth {
      */
     async loadProgress() {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/user/progress/${this.userId}`);
+            const response = await fetch(`${API_BASE_URL}/api/user/progress`, {
+                headers: {
+                    'X-User-Id': this.userId
+                }
+            });
             if (response.ok) {
                 const progress = await response.json();
                 this.solvedPuzzles = new Set(progress.solvedPuzzleIds || []);
@@ -81,9 +85,9 @@ class UserAuth {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-User-Id': this.userId
                 },
                 body: JSON.stringify({
-                    userId: this.userId,
                     puzzleId: puzzleId
                 })
             });
@@ -106,7 +110,12 @@ class UserAuth {
     async getAvailablePuzzles(language = 'English') {
         try {
             const response = await fetch(
-                `${API_BASE_URL}/api/user/available/${this.userId}?language=${language}`
+                `${API_BASE_URL}/api/user/available?language=${language}`,
+                {
+                    headers: {
+                        'X-User-Id': this.userId
+                    }
+                }
             );
             
             if (response.ok) {

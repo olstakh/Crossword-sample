@@ -6,7 +6,6 @@ namespace CrossWords.Models;
 public class RecordSolvedPuzzleRequest
 {
     public string PuzzleId { get; init; } = string.Empty;
-    public string UserId { get; init; } = string.Empty;
 }
 
 /// <summary>

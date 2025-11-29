@@ -30,12 +30,12 @@ public class UserController : ControllerBase
     /// <summary>
     /// Get user's progress and solved puzzles
     /// </summary>
-    [HttpGet("progress/{userId}")]
-    public ActionResult<UserProgress> GetProgress(string userId)
+    [HttpGet("progress")]
+    public ActionResult<UserProgress> GetProgress([FromHeader(Name = "X-User-Id")] string? userId)
     {
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return BadRequest(new { error = "User ID is required" });
+            return BadRequest(new { error = "User ID is required in X-User-Id header" });
         }
 
         var solvedIds = _repositoryReader.GetSolvedPuzzles(userId).ToList();
@@ -52,15 +52,22 @@ public class UserController : ControllerBase
     /// Record that user solved a puzzle
     /// </summary>
     [HttpPost("solved")]
-    public ActionResult RecordSolvedPuzzle([FromBody] RecordSolvedPuzzleRequest request)
+    public ActionResult RecordSolvedPuzzle(
+        [FromBody] RecordSolvedPuzzleRequest request,
+        [FromHeader(Name = "X-User-Id")] string? userId)
     {
-        if (string.IsNullOrWhiteSpace(request.UserId) || string.IsNullOrWhiteSpace(request.PuzzleId))
+        if (string.IsNullOrWhiteSpace(userId))
         {
-            return BadRequest(new { error = "User ID and Puzzle ID are required" });
+            return BadRequest(new { error = "User ID is required in X-User-Id header" });
         }
 
-        _repositoryWriter.RecordSolvedPuzzle(request.UserId, request.PuzzleId);
-        _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", request.UserId, request.PuzzleId);
+        if (string.IsNullOrWhiteSpace(request.PuzzleId))
+        {
+            return BadRequest(new { error = "Puzzle ID is required" });
+        }
+
+        _repositoryWriter.RecordSolvedPuzzle(userId, request.PuzzleId);
+        _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId, request.PuzzleId);
         
         return Ok(new { success = true, message = "Puzzle marked as solved" });
     }
@@ -68,14 +75,14 @@ public class UserController : ControllerBase
     /// <summary>
     /// Get available puzzles for user (excluding solved ones)
     /// </summary>
-    [HttpGet("available/{userId}")]
+    [HttpGet("available")]
     public ActionResult<AvailablePuzzlesResponse> GetAvailablePuzzles(
-        string userId,
+        [FromHeader(Name = "X-User-Id")] string? userId,
         [FromQuery] PuzzleLanguage? language = null)
     {
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return BadRequest(new { error = "User ID is required" });
+            return BadRequest(new { error = "User ID is required in X-User-Id header" });
         }
 
         var allPuzzles = _puzzleRepositoryReader
@@ -100,12 +107,19 @@ public class UserController : ControllerBase
     /// <summary>
     /// Check if user has solved a specific puzzle
     /// </summary>
-    [HttpGet("has-solved/{userId}/{puzzleId}")]
-    public ActionResult<bool> HasSolvedPuzzle(string userId, string puzzleId)
+    [HttpGet("has-solved/{puzzleId}")]
+    public ActionResult<bool> HasSolvedPuzzle(
+        [FromHeader(Name = "X-User-Id")] string? userId,
+        string puzzleId)
     {
-        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(puzzleId))
+        if (string.IsNullOrWhiteSpace(userId))
         {
-            return BadRequest(new { error = "User ID and Puzzle ID are required" });
+            return BadRequest(new { error = "User ID is required in X-User-Id header" });
+        }
+
+        if (string.IsNullOrWhiteSpace(puzzleId))
+        {
+            return BadRequest(new { error = "Puzzle ID is required" });
         }
 
         var hasSolved = _repositoryReader.IsPuzzleSolved(userId, puzzleId);
