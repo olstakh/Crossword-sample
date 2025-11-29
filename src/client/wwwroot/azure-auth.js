@@ -59,7 +59,7 @@ class AzureAuthManager {
         }
 
         const loginRequest = {
-            scopes: [`api://${this.config.auth.clientId}/access_as_admin`]
+            scopes: [`${this.config.auth.clientId}/.default`]
         };
 
         try {
