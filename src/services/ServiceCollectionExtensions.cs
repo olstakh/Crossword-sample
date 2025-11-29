@@ -28,7 +28,6 @@ public static class ServiceCollectionExtensions
 
         // Register business logic services
         services.AddSingleton<ICrosswordService, CrosswordService>();
-        services.AddSingleton<IUserProgressService, UserProgressService>();
 
         // Register storage based on provider
         switch (storageConfig.Provider.ToLowerInvariant())
