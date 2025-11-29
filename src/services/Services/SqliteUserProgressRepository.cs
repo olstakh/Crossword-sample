@@ -8,7 +8,7 @@ namespace CrossWords.Services;
 /// SQLite-based implementation of user progress repository
 /// Stores data in a single SQLite database file
 /// </summary>
-internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IDisposable
+internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter, IDisposable
 {
     private readonly string _connectionString;
     private readonly ILogger<SqliteUserProgressRepository> _logger;

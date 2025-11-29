@@ -6,7 +6,7 @@ namespace CrossWords.Services.Testing;
 /// In-memory implementation of user progress repository for testing
 /// Thread-safe for parallel test execution
 /// </summary>
-public class InMemoryUserProgressRepository : IUserProgressRepositoryReader
+public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter
 {
     private readonly Dictionary<string, HashSet<string>> _userProgress = new();
     private readonly object _lock = new();

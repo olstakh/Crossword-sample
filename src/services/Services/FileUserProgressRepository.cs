@@ -8,7 +8,7 @@ namespace CrossWords.Services;
 /// File-based implementation of user progress repository
 /// Stores data as JSON: { "userId": ["puzzle1", "puzzle2", ...] }
 /// </summary>
-internal class FileUserProgressRepository : IUserProgressRepositoryReader
+internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter
 {
     private readonly string _filePath;
     private readonly ILogger<FileUserProgressRepository> _logger;

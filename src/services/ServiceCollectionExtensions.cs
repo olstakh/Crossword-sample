@@ -77,6 +77,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPuzzleRepositoryReader, Testing.InMemoryPuzzleRepository>();
         services.AddSingleton<IPuzzleRepositoryWriter, Testing.InMemoryPuzzleRepository>();
         services.AddSingleton<IUserProgressRepositoryReader, Testing.InMemoryUserProgressRepository>();
+        services.AddSingleton<IUserProgressRepositoryWriter, Testing.InMemoryUserProgressRepository>();
         return services;
     }
 
@@ -100,11 +101,15 @@ public static class ServiceCollectionExtensions
     /// </summary>
     internal static IServiceCollection AddSqliteUserProgressRepository(this IServiceCollection services, string dbFilePath)
     {
-        services.AddSingleton<IUserProgressRepositoryReader>(sp =>
+        services.AddSingleton<SqliteUserProgressRepository>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<SqliteUserProgressRepository>>();
             return new SqliteUserProgressRepository(dbFilePath, logger);
         });
+
+        services.AddSingleton<IUserProgressRepositoryReader>(sp => sp.GetRequiredService<SqliteUserProgressRepository>());
+        services.AddSingleton<IUserProgressRepositoryWriter>(sp => sp.GetRequiredService<SqliteUserProgressRepository>());
+        
         return services;
     }
 

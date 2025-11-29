@@ -6,17 +6,19 @@ namespace CrossWords.Services;
 internal class UserProgressService : IUserProgressService
 {
     private readonly ICrosswordService _crosswordService;
-    private readonly IUserProgressRepositoryReader _repository;
+    private readonly IUserProgressRepositoryReader _repositoryReader;
+    private readonly IUserProgressRepositoryWriter _repositoryWriter;
 
-    public UserProgressService(ICrosswordService crosswordService, IUserProgressRepositoryReader repository)
+    public UserProgressService(ICrosswordService crosswordService, IUserProgressRepositoryReader repositoryReader, IUserProgressRepositoryWriter repositoryWriter)
     {
         _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _repositoryReader = repositoryReader ?? throw new ArgumentNullException(nameof(repositoryReader));
+        _repositoryWriter = repositoryWriter ?? throw new ArgumentNullException(nameof(repositoryWriter));
     }
 
     public UserProgress GetUserProgress(string userId)
     {
-        var solvedIds = _repository.GetSolvedPuzzles(userId).ToList();
+        var solvedIds = _repositoryReader.GetSolvedPuzzles(userId).ToList();
         var availablePuzzleIds = _crosswordService.GetAvailablePuzzleIds();
         return new UserProgress
         {
@@ -29,13 +31,13 @@ internal class UserProgressService : IUserProgressService
 
     public void RecordSolvedPuzzle(string userId, string puzzleId)
     {
-        _repository.RecordSolvedPuzzle(userId, puzzleId);
+        _repositoryWriter.RecordSolvedPuzzle(userId, puzzleId);
     }
 
     public AvailablePuzzlesResponse GetAvailablePuzzles(string userId, PuzzleLanguage? language = null)
     {
         var allPuzzles = _crosswordService.GetAvailablePuzzleIds(language);
-        var solvedPuzzles = _repository.GetSolvedPuzzles(userId).ToList();
+        var solvedPuzzles = _repositoryReader.GetSolvedPuzzles(userId).ToList();
 
         var unsolvedPuzzles = allPuzzles
             .Where(id => !solvedPuzzles.Contains(id))
@@ -52,6 +54,6 @@ internal class UserProgressService : IUserProgressService
 
     public bool HasSolvedPuzzle(string userId, string puzzleId)
     {
-        return _repository.IsPuzzleSolved(userId, puzzleId);
+        return _repositoryReader.IsPuzzleSolved(userId, puzzleId);
     }
 }

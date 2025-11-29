@@ -9,12 +9,7 @@ public interface IUserProgressRepositoryReader
     /// Check if user has solved a specific puzzle
     /// </summary>
     bool IsPuzzleSolved(string userId, string puzzleId);
-    
-    /// <summary>
-    /// Record that user has solved a puzzle
-    /// </summary>
-    void RecordSolvedPuzzle(string userId, string puzzleId);
-    
+        
     /// <summary>
     /// Get all solved puzzle IDs for a user
     /// </summary>

@@ -11,7 +11,8 @@ namespace CrossWords.Services.Tests;
 
 public class UserProgressServiceTests
 {
-    private readonly Mock<IUserProgressRepositoryReader> _mockUserRepository = new(MockBehavior.Strict);
+    private readonly Mock<IUserProgressRepositoryReader> _mockUserRepositoryReader = new(MockBehavior.Strict);
+    private readonly Mock<IUserProgressRepositoryWriter> _mockUserRepositoryWriter = new(MockBehavior.Strict);
     private readonly Mock<ICrosswordService> _mockCrosswordService = new(MockBehavior.Strict);
 
     private readonly IUserProgressService _userProgressService;
@@ -22,7 +23,8 @@ public class UserProgressServiceTests
     {
         _userProgressService = new UserProgressService(
             _mockCrosswordService.Object,
-            _mockUserRepository.Object);
+            _mockUserRepositoryReader.Object,
+            _mockUserRepositoryWriter.Object);
     }
 
     [Fact]
@@ -30,7 +32,7 @@ public class UserProgressServiceTests
     {
         var userSolvedPuzzles = new HashSet<string>() { "puzzle1", "puzzle2" };
         var availablePuzzles = new List<string>() { "puzzle1", "puzzle3", "puzzle4"};
-        _mockUserRepository
+        _mockUserRepositoryReader
             .Setup(x => x.GetSolvedPuzzles(_testUserId))
             .Returns(userSolvedPuzzles);
         _mockCrosswordService
@@ -48,13 +50,13 @@ public class UserProgressServiceTests
     public void GetUserProgress_RecordSolvedPuzzles_ForwardsToUserRepository()
     {
         string solvedPuzzle = "solved-puzzle";
-        _mockUserRepository
+        _mockUserRepositoryWriter
             .Setup(x => x.RecordSolvedPuzzle(_testUserId, solvedPuzzle))
             .Verifiable();
 
         _userProgressService.RecordSolvedPuzzle(_testUserId, solvedPuzzle);
 
-        _mockUserRepository.VerifyAll();
+        _mockUserRepositoryWriter.VerifyAll();
     }
 
     [Theory]
@@ -63,7 +65,7 @@ public class UserProgressServiceTests
     public void GetUserProgress_HasSolvedPuzzle_ForwardsToUserRepository(bool isSolved)
     {
         string solvedPuzzle = "solved-puzzle";
-        _mockUserRepository
+        _mockUserRepositoryReader
             .Setup(x => x.IsPuzzleSolved(_testUserId, solvedPuzzle))
             .Returns(isSolved)
             .Verifiable();
@@ -71,6 +73,6 @@ public class UserProgressServiceTests
         var result = _userProgressService.HasSolvedPuzzle(_testUserId, solvedPuzzle);
 
         Assert.Equal(isSolved, result);
-        _mockUserRepository.VerifyAll();
+        _mockUserRepositoryReader.VerifyAll();
     }
 }
