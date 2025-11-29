@@ -75,7 +75,7 @@ public static class ServiceCollectionExtensions
     internal static IServiceCollection AddInMemoryRepositories(this IServiceCollection services)
     {
         services.AddSingleton<IPuzzleRepositoryReader, Testing.InMemoryPuzzleRepository>();
-        services.AddSingleton<IPuzzleRepositoryPersister, Testing.InMemoryPuzzleRepository>();
+        services.AddSingleton<IPuzzleRepositoryWriter, Testing.InMemoryPuzzleRepository>();
         services.AddSingleton<IUserProgressRepository, Testing.InMemoryUserProgressRepository>();
         return services;
     }
@@ -91,7 +91,7 @@ public static class ServiceCollectionExtensions
             return new SqlitePuzzleRepository(dbFilePath, logger);
         });
         services.AddSingleton<IPuzzleRepositoryReader>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
-        services.AddSingleton<IPuzzleRepositoryPersister>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
+        services.AddSingleton<IPuzzleRepositoryWriter>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
         return services;
     }
 

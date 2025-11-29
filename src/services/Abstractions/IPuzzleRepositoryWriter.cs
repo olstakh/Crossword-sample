@@ -6,7 +6,7 @@ namespace CrossWords.Services.Abstractions;
 /// Repository interface for persisting puzzles (add/delete operations)
 /// Separate from IPuzzleRepository to maintain read-only interface for services that don't need write access
 /// </summary>
-public interface IPuzzleRepositoryPersister
+public interface IPuzzleRepositoryWriter
 {
     /// <summary>
     /// Add a new puzzle to the repository (or update if it already exists)

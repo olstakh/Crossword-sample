@@ -10,12 +10,12 @@ namespace CrossWords.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IPuzzleRepositoryReader _puzzleRepository;
-    private readonly IPuzzleRepositoryPersister _puzzlePersister;
+    private readonly IPuzzleRepositoryWriter _puzzlePersister;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
         IPuzzleRepositoryReader puzzleRepository, 
-        IPuzzleRepositoryPersister puzzlePersister,
+        IPuzzleRepositoryWriter puzzlePersister,
         ILogger<AdminController> logger)
     {
         _puzzleRepository = puzzleRepository;
