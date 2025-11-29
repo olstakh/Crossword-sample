@@ -463,7 +463,8 @@ class PuzzleBuilder {
             console.error('Error downloading database:', error);
             btn.textContent = '✗ Failed';
             btn.classList.add('error');
-            alert(`Failed to download database: ${error.message}`);\n            
+            alert(`Failed to download database: ${error.message}`);
+            
             setTimeout(() => {
                 btn.textContent = originalText;
                 btn.classList.remove('error');
