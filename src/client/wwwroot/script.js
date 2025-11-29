@@ -1091,28 +1091,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 newPuzzleBtn.textContent = 'Loading...';
                 
                 try {
-                    // Try to load an unsolved puzzle if userAuth is available
-                    if (typeof userAuth !== 'undefined') {
-                        const available = await userAuth.getAvailablePuzzles(selectedLanguage);
-                        if (available && available.unsolvedPuzzleIds.length > 0) {
-                            console.log(`Found ${available.unsolvedPuzzleIds.length} unsolved puzzles`);
-                            // Fetch new puzzle without reload
-                            await loadNewPuzzle(selectedSize, selectedLanguage);
-                            return;
-                        } else if (available && available.totalSolved > 0) {
-                            // All puzzles solved for this language
-                            showErrorMessage(
-                                'All Puzzles Completed! 🎉',
-                                `Congratulations! You've solved all ${available.totalSolved} available puzzles in ${selectedLanguage}. Try a different language or replay puzzles!`,
-                                async () => {
-                                    await loadNewPuzzle(selectedSize, selectedLanguage);
-                                }
-                            );
-                            return;
-                        }
-                    }
-                    
-                    // Fallback: Load puzzle normally
                     await loadNewPuzzle(selectedSize, selectedLanguage);
                 } catch (error) {
                     console.error('Error loading new puzzle:', error);

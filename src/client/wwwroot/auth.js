@@ -90,8 +90,9 @@ class UserAuth {
             
             if (response.ok) {
                 console.log(`Puzzle ${puzzleId} marked as solved`);
-                // Reload progress from server to get accurate count
-                await this.loadProgress();
+                // Increment count locally instead of reloading from server
+                this.totalSolved++;
+                this.updateProgressUI();
                 this.showCongratulations();
             }
         } catch (error) {
