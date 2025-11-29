@@ -168,6 +168,64 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
     }
 
     /// <summary>
+    /// Add multiple puzzles to the database in bulk using a transaction
+    /// </summary>
+    public void AddPuzzles(IEnumerable<CrosswordPuzzle> puzzles)
+    {
+        var puzzleList = puzzles.ToList();
+        if (!puzzleList.Any())
+        {
+            return;
+        }
+
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+            
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = @"
+                INSERT OR REPLACE INTO Puzzles (Id, Title, Language, Rows, Cols, GridJson, CreatedAt)
+                VALUES ($id, $title, $language, $rows, $cols, $gridJson, $createdAt)";
+            
+            var idParam = command.Parameters.Add("$id", SqliteType.Text);
+            var titleParam = command.Parameters.Add("$title", SqliteType.Text);
+            var languageParam = command.Parameters.Add("$language", SqliteType.Text);
+            var rowsParam = command.Parameters.Add("$rows", SqliteType.Integer);
+            var colsParam = command.Parameters.Add("$cols", SqliteType.Integer);
+            var gridJsonParam = command.Parameters.Add("$gridJson", SqliteType.Text);
+            var createdAtParam = command.Parameters.Add("$createdAt", SqliteType.Text);
+            
+            var createdAt = DateTime.UtcNow.ToString("O");
+
+            foreach (var puzzle in puzzleList)
+            {
+                idParam.Value = puzzle.Id;
+                titleParam.Value = puzzle.Title;
+                languageParam.Value = puzzle.Language.ToString();
+                rowsParam.Value = puzzle.Size.Rows;
+                colsParam.Value = puzzle.Size.Cols;
+                gridJsonParam.Value = JsonSerializer.Serialize(puzzle.Grid, s_jsonOptions);
+                createdAtParam.Value = createdAt;
+
+                command.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+            
+            _logger.LogInformation("Added {Count} puzzles to database in bulk", puzzleList.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding {Count} puzzles to database in bulk", puzzleList.Count);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Delete a puzzle from the database
     /// </summary>
     public void DeletePuzzle(string puzzleId)

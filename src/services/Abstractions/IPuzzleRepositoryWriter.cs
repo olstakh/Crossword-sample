@@ -14,6 +14,11 @@ public interface IPuzzleRepositoryWriter
     void AddPuzzle(CrosswordPuzzle puzzle);
     
     /// <summary>
+    /// Add multiple puzzles to the repository in bulk (or update if they already exist)
+    /// </summary>
+    void AddPuzzles(IEnumerable<CrosswordPuzzle> puzzles);
+    
+    /// <summary>
     /// Delete a puzzle from the repository
     /// </summary>
     void DeletePuzzle(string puzzleId);

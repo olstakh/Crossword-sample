@@ -40,6 +40,17 @@ public class InMemoryPuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
         }
     }
 
+    public void AddPuzzles(IEnumerable<CrosswordPuzzle> puzzles)
+    {
+        lock (_lock)
+        {
+            foreach (var puzzle in puzzles)
+            {
+                _puzzles[puzzle.Id] = puzzle;
+            }
+        }
+    }
+
     public void DeletePuzzle(string puzzleId)
     {
         lock (_lock)
