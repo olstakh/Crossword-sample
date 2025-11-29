@@ -10,13 +10,22 @@ namespace CrossWords.Controllers;
 [Route("api/[controller]")]
 public class UserController : ControllerBase
 {
-    private readonly IUserProgressService _userProgressService;
+    private readonly IUserProgressRepositoryReader _repositoryReader;
+    private readonly IUserProgressRepositoryWriter _repositoryWriter;
+    private readonly ICrosswordService _crosswordService;
     private readonly ILogger<UserController> _logger;
 
-    public UserController(IUserProgressService userProgressService, ILogger<UserController> logger)
+    public UserController(
+        IUserProgressService userProgressService,
+        IUserProgressRepositoryReader repositoryReader,
+        IUserProgressRepositoryWriter repositoryWriter,
+        ICrosswordService crosswordService,
+        ILogger<UserController> logger)
     {
-        _userProgressService = userProgressService;
-        _logger = logger;
+        _repositoryReader = repositoryReader ?? throw new ArgumentNullException(nameof(repositoryReader));
+        _repositoryWriter = repositoryWriter ?? throw new ArgumentNullException(nameof(repositoryWriter));
+        _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -30,8 +39,15 @@ public class UserController : ControllerBase
             return BadRequest(new { error = "User ID is required" });
         }
 
-        var progress = _userProgressService.GetUserProgress(userId);
-        return Ok(progress);
+        var solvedIds = _repositoryReader.GetSolvedPuzzles(userId).ToList();
+        var availablePuzzleIds = _crosswordService.GetAvailablePuzzleIds();
+        return Ok(new UserProgress
+        {
+            UserId = userId,
+            SolvedPuzzleIds = solvedIds.Intersect(availablePuzzleIds).ToList(),
+            TotalPuzzlesSolved = solvedIds.Count,
+            LastPlayed = DateTime.UtcNow
+        });
     }
 
     /// <summary>
@@ -45,7 +61,7 @@ public class UserController : ControllerBase
             return BadRequest(new { error = "User ID and Puzzle ID are required" });
         }
 
-        _userProgressService.RecordSolvedPuzzle(request.UserId, request.PuzzleId);
+        _repositoryWriter.RecordSolvedPuzzle(request.UserId, request.PuzzleId);
         _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", request.UserId, request.PuzzleId);
         
         return Ok(new { success = true, message = "Puzzle marked as solved" });
@@ -64,8 +80,20 @@ public class UserController : ControllerBase
             return BadRequest(new { error = "User ID is required" });
         }
 
-        var response = _userProgressService.GetAvailablePuzzles(userId, language);
-        return Ok(response);
+        var allPuzzles = _crosswordService.GetAvailablePuzzleIds(language);
+        var solvedPuzzles = _repositoryReader.GetSolvedPuzzles(userId).ToList();
+
+        var unsolvedPuzzles = allPuzzles
+            .Where(id => !solvedPuzzles.Contains(id))
+            .ToList();
+
+        return Ok(new AvailablePuzzlesResponse
+        {
+            UnsolvedPuzzleIds = unsolvedPuzzles,
+            SolvedPuzzleIds = solvedPuzzles.Where(id => allPuzzles.Contains(id)).ToList(),
+            TotalAvailable = allPuzzles.Count,
+            TotalSolved = solvedPuzzles.Count(id => allPuzzles.Contains(id))
+        });
     }
 
     /// <summary>
@@ -79,7 +107,7 @@ public class UserController : ControllerBase
             return BadRequest(new { error = "User ID and Puzzle ID are required" });
         }
 
-        var hasSolved = _userProgressService.HasSolvedPuzzle(userId, puzzleId);
+        var hasSolved = _repositoryReader.IsPuzzleSolved(userId, puzzleId);
         return Ok(new { hasSolved });
     }
 }
