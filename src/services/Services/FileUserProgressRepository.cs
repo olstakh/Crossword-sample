@@ -57,6 +57,32 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         }
     }
 
+    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    {
+        lock (_lock)
+        {
+            if (!_userProgress.ContainsKey(userId))
+            {
+                return;
+            }
+
+            int removedCount = 0;
+            foreach (var puzzleId in puzzleIds)
+            {
+                if (_userProgress[userId].Remove(puzzleId))
+                {
+                    removedCount++;
+                }
+            }
+
+            if (removedCount > 0)
+            {
+                _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", removedCount, userId);
+                SaveToFile();
+            }
+        }
+    }
+
     public HashSet<string> GetSolvedPuzzles(string userId)
     {
         lock (_lock)

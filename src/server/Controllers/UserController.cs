@@ -125,4 +125,28 @@ public class UserController : ControllerBase
         var hasSolved = _repositoryReader.IsPuzzleSolved(userId, puzzleId);
         return Ok(new { hasSolved });
     }
+
+    /// <summary>
+    /// Remove solved puzzle records for user (mark puzzles as unsolved)
+    /// </summary>
+    [HttpPost("forget")]
+    public ActionResult ForgetPuzzles(
+        [FromBody] ForgetPuzzlesRequest request,
+        [FromHeader(Name = "X-User-Id")] string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return BadRequest(new { error = "User ID is required in X-User-Id header" });
+        }
+
+        if (request.PuzzleIds == null || !request.PuzzleIds.Any())
+        {
+            return BadRequest(new { error = "At least one puzzle ID is required" });
+        }
+
+        _repositoryWriter.ForgetPuzzles(userId, request.PuzzleIds);
+        _logger.LogInformation("User {UserId} forgot {Count} puzzle(s)", userId, request.PuzzleIds.Count());
+        
+        return Ok(new { success = true, message = $"Forgot {request.PuzzleIds.Count()} puzzle(s)" });
+    }
 }

@@ -32,6 +32,22 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
+    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    {
+        lock (_lock)
+        {
+            if (!_userProgress.TryGetValue(userId, out var solvedPuzzles))
+            {
+                return;
+            }
+
+            foreach (var puzzleId in puzzleIds)
+            {
+                solvedPuzzles.Remove(puzzleId);
+            }
+        }
+    }
+
     public HashSet<string> GetSolvedPuzzles(string userId)
     {
         lock (_lock)
