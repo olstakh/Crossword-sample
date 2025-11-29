@@ -27,7 +27,7 @@ async function loadUsers() {
     try {
         showMessage('Loading users...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/user/all`);
+        const response = await authenticatedFetch(`${API_BASE_URL}/api/user/all`);
         
         if (!response.ok) {
             throw new Error(`Failed to load users: ${response.statusText}`);

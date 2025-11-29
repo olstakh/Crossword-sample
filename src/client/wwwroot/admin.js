@@ -330,7 +330,7 @@ class PuzzleBuilder {
             btn.textContent = '⏳ Saving...';
             statusDiv.style.display = 'none';
             
-            const response = await fetch('/api/admin/puzzles', {
+            const response = await authenticatedFetch('/api/admin/puzzles', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -431,7 +431,7 @@ class PuzzleBuilder {
             btn.textContent = '⏳ Downloading...';
             btn.disabled = true;
             
-            const response = await fetch('/api/admin/puzzles');
+            const response = await authenticatedFetch('/api/admin/puzzles');
             if (!response.ok) {
                 throw new Error(`Failed to fetch puzzles: ${response.statusText}`);
             }
@@ -492,7 +492,7 @@ class PuzzleBuilder {
             }
             
             // Upload to server
-            const response = await fetch('/api/admin/puzzles/upload-bulk', {
+            const response = await authenticatedFetch('/api/admin/puzzles/upload-bulk', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

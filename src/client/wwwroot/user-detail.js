@@ -48,7 +48,7 @@ async function loadSolvedPuzzles() {
     try {
         showMessage('Loading solved puzzles...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/user/progress`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/api/user/progress`, {
             headers: {
                 'X-User-Id': userId
             }
@@ -188,7 +188,7 @@ async function forgetPuzzles(puzzleIds) {
     try {
         showMessage(`Forgetting ${puzzleIds.length} puzzle(s)...`, 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/user/forget`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/api/user/forget`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
