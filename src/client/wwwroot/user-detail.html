@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Puzzles - Admin Panel</title>
+    <title>User Details - Admin Panel</title>
     <link rel="stylesheet" href="delete.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Puzzle Management</h1>
-            <p class="subtitle">View and delete existing puzzles</p>
+            <h1>User Progress Details</h1>
+            <p class="subtitle" id="userIdDisplay">Loading...</p>
             <nav class="admin-nav">
                 <a href="admin.html" class="nav-link">Create Puzzles</a>
-                <a href="delete.html" class="nav-link active">Manage Puzzles</a>
+                <a href="delete.html" class="nav-link">Manage Puzzles</a>
                 <a href="users.html" class="nav-link">Manage Users</a>
                 <a href="index.html" class="nav-link">Play Puzzles</a>
             </nav>
@@ -22,8 +22,9 @@
         <main>
             <div class="panel-section">
                 <div class="controls-bar">
-                    <button id="deleteSelectedBtn" class="btn-danger" disabled>Delete Selected</button>
-                    <button id="refreshBtn" class="btn-secondary">Refresh List</button>
+                    <button id="deleteSelectedBtn" class="btn-danger" disabled>Forget Selected</button>
+                    <button id="refreshBtn" class="btn-secondary">Refresh</button>
+                    <button id="backBtn" class="btn-secondary">Back to Users</button>
                     <span id="selectionCount" class="selection-info">0 selected</span>
                 </div>
                 
@@ -37,16 +38,12 @@
                                     <input type="checkbox" id="selectAllCheckbox" title="Select All">
                                 </th>
                                 <th class="id-column">Puzzle ID</th>
-                                <th class="title-column">Title</th>
-                                <th class="language-column">Language</th>
-                                <th class="size-column">Rows</th>
-                                <th class="size-column">Columns</th>
                                 <th class="actions-column">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="puzzlesTableBody">
                             <tr class="loading-row">
-                                <td colspan="7" class="loading-cell">Loading puzzles...</td>
+                                <td colspan="3" class="loading-cell">Loading solved puzzles...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -55,6 +52,6 @@
         </main>
     </div>
     
-    <script src="delete.js"></script>
+    <script src="user-detail.js"></script>
 </body>
 </html>

@@ -149,4 +149,14 @@ public class UserController : ControllerBase
         
         return Ok(new { success = true, message = $"Forgot {request.PuzzleIds.Count()} puzzle(s)" });
     }
+
+    /// <summary>
+    /// Get all users with progress records
+    /// </summary>
+    [HttpGet("all")]
+    public ActionResult<IEnumerable<string>> GetAllUsers()
+    {
+        var users = _repositoryReader.GetAllUsers().ToList();
+        return Ok(users);
+    }
 }

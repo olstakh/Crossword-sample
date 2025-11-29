@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Puzzles - Admin Panel</title>
+    <title>Manage Users - Admin Panel</title>
     <link rel="stylesheet" href="delete.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Puzzle Management</h1>
-            <p class="subtitle">View and delete existing puzzles</p>
+            <h1>User Management</h1>
+            <p class="subtitle">View all users and their progress</p>
             <nav class="admin-nav">
                 <a href="admin.html" class="nav-link">Create Puzzles</a>
-                <a href="delete.html" class="nav-link active">Manage Puzzles</a>
-                <a href="users.html" class="nav-link">Manage Users</a>
+                <a href="delete.html" class="nav-link">Manage Puzzles</a>
+                <a href="users.html" class="nav-link active">Manage Users</a>
                 <a href="index.html" class="nav-link">Play Puzzles</a>
             </nav>
         </header>
@@ -22,31 +22,23 @@
         <main>
             <div class="panel-section">
                 <div class="controls-bar">
-                    <button id="deleteSelectedBtn" class="btn-danger" disabled>Delete Selected</button>
                     <button id="refreshBtn" class="btn-secondary">Refresh List</button>
-                    <span id="selectionCount" class="selection-info">0 selected</span>
+                    <span id="userCount" class="selection-info">0 users</span>
                 </div>
                 
                 <div id="messageBox" class="message-box hidden"></div>
                 
                 <div class="table-container">
-                    <table id="puzzlesTable">
+                    <table id="usersTable">
                         <thead>
                             <tr>
-                                <th class="checkbox-column">
-                                    <input type="checkbox" id="selectAllCheckbox" title="Select All">
-                                </th>
-                                <th class="id-column">Puzzle ID</th>
-                                <th class="title-column">Title</th>
-                                <th class="language-column">Language</th>
-                                <th class="size-column">Rows</th>
-                                <th class="size-column">Columns</th>
+                                <th class="id-column">User ID</th>
                                 <th class="actions-column">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="puzzlesTableBody">
+                        <tbody id="usersTableBody">
                             <tr class="loading-row">
-                                <td colspan="7" class="loading-cell">Loading puzzles...</td>
+                                <td colspan="2" class="loading-cell">Loading users...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -55,6 +47,6 @@
         </main>
     </div>
     
-    <script src="delete.js"></script>
+    <script src="users.js"></script>
 </body>
 </html>
