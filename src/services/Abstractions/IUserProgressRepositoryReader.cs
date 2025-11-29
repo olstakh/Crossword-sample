@@ -3,7 +3,7 @@ namespace CrossWords.Services.Abstractions;
 /// <summary>
 /// Repository interface for persisting user progress
 /// </summary>
-public interface IUserProgressRepository
+public interface IUserProgressRepositoryReader
 {
     /// <summary>
     /// Check if user has solved a specific puzzle

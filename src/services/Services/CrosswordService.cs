@@ -9,13 +9,13 @@ internal class CrosswordService : ICrosswordService
 {
     private readonly Lazy<IReadOnlyDictionary<string, CrosswordPuzzle>> _cachedPuzzles;
     private readonly ILogger<CrosswordService> _logger;
-    private readonly IUserProgressRepository _userProgressRepository;
+    private readonly IUserProgressRepositoryReader _userProgressRepository;
 
     private IReadOnlyDictionary<string, CrosswordPuzzle> CachedPuzzles => _cachedPuzzles.Value;
 
     public CrosswordService(
         IPuzzleRepositoryReader puzzleRepository,
-        IUserProgressRepository userProgressRepository, 
+        IUserProgressRepositoryReader userProgressRepository, 
         ILogger<CrosswordService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -11,7 +11,7 @@ namespace CrossWords.Services.Tests;
 
 public class UserProgressServiceTests
 {
-    private readonly Mock<IUserProgressRepository> _mockUserRepository = new(MockBehavior.Strict);
+    private readonly Mock<IUserProgressRepositoryReader> _mockUserRepository = new(MockBehavior.Strict);
     private readonly Mock<ICrosswordService> _mockCrosswordService = new(MockBehavior.Strict);
 
     private readonly IUserProgressService _userProgressService;

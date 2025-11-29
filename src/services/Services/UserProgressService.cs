@@ -6,9 +6,9 @@ namespace CrossWords.Services;
 internal class UserProgressService : IUserProgressService
 {
     private readonly ICrosswordService _crosswordService;
-    private readonly IUserProgressRepository _repository;
+    private readonly IUserProgressRepositoryReader _repository;
 
-    public UserProgressService(ICrosswordService crosswordService, IUserProgressRepository repository)
+    public UserProgressService(ICrosswordService crosswordService, IUserProgressRepositoryReader repository)
     {
         _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
