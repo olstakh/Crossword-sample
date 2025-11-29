@@ -2,6 +2,8 @@ using CrossWords.Services.Extensions;
 using CrossWords.Middleware;
 using CrossWords.Auth;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,16 +25,41 @@ builder.Services.AddCrosswordServices(
     builder.Environment.ContentRootPath);
 
 // Add authentication for admin endpoints
-builder.Services.AddAuthentication("AdminScheme")
-    .AddScheme<AuthenticationSchemeOptions, AdminAuthHandler>("AdminScheme", null);
+// Configure Azure AD or fallback to AdminScheme
+var azureAdConfigured = !string.IsNullOrEmpty(builder.Configuration["AzureAd:TenantId"]) &&
+                        !string.IsNullOrEmpty(builder.Configuration["AzureAd:ClientId"]);
+
+if (azureAdConfigured)
+{
+    // Use Azure AD authentication
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"))
+        .EnableTokenAcquisitionToCallDownstreamApi()
+        .AddInMemoryTokenCaches();
+}
+else
+{
+    // Fallback to custom AdminScheme
+    builder.Services.AddAuthentication("AdminScheme")
+        .AddScheme<AuthenticationSchemeOptions, AdminAuthHandler>("AdminScheme", null);
+}
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
     {
-        policy.AuthenticationSchemes.Add("AdminScheme");
-        policy.RequireAuthenticatedUser();
-        policy.RequireRole("Admin");
+        if (azureAdConfigured)
+        {
+            policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+            policy.RequireAuthenticatedUser();
+            policy.RequireRole("Admin"); // Users must have Admin role in Azure AD app roles
+        }
+        else
+        {
+            policy.AuthenticationSchemes.Add("AdminScheme");
+            policy.RequireAuthenticatedUser();
+            policy.RequireRole("Admin");
+        }
     });
 });
 
