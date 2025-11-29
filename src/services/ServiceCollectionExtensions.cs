@@ -26,9 +26,6 @@ public static class ServiceCollectionExtensions
         services.Configure<StorageConfiguration>(
             configuration.GetSection(StorageConfiguration.SectionName));
 
-        // Register business logic services
-        services.AddSingleton<ICrosswordService, CrosswordService>();
-
         // Register storage based on provider
         switch (storageConfig.Provider.ToLowerInvariant())
         {

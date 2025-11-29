@@ -33,4 +33,32 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader
             return Enumerable.Empty<CrosswordPuzzle>();
         }
     }
+
+    public IEnumerable<CrosswordPuzzle> GetPuzzles(PuzzleSizeCategory sizeCategory = PuzzleSizeCategory.Any, PuzzleLanguage? language = null)
+    {
+        var allPuzzles = LoadAllPuzzles();
+
+        // Filter by language if specified
+        if (language.HasValue)
+        {
+            allPuzzles = allPuzzles.Where(p => p.Language == language.Value);
+        }
+
+        // Filter by size category if not Any
+        if (sizeCategory != PuzzleSizeCategory.Any)
+        {
+            var (minSize, maxSize) = sizeCategory.GetSizeRange();
+            allPuzzles = allPuzzles.Where(p => 
+                p.Size.Rows >= minSize && p.Size.Rows <= maxSize &&
+                p.Size.Cols >= minSize && p.Size.Cols <= maxSize);
+        }
+
+        return allPuzzles;
+    }
+
+    public CrosswordPuzzle? GetPuzzle(string puzzleId)
+    {
+        var allPuzzles = LoadAllPuzzles();
+        return allPuzzles.FirstOrDefault(p => p.Id == puzzleId);
+    }
 }

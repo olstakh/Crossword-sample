@@ -133,6 +133,139 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
         return puzzles;
     }
 
+    public IEnumerable<CrosswordPuzzle> GetPuzzles(PuzzleSizeCategory sizeCategory = PuzzleSizeCategory.Any, PuzzleLanguage? language = null)
+    {
+        var puzzles = new List<CrosswordPuzzle>();
+
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            
+            // Build query with filters
+            var whereClauses = new List<string>();
+            
+            if (language.HasValue)
+            {
+                whereClauses.Add("Language = $language");
+            }
+            
+            if (sizeCategory != PuzzleSizeCategory.Any)
+            {
+                var (minSize, maxSize) = sizeCategory.GetSizeRange();
+                whereClauses.Add("(Rows BETWEEN $minSize AND $maxSize)");
+                whereClauses.Add("(Cols BETWEEN $minSize AND $maxSize)");
+            }
+            
+            var whereClause = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+            
+            command.CommandText = $@"
+                SELECT Id, Title, Language, Rows, Cols, GridJson
+                FROM Puzzles
+                {whereClause}
+                ORDER BY CreatedAt";
+            
+            if (language.HasValue)
+            {
+                command.Parameters.AddWithValue("$language", language.Value.ToString());
+            }
+            
+            if (sizeCategory != PuzzleSizeCategory.Any)
+            {
+                var (minSize, maxSize) = sizeCategory.GetSizeRange();
+                command.Parameters.AddWithValue("$minSize", minSize);
+                command.Parameters.AddWithValue("$maxSize", maxSize);
+            }
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var id = reader.GetString(0);
+                var title = reader.GetString(1);
+                var languageValue = Enum.Parse<PuzzleLanguage>(reader.GetString(2));
+                var rows = reader.GetInt32(3);
+                var cols = reader.GetInt32(4);
+                var gridJson = reader.GetString(5);
+
+                var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, s_jsonOptions);
+
+                if (grid != null)
+                {
+                    puzzles.Add(new CrosswordPuzzle
+                    {
+                        Id = id,
+                        Title = title,
+                        Language = languageValue,
+                        Size = new PuzzleSize { Rows = rows, Cols = cols },
+                        Grid = grid
+                    });
+                }
+            }
+
+            _logger.LogInformation("Loaded {Count} puzzles with filters: size={Size}, language={Language}", 
+                puzzles.Count, sizeCategory, language);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading filtered puzzles from SQLite database");
+            return Enumerable.Empty<CrosswordPuzzle>();
+        }
+
+        return puzzles;
+    }
+
+    public CrosswordPuzzle? GetPuzzle(string puzzleId)
+    {
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT Id, Title, Language, Rows, Cols, GridJson
+                FROM Puzzles
+                WHERE Id = $id";
+            
+            command.Parameters.AddWithValue("$id", puzzleId);
+
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                var id = reader.GetString(0);
+                var title = reader.GetString(1);
+                var language = Enum.Parse<PuzzleLanguage>(reader.GetString(2));
+                var rows = reader.GetInt32(3);
+                var cols = reader.GetInt32(4);
+                var gridJson = reader.GetString(5);
+
+                var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, s_jsonOptions);
+
+                if (grid != null)
+                {
+                    return new CrosswordPuzzle
+                    {
+                        Id = id,
+                        Title = title,
+                        Language = language,
+                        Size = new PuzzleSize { Rows = rows, Cols = cols },
+                        Grid = grid
+                    };
+                }
+            }
+
+            _logger.LogInformation("Puzzle {PuzzleId} not found", puzzleId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading puzzle {PuzzleId} from SQLite database", puzzleId);
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Add a new puzzle to the database
     /// </summary>

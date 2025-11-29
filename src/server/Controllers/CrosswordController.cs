@@ -10,12 +10,14 @@ namespace CrossWords.Controllers;
 [Route("api/[controller]")]
 public class CrosswordController : ControllerBase
 {
-    private readonly ICrosswordService _crosswordService;
+    private readonly IPuzzleRepositoryReader _puzzleRepositoryReader;
+    private readonly IUserProgressRepositoryReader _userProgressRepositoryReader;
     private readonly ILogger<CrosswordController> _logger;
 
-    public CrosswordController(ICrosswordService crosswordService, ILogger<CrosswordController> logger)
+    public CrosswordController(IPuzzleRepositoryReader puzzleRepositoryReader, IUserProgressRepositoryReader userProgressRepositoryReader, ILogger<CrosswordController> logger)
     {
-        _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
+        _puzzleRepositoryReader = puzzleRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
+        _userProgressRepositoryReader = userProgressRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -25,7 +27,11 @@ public class CrosswordController : ControllerBase
     [HttpGet("puzzles")]
     public ActionResult<List<string>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
     {
-        var puzzleIds = _crosswordService.GetAvailablePuzzleIds(language);
+        var puzzleIds = _puzzleRepositoryReader
+            .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
+            .Select(p => p.Id)
+            .ToList();
+
         return Ok(puzzleIds);
     }
 
@@ -35,7 +41,13 @@ public class CrosswordController : ControllerBase
     [HttpGet("puzzle/{id}")]
     public ActionResult<CrosswordPuzzle> GetPuzzle(string id)
     {
-        var puzzle = _crosswordService.GetPuzzle(id);
+        var puzzle = _puzzleRepositoryReader.GetPuzzle(id);
+
+        if (puzzle == null)
+        {
+            throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
+        }
+
         return Ok(puzzle);
     }
 
@@ -57,15 +69,19 @@ public class CrosswordController : ControllerBase
             SizeCategory = size,
             Language = language,
             UserId = userId
-        };
+        };     
         
-        var puzzle = _crosswordService.GetPuzzles(request).ToList();
-        if (puzzle.Count == 0)
+        var puzzles = _puzzleRepositoryReader
+            .GetPuzzles(sizeCategory: size, language: language)
+            .Where(p => userId == null || !_userProgressRepositoryReader.IsPuzzleSolved(userId, p.Id))
+            .ToList();
+
+        if (puzzles.Count == 0)
         {
             // Should this be a 404 instead?
             throw new PuzzleNotFoundException(
                 $"No puzzles found for language '{language}' and size '{size}', you probably solved all. Please try a different combination.");
         }
-        return Ok(puzzle[Random.Shared.Next(puzzle.Count)]);
+        return Ok(puzzles[Random.Shared.Next(puzzles.Count)]);
     }
 }

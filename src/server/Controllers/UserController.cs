@@ -12,18 +12,18 @@ public class UserController : ControllerBase
 {
     private readonly IUserProgressRepositoryReader _repositoryReader;
     private readonly IUserProgressRepositoryWriter _repositoryWriter;
-    private readonly ICrosswordService _crosswordService;
+    private readonly IPuzzleRepositoryReader _puzzleRepositoryReader;
     private readonly ILogger<UserController> _logger;
 
     public UserController(
         IUserProgressRepositoryReader repositoryReader,
         IUserProgressRepositoryWriter repositoryWriter,
-        ICrosswordService crosswordService,
+        IPuzzleRepositoryReader puzzleRepositoryReader,
         ILogger<UserController> logger)
     {
         _repositoryReader = repositoryReader ?? throw new ArgumentNullException(nameof(repositoryReader));
         _repositoryWriter = repositoryWriter ?? throw new ArgumentNullException(nameof(repositoryWriter));
-        _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
+        _puzzleRepositoryReader = puzzleRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,11 +39,10 @@ public class UserController : ControllerBase
         }
 
         var solvedIds = _repositoryReader.GetSolvedPuzzles(userId).ToList();
-        var availablePuzzleIds = _crosswordService.GetAvailablePuzzleIds();
         return Ok(new UserProgress
         {
             UserId = userId,
-            SolvedPuzzleIds = solvedIds.Intersect(availablePuzzleIds).ToList(),
+            SolvedPuzzleIds = solvedIds.ToList(),
             TotalPuzzlesSolved = solvedIds.Count,
             LastPlayed = DateTime.UtcNow
         });
@@ -79,7 +78,10 @@ public class UserController : ControllerBase
             return BadRequest(new { error = "User ID is required" });
         }
 
-        var allPuzzles = _crosswordService.GetAvailablePuzzleIds(language);
+        var allPuzzles = _puzzleRepositoryReader
+            .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
+            .Select(p => p.Id)
+            .ToList();
         var solvedPuzzles = _repositoryReader.GetSolvedPuzzles(userId).ToList();
 
         var unsolvedPuzzles = allPuzzles
