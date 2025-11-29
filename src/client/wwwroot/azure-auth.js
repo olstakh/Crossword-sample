@@ -198,3 +198,25 @@ async function authenticatedFetchJSON(url, options = {}) {
 window.authManager = authManager;
 window.authenticatedFetch = authenticatedFetch;
 window.authenticatedFetchJSON = authenticatedFetchJSON;
+
+// Setup logout button when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        // Check if user is logged in
+        if (authManager.isLoggedIn()) {
+            logoutBtn.style.display = 'inline-block';
+            const user = authManager.getCurrentUser();
+            if (user) {
+                logoutBtn.title = `Logged in as ${user.username}`;
+            }
+        }
+        
+        // Add logout handler
+        logoutBtn.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to logout?')) {
+                await authManager.logout();
+            }
+        });
+    }
+});
