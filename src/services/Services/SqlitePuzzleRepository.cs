@@ -52,6 +52,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                     Rows INTEGER NOT NULL,
                     Cols INTEGER NOT NULL,
                     GridJson TEXT NOT NULL,
+                    RevealedLettersJson TEXT,
                     CreatedAt TEXT NOT NULL
                 )";
             command.ExecuteNonQuery();
@@ -93,7 +94,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT Id, Title, Language, Rows, Cols, GridJson
+                SELECT Id, Title, Language, Rows, Cols, GridJson, RevealedLettersJson
                 FROM Puzzles
                 ORDER BY CreatedAt";
 
@@ -106,8 +107,12 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 var rows = reader.GetInt32(3);
                 var cols = reader.GetInt32(4);
                 var gridJson = reader.GetString(5);
+                var revealedLettersJson = reader.IsDBNull(6) ? null : reader.GetString(6);
 
                 var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, s_jsonOptions);
+                var revealedLetters = string.IsNullOrEmpty(revealedLettersJson) 
+                    ? null 
+                    : JsonSerializer.Deserialize<List<string>>(revealedLettersJson, s_jsonOptions);
 
                 if (grid != null)
                 {
@@ -117,7 +122,8 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                         Title = title,
                         Language = language,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
-                        Grid = grid
+                        Grid = grid,
+                        RevealedLetters = revealedLetters
                     });
                 }
             }
@@ -162,7 +168,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
             var whereClause = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
             
             command.CommandText = $@"
-                SELECT Id, Title, Language, Rows, Cols, GridJson
+                SELECT Id, Title, Language, Rows, Cols, GridJson, RevealedLettersJson
                 FROM Puzzles
                 {whereClause}
                 ORDER BY CreatedAt";
@@ -188,8 +194,12 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 var rows = reader.GetInt32(3);
                 var cols = reader.GetInt32(4);
                 var gridJson = reader.GetString(5);
+                var revealedLettersJson = reader.IsDBNull(6) ? null : reader.GetString(6);
 
                 var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, s_jsonOptions);
+                var revealedLetters = string.IsNullOrEmpty(revealedLettersJson) 
+                    ? null 
+                    : JsonSerializer.Deserialize<List<string>>(revealedLettersJson, s_jsonOptions);
 
                 if (grid != null)
                 {
@@ -199,7 +209,8 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                         Title = title,
                         Language = languageValue,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
-                        Grid = grid
+                        Grid = grid,
+                        RevealedLetters = revealedLetters
                     });
                 }
             }
@@ -225,7 +236,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT Id, Title, Language, Rows, Cols, GridJson
+                SELECT Id, Title, Language, Rows, Cols, GridJson, RevealedLettersJson
                 FROM Puzzles
                 WHERE Id = $id";
             
@@ -240,8 +251,12 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 var rows = reader.GetInt32(3);
                 var cols = reader.GetInt32(4);
                 var gridJson = reader.GetString(5);
+                var revealedLettersJson = reader.IsDBNull(6) ? null : reader.GetString(6);
 
                 var grid = JsonSerializer.Deserialize<List<List<string>>>(gridJson, s_jsonOptions);
+                var revealedLetters = string.IsNullOrEmpty(revealedLettersJson) 
+                    ? null 
+                    : JsonSerializer.Deserialize<List<string>>(revealedLettersJson, s_jsonOptions);
 
                 if (grid != null)
                 {
@@ -251,7 +266,8 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                         Title = title,
                         Language = language,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
-                        Grid = grid
+                        Grid = grid,
+                        RevealedLetters = revealedLetters
                     };
                 }
             }
@@ -278,8 +294,8 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                INSERT OR REPLACE INTO Puzzles (Id, Title, Language, Rows, Cols, GridJson, CreatedAt)
-                VALUES ($id, $title, $language, $rows, $cols, $gridJson, $createdAt)";
+                INSERT OR REPLACE INTO Puzzles (Id, Title, Language, Rows, Cols, GridJson, RevealedLettersJson, CreatedAt)
+                VALUES ($id, $title, $language, $rows, $cols, $gridJson, $revealedLettersJson, $createdAt)";
             
             command.Parameters.AddWithValue("$id", puzzle.Id);
             command.Parameters.AddWithValue("$title", puzzle.Title);
@@ -287,6 +303,12 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
             command.Parameters.AddWithValue("$rows", puzzle.Size.Rows);
             command.Parameters.AddWithValue("$cols", puzzle.Size.Cols);
             command.Parameters.AddWithValue("$gridJson", JsonSerializer.Serialize(puzzle.Grid, s_jsonOptions));
+            
+            var revealedLettersJson = puzzle.RevealedLetters != null && puzzle.RevealedLetters.Count > 0
+                ? JsonSerializer.Serialize(puzzle.RevealedLetters, s_jsonOptions)
+                : (object)DBNull.Value;
+            command.Parameters.AddWithValue("$revealedLettersJson", revealedLettersJson);
+            
             command.Parameters.AddWithValue("$createdAt", DateTime.UtcNow.ToString("O"));
 
             command.ExecuteNonQuery();

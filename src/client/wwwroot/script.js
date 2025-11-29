@@ -49,9 +49,17 @@ class CryptogramPuzzle {
         // Store the mapping (number -> letter)
         this.data.letterMapping = numberToLetter;
 
-        // Reveal 25% of letters initially (at least 2)
-        const numbersToReveal = Math.max(2, Math.floor(letters.length * 0.25));
-        this.data.initiallyRevealed = shuffledNumbers.slice(0, numbersToReveal);
+        // Determine which letters to reveal
+        if (this.data.revealedLetters && this.data.revealedLetters.length > 0) {
+            // Use revealed letters from server - convert letters to their corresponding numbers
+            this.data.initiallyRevealed = this.data.revealedLetters
+                .map(letter => letterToNumber[letter])
+                .filter(num => num !== undefined); // Filter out letters not in the puzzle
+        } else {
+            // Fallback: Reveal 25% of letters randomly (at least 2)
+            const numbersToReveal = Math.max(2, Math.floor(letters.length * 0.25));
+            this.data.initiallyRevealed = shuffledNumbers.slice(0, numbersToReveal);
+        }
     }
 
     shuffleArray(array, seed) {

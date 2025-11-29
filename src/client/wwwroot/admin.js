@@ -290,7 +290,7 @@ class PuzzleBuilder {
     }
     
     getPuzzleObject() {
-        return {
+        const puzzleObj = {
             Id: this.puzzleId,
             Title: this.puzzleTitle,
             Language: this.puzzleLanguage,
@@ -300,6 +300,20 @@ class PuzzleBuilder {
             },
             Grid: this.grid
         };
+        
+        // Parse revealed letters if provided
+        const revealedInput = document.getElementById('revealedLetters')?.value.trim();
+        if (revealedInput) {
+            // Split by whitespace and filter out empty strings
+            const letters = revealedInput.split(/\s+/).filter(l => l.length > 0);
+            
+            if (letters.length > 0) {
+                // Convert to uppercase for consistency
+                puzzleObj.RevealedLetters = letters.map(l => l.toUpperCase());
+            }
+        }
+        
+        return puzzleObj;
     }
     
     updateJsonPreview() {
