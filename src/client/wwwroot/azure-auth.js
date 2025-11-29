@@ -146,15 +146,36 @@ class AzureAuthManager {
 const authManager = new AzureAuthManager();
 
 async function authenticatedFetch(url, options = {}) {
-    // First attempt: Try without authentication
-    let response = await fetch(url, options);
+    // Try to get token if user is already logged in (avoids extra 401 request)
+    let token = null;
+    try {
+        if (authManager.msalInstance) {
+            await authManager.initialize();
+            if (authManager.isLoggedIn()) {
+                token = await authManager.getAccessToken();
+            }
+        }
+    } catch (preAuthError) {
+        console.log("Could not pre-fetch token, will try after 401:", preAuthError.message);
+    }
+    
+    // First attempt: Try with token if we have one, otherwise without
+    const firstAttemptOptions = token ? {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        }
+    } : options;
+    
+    let response = await fetch(url, firstAttemptOptions);
 
-    // If unauthorized, acquire token and retry
-    if (response.status === 401) {
+    // If unauthorized and we didn't have a token, acquire one and retry
+    if (response.status === 401 && !token) {
         console.log("Received 401, attempting Azure AD authentication...");
         
         try {
-            const token = await authManager.getAccessToken();
+            token = await authManager.getAccessToken();
             
             // Retry with Bearer token
             const authOptions = {
@@ -200,23 +221,30 @@ window.authenticatedFetch = authenticatedFetch;
 window.authenticatedFetchJSON = authenticatedFetchJSON;
 
 // Setup logout button when page loads
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        // Check if user is logged in
-        if (authManager.isLoggedIn()) {
-            logoutBtn.style.display = 'inline-block';
-            const user = authManager.getCurrentUser();
-            if (user) {
-                logoutBtn.title = `Logged in as ${user.username}`;
+        try {
+            // Wait for MSAL to initialize
+            await authManager.initialize();
+            
+            // Check if user is logged in
+            if (authManager.isLoggedIn()) {
+                logoutBtn.style.display = 'inline-block';
+                const user = authManager.getCurrentUser();
+                if (user) {
+                    logoutBtn.title = `Logged in as ${user.username}`;
+                }
             }
+            
+            // Add logout handler
+            logoutBtn.addEventListener('click', async () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    await authManager.logout();
+                }
+            });
+        } catch (error) {
+            console.log('Logout button setup skipped:', error.message);
         }
-        
-        // Add logout handler
-        logoutBtn.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to logout?')) {
-                await authManager.logout();
-            }
-        });
     }
 });
