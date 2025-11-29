@@ -207,6 +207,35 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         return solvedPuzzles;
     }
 
+    public IEnumerable<string> GetAllUsers()
+    {
+        var users = new List<string>();
+
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT DISTINCT UserId 
+                FROM UserProgress 
+                ORDER BY UserId";
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                users.Add(reader.GetString(0));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all users");
+        }
+
+        return users;
+    }
+
     public void Dispose()
     {
         // SQLite connections are disposed in using blocks

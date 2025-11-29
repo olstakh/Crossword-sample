@@ -60,6 +60,14 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
+    public IEnumerable<string> GetAllUsers()
+    {
+        lock (_lock)
+        {
+            return _userProgress.Keys.ToList();
+        }
+    }
+
     public void Clear()
     {
         lock (_lock)

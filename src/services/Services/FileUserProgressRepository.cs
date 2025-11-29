@@ -93,6 +93,14 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         }
     }
 
+    public IEnumerable<string> GetAllUsers()
+    {
+        lock (_lock)
+        {
+            return _userProgress.Keys.ToList();
+        }
+    }
+
     private void LoadFromFile()
     {
         try

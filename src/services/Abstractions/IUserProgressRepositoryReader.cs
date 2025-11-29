@@ -14,4 +14,9 @@ public interface IUserProgressRepositoryReader
     /// Get all solved puzzle IDs for a user
     /// </summary>
     HashSet<string> GetSolvedPuzzles(string userId);
+
+    /// <summary>
+    /// Get all user IDs that have progress records
+    /// </summary>
+    IEnumerable<string> GetAllUsers();
 }
