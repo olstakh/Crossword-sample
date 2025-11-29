@@ -870,11 +870,6 @@ async function loadPuzzle() {
                     // Check if this is all-solved case
                     if (error.isAllSolved) {
                         showAllPuzzlesSolvedMessage(error.message, size, language);
-                        // Update radio buttons to match
-                        const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
-                        if (radioButton) {
-                            radioButton.checked = true;
-                        }
                         return;
                     }
                     
@@ -885,7 +880,8 @@ async function loadPuzzle() {
                         try {
                             puzzleData = await fetchPuzzleBySize(size, 'English', seed);
                             if (puzzleData) {
-                                document.getElementById('languageSelector').value = 'English';
+                                const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
+                                if (englishRadio) englishRadio.checked = true;
                                 initializePuzzle(puzzleData, size);
                             }
                         } catch (fallbackError) {
@@ -902,11 +898,6 @@ async function loadPuzzle() {
                     return;
                 }
                 throw error;
-            }
-            // Update radio buttons to match
-            const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
-            if (radioButton) {
-                radioButton.checked = true;
             }
         } else if (puzzleId) {
             // Load by specific ID
@@ -938,7 +929,8 @@ async function loadPuzzle() {
                     if (language !== 'English') {
                         try {
                             puzzleData = await fetchPuzzleBySize('medium', 'English');
-                            document.getElementById('languageSelector').value = 'English';
+                            const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
+                            if (englishRadio) englishRadio.checked = true;
                         } catch (fallbackError) {
                             if (fallbackError.isAllSolved) {
                                 showAllPuzzlesSolvedMessage(fallbackError.message, 'medium', 'English');
@@ -964,17 +956,11 @@ async function loadPuzzle() {
 }
 
 function initializePuzzle(puzzleData, size = null) {
-    // Update language selector to match
-    const languageSelector = document.getElementById('languageSelector');
-    if (languageSelector && puzzleData.language) {
-        languageSelector.value = puzzleData.language;
-    }
-    
-    // Update radio buttons if size provided
-    if (size) {
-        const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
-        if (radioButton) {
-            radioButton.checked = true;
+    // Update language radio button to match
+    if (puzzleData.language) {
+        const languageRadio = document.querySelector(`input[name="puzzleLanguage"][value="${puzzleData.language}"]`);
+        if (languageRadio) {
+            languageRadio.checked = true;
         }
     }
     
@@ -1084,34 +1070,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         newPuzzleBtn.addEventListener('click', async (e) => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
-            const selectedRadio = document.querySelector('input[name="puzzleSize"]:checked');
-            const languageSelector = document.getElementById('languageSelector');
-            const selectedLanguage = languageSelector ? languageSelector.value : 'English';
-            console.log('Selected radio:', selectedRadio);
+            const selectedLanguageRadio = document.querySelector('input[name="puzzleLanguage"]:checked');
+            const selectedLanguage = selectedLanguageRadio ? selectedLanguageRadio.value : 'English';
             console.log('Selected language:', selectedLanguage);
-            if (selectedRadio) {
-                const selectedSize = selectedRadio.value;
-                console.log('Selected size:', selectedSize);
+            
+            // Always use 'any' for size
+            const selectedSize = 'any';
+            console.log('Selected size:', selectedSize);
+            
+            // Disable button and show loading state
+            newPuzzleBtn.disabled = true;
+            const originalText = newPuzzleBtn.textContent;
+            newPuzzleBtn.textContent = 'Loading...';
+            
+            try {
+                await loadNewPuzzle(selectedSize, selectedLanguage);
+            } catch (error) {
+                console.error('Error loading new puzzle:', error);
                 
-                // Disable button and show loading state
-                newPuzzleBtn.disabled = true;
-                const originalText = newPuzzleBtn.textContent;
-                newPuzzleBtn.textContent = 'Loading...';
-                
-                try {
-                    await loadNewPuzzle(selectedSize, selectedLanguage);
-                } catch (error) {
-                    console.error('Error loading new puzzle:', error);
-                    
-                    // Only show generic error if it's not the all-solved case (which loadNewPuzzle already handled)
-                    if (!(error.status === 404 && error.isAllSolved)) {
-                        showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
-                    }
-                } finally {
-                    // Re-enable button
-                    newPuzzleBtn.disabled = false;
-                    newPuzzleBtn.textContent = originalText;
+                // Only show generic error if it's not the all-solved case (which loadNewPuzzle already handled)
+                if (!(error.status === 404 && error.isAllSolved)) {
+                    showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
                 }
+            } finally {
+                // Re-enable button
+                newPuzzleBtn.disabled = false;
+                newPuzzleBtn.textContent = originalText;
             }
         });
     } else {
