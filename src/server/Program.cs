@@ -1,5 +1,7 @@
 using CrossWords.Services.Extensions;
 using CrossWords.Middleware;
+using CrossWords.Auth;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,20 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCrosswordServices(
     builder.Configuration, 
     builder.Environment.ContentRootPath);
+
+// Add authentication for admin endpoints
+builder.Services.AddAuthentication("AdminScheme")
+    .AddScheme<AuthenticationSchemeOptions, AdminAuthHandler>("AdminScheme", null);
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+    {
+        policy.AuthenticationSchemes.Add("AdminScheme");
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole("Admin");
+    });
+});
 
 // Add CORS for development
 builder.Services.AddCors(options =>
@@ -68,6 +84,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 
 app.UseCors("AllowAll");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

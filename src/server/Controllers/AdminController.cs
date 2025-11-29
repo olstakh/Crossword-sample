@@ -2,11 +2,13 @@ using CrossWords.Models;
 using CrossWords.Services.Models;
 using CrossWords.Services.Abstractions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CrossWords.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "AdminOnly")]
 public class AdminController : ControllerBase
 {
     private readonly IPuzzleRepositoryReader _puzzleRepository;

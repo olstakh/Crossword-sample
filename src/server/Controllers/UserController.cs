@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using CrossWords.Models;
 using CrossWords.Services.Models;
 using CrossWords.Services;
@@ -154,6 +155,7 @@ public class UserController : ControllerBase
     /// Get all users with progress records
     /// </summary>
     [HttpGet("all")]
+    [Authorize(Policy = "AdminOnly")]
     public ActionResult<IEnumerable<string>> GetAllUsers()
     {
         var users = _repositoryReader.GetAllUsers().ToList();
