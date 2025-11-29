@@ -66,6 +66,19 @@ class PuzzleBuilder {
             this.downloadJson();
         });
         
+        // Database actions
+        document.getElementById('downloadDbBtn').addEventListener('click', () => {
+            this.downloadDatabase();
+        });
+        
+        document.getElementById('uploadDbBtn').addEventListener('click', () => {
+            document.getElementById('uploadFileInput').click();
+        });
+        
+        document.getElementById('uploadFileInput').addEventListener('change', (e) => {
+            this.uploadDatabase(e.target.files[0]);
+        });
+        
         // Note: Keyboard handling is done in handleCellKeydown, not here
         // to avoid double-triggering arrow key navigation
     }
@@ -408,6 +421,117 @@ class PuzzleBuilder {
             btn.textContent = originalText;
             btn.classList.remove('success');
         }, 2000);
+    }
+    
+    async downloadDatabase() {
+        const btn = document.getElementById('downloadDbBtn');
+        const originalText = btn.textContent;
+        
+        try {
+            btn.textContent = '⏳ Downloading...';
+            btn.disabled = true;
+            
+            const response = await fetch('/api/admin/puzzles');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch puzzles: ${response.statusText}`);
+            }
+            
+            const puzzles = await response.json();
+            
+            // Create blob and download
+            const jsonString = JSON.stringify(puzzles, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `puzzles-database-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            btn.textContent = `✓ Downloaded ${puzzles.length} puzzles!`;
+            btn.classList.add('success');
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('success');
+                btn.disabled = false;
+            }, 2000);
+        } catch (error) {
+            console.error('Error downloading database:', error);
+            btn.textContent = '✗ Failed';
+            btn.classList.add('error');
+            alert(`Failed to download database: ${error.message}`);\n            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('error');
+                btn.disabled = false;
+            }, 2000);
+        }
+    }
+    
+    async uploadDatabase(file) {
+        if (!file) return;
+        
+        const btn = document.getElementById('uploadDbBtn');
+        const originalText = btn.textContent;
+        
+        try {
+            btn.textContent = '⏳ Uploading...';
+            btn.disabled = true;
+            
+            // Read the file
+            const fileContent = await file.text();
+            const puzzles = JSON.parse(fileContent);
+            
+            if (!Array.isArray(puzzles)) {
+                throw new Error('Invalid file format: expected an array of puzzles');
+            }
+            
+            // Upload to server
+            const response = await fetch('/api/admin/puzzles/upload-bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(puzzles)
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || `Upload failed: ${response.statusText}`);
+            }
+            
+            btn.textContent = `✓ Uploaded ${puzzles.length} puzzles!`;
+            btn.classList.add('success');
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('success');
+                btn.disabled = false;
+            }, 3000);
+            
+            // Reset the file input
+            document.getElementById('uploadFileInput').value = '';
+            
+        } catch (error) {
+            console.error('Error uploading database:', error);
+            btn.textContent = '✗ Failed';
+            btn.classList.add('error');
+            alert(`Failed to upload puzzles: ${error.message}`);
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('error');
+                btn.disabled = false;
+            }, 2000);
+            
+            // Reset the file input
+            document.getElementById('uploadFileInput').value = '';
+        }
     }
 }
 

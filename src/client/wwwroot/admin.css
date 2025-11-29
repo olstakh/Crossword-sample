@@ -63,6 +63,18 @@ h1 {
     color: #667eea;
 }
 
+.database-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.database-actions .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+}
+
 main {
     display: grid;
     grid-template-columns: 300px 1fr 400px;
