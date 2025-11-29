@@ -2,7 +2,7 @@ using CrossWords.Services.Models;
 
 namespace CrossWords.Services.Abstractions;
 
-public interface IPuzzleRepository
+public interface IPuzzleRepositoryReader
 {
     IEnumerable<CrosswordPuzzle> LoadAllPuzzles();
 }

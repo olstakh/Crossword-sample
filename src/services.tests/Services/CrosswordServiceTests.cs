@@ -12,7 +12,7 @@ namespace CrossWords.Services.Tests;
 public class CrosswordServiceTests
 {
     private readonly CrosswordService _service;
-    private readonly Mock<IPuzzleRepository> _mockPuzzleRepository = new(MockBehavior.Strict);
+    private readonly Mock<IPuzzleRepositoryReader> _mockPuzzleRepository = new(MockBehavior.Strict);
     private readonly Mock<IUserProgressRepository> _mockUserRepository = new(MockBehavior.Strict);
 
     public CrosswordServiceTests(ITestOutputHelper output)

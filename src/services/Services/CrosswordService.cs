@@ -14,7 +14,7 @@ internal class CrosswordService : ICrosswordService
     private IReadOnlyDictionary<string, CrosswordPuzzle> CachedPuzzles => _cachedPuzzles.Value;
 
     public CrosswordService(
-        IPuzzleRepository puzzleRepository,
+        IPuzzleRepositoryReader puzzleRepository,
         IUserProgressRepository userProgressRepository, 
         ILogger<CrosswordService> logger)
     {
@@ -56,7 +56,7 @@ internal class CrosswordService : ICrosswordService
             .ToList();
     }
 
-    private Dictionary<string, CrosswordPuzzle> InitializePuzzles(IPuzzleRepository puzzleRepository)
+    private Dictionary<string, CrosswordPuzzle> InitializePuzzles(IPuzzleRepositoryReader puzzleRepository)
     {
         try
         {

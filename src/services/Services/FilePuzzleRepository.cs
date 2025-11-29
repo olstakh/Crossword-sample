@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CrossWords.Services;
 
-internal class FilePuzzleRepository : IPuzzleRepository
+internal class FilePuzzleRepository : IPuzzleRepositoryReader
 {
     private readonly string _puzzlesFilePath;
     private readonly ILogger<FilePuzzleRepository> _logger;

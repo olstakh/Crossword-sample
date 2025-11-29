@@ -7,7 +7,7 @@ namespace CrossWords.Services.Testing;
 /// In-memory implementation of puzzle repository for testing
 /// Thread-safe for parallel test execution
 /// </summary>
-public class InMemoryPuzzleRepository : IPuzzleRepository, IPuzzleRepositoryPersister
+public class InMemoryPuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepositoryPersister
 {
     private readonly Dictionary<string, CrosswordPuzzle> _puzzles = new();
     private readonly object _lock = new();
