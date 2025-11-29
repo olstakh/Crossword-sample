@@ -10,8 +10,8 @@ internal class UserProgressService : IUserProgressService
 
     public UserProgressService(ICrosswordService crosswordService, IUserProgressRepository repository)
     {
-        _crosswordService = crosswordService;
-        _repository = repository;
+        _crosswordService = crosswordService ?? throw new ArgumentNullException(nameof(crosswordService));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
     public UserProgress GetUserProgress(string userId)
