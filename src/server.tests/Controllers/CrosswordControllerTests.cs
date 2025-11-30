@@ -49,76 +49,54 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetPuzzleBySize_WithInvalidSize_ReturnsBadRequest()
+    public async Task GetPuzzleBySize_Small_ReturnsProperlyGrid()
     {
         // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle?size=invalid", TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetPuzzleBySize_WithSeed_ReturnsSuccess()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle?size=medium&seed=test123", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/crossword/unsolvedpuzzle", TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.NotNull(puzzle);
-        Assert.NotEmpty(puzzle.Grid);
+        Assert.InRange(puzzle.Size.Rows, 5, 20);
+        Assert.InRange(puzzle.Size.Cols, 5, 20);
     }
 
     [Theory]
-    [InlineData(PuzzleLanguage.English)]
-    [InlineData(PuzzleLanguage.Ukrainian)]
-    public async Task GetPuzzleBySize_WithAvailableLanguage_ReturnsSuccess(PuzzleLanguage language)
+    [InlineData("en", PuzzleLanguage.English)]
+    [InlineData("uk", PuzzleLanguage.Ukrainian)]
+    public async Task GetPuzzle_WithAcceptLanguageHeader_ReturnsCorrectLanguage(string languageCode, PuzzleLanguage expectedLanguage)
     {
+        // Arrange
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/unsolvedpuzzle");
+        request.Headers.Add("Accept-Language", languageCode);
+
         // Act
-        var response = await _client.GetAsync($"/api/crossword/puzzle?size=medium&language={language}", TestContext.Current.CancellationToken);
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
-        
         Assert.NotNull(puzzle);
-        Assert.NotEmpty(puzzle.Grid);
+        Assert.Equal(expectedLanguage, puzzle.Language);
     }
 
     [Fact]
-    public async Task GetPuzzleBySize_WithUnavailableLanguage_ReturnsNotFound()
+    public async Task GetPuzzle_WithUnavailableLanguage_ReturnsNotFound()
     {
-        // Act - Request Russian puzzle (which doesn't exist in test data)
-        var response = await _client.GetAsync($"/api/crossword/puzzle?size=medium&language={PuzzleLanguage.Russian}", TestContext.Current.CancellationToken);
+        // Arrange - Request Russian puzzle (which doesn't exist in test data)
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/unsolvedpuzzle");
+        request.Headers.Add("Accept-Language", "ru");
+
+        // Act
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        var errorResponse = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(cancellationToken: TestContext.Current.CancellationToken);
+        var errorResponse = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(errorResponse);
         Assert.True(errorResponse.ContainsKey("error"));
-        Assert.Contains("Russian", errorResponse["error"]);
-    }
-
-    [Theory]
-    [InlineData(PuzzleSizeCategory.Small)]
-    [InlineData(PuzzleSizeCategory.Medium)]
-    [InlineData(PuzzleSizeCategory.Big)]
-    public async Task GetPuzzleBySize_Small_ReturnsProperlyGrid(PuzzleSizeCategory size)
-    {
-        // Act
-        var response = await _client.GetAsync($"/api/crossword/puzzle?size={size}", TestContext.Current.CancellationToken);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
-        
-        var (minSize, maxSize) = size.GetSizeRange();
-        Assert.NotNull(puzzle);
-        Assert.InRange(puzzle.Size.Rows, minSize, maxSize);
-        Assert.InRange(puzzle.Size.Cols, minSize, maxSize);
     }
 
     [Fact]
@@ -167,8 +145,9 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
     {
         // Arrange
         var userId = "test_user_" + Guid.NewGuid();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/puzzle?size=medium&language=English");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/unsolvedpuzzle");
         request.Headers.Add("X-User-Id", userId);
+        request.Headers.Add("Accept-Language", "en");
 
         // Act
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -198,8 +177,8 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
     public async Task GetPuzzleBySize_ReturnsConsistentPuzzleWithSeed()
     {
         // Act - Request same puzzle twice with same seed
-        var response1 = await _client.GetAsync("/api/crossword/puzzle?size=medium&seed=test123", TestContext.Current.CancellationToken);
-        var response2 = await _client.GetAsync("/api/crossword/puzzle?size=medium&seed=test123", TestContext.Current.CancellationToken);
+        var response1 = await _client.GetAsync("/api/crossword/unsolvedpuzzle?seed=test123", TestContext.Current.CancellationToken);
+        var response2 = await _client.GetAsync("/api/crossword/unsolvedpuzzle?seed=test123", TestContext.Current.CancellationToken);
 
         // Assert
         response1.EnsureSuccessStatusCode();
@@ -213,29 +192,28 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(puzzle2);
     }
 
-    [Theory]
-    [InlineData(PuzzleSizeCategory.Small, 5, 8)]
-    [InlineData(PuzzleSizeCategory.Medium, 9, 14)]
-    [InlineData(PuzzleSizeCategory.Big, 15, 20)]
-    public async Task GetPuzzleBySize_ReturnsCorrectSizeRange(PuzzleSizeCategory size, int minExpected, int maxExpected)
+    [Fact]
+    public async Task GetPuzzleBySize_ReturnsCorrectSizeRange()
     {
         // Act
-        var response = await _client.GetAsync($"/api/crossword/puzzle?size={size}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/crossword/unsolvedpuzzle", TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.NotNull(puzzle);
-        Assert.InRange(puzzle.Size.Rows, minExpected, maxExpected);
-        Assert.InRange(puzzle.Size.Cols, minExpected, maxExpected);
+        Assert.InRange(puzzle.Size.Rows, 5, 20);
+        Assert.InRange(puzzle.Size.Cols, 5, 20);
     }
 
     [Fact]
     public async Task GetPuzzle_WithoutSizeParameter_ReturnsAnySize()
     {
         // Act - Don't specify size, should default to Any
-        var response = await _client.GetAsync("/api/crossword/puzzle?language=English", TestContext.Current.CancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/unsolvedpuzzle");
+        request.Headers.Add("Accept-Language", "en");
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
