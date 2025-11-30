@@ -11,6 +11,34 @@ class LocaleManager {
         
         this.currentLocale = this.getStoredLocale() || 'English';
         this.listeners = [];
+        this.translations = {};
+        this.loadTranslations();
+    }
+
+    /**
+     * Load translations for current locale
+     */
+    async loadTranslations() {
+        const localeCode = this.getAcceptLanguageHeader();
+        try {
+            const response = await fetch(`/locales/${localeCode}.json`);
+            if (response.ok) {
+                this.translations = await response.json();
+            } else {
+                console.warn(`Failed to load translations for ${localeCode}, using defaults`);
+                this.translations = {};
+            }
+        } catch (error) {
+            console.error('Error loading translations:', error);
+            this.translations = {};
+        }
+    }
+
+    /**
+     * Get translated string by key
+     */
+    t(key, defaultValue = '') {
+        return this.translations[key] || defaultValue || key;
     }
 
     /**
@@ -134,6 +162,27 @@ class LocaleManager {
 
             container.appendChild(button);
         });
+        
+        // Apply translations to UI elements
+        this.applyTranslations();
+    }
+    
+    /**
+     * Apply translations to all elements with data-i18n attribute
+     */
+    applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translated = this.t(key);
+            
+            // For buttons and some elements, keep emoji/symbols
+            if (el.textContent.match(/^[😊💪🎉🏆🎊⌫]/)) {
+                const emoji = el.textContent.match(/^[😊💪🎉🏆🎊⌫]+/)[0];
+                el.textContent = emoji + ' ' + translated;
+            } else {
+                el.textContent = translated;
+            }
+        });
     }
 
     /**
@@ -163,9 +212,13 @@ const localeManager = new LocaleManager();
 
 // Initialize UI when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        await localeManager.loadTranslations();
         localeManager.initializeUI();
     });
 } else {
-    localeManager.initializeUI();
+    (async () => {
+        await localeManager.loadTranslations();
+        localeManager.initializeUI();
+    })();
 }
