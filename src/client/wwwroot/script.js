@@ -652,6 +652,7 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
     const gridElement = document.getElementById('crossword-grid');
     const alphabetElement = document.getElementById('alphabet-row');
     const puzzleSection = document.querySelector('.puzzle-section');
+    const letterPickerPanel = document.getElementById('letterPickerPanel');
     
     if (gridElement) {
         gridElement.innerHTML = `
@@ -675,6 +676,11 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
     
     if (alphabetElement) {
         alphabetElement.innerHTML = '';
+    }
+    
+    // Hide letter picker panel when no puzzle to solve
+    if (letterPickerPanel) {
+        letterPickerPanel.style.display = 'none';
     }
     
     // Fade in the message
@@ -912,6 +918,12 @@ function initializePuzzle(puzzleData, size = null) {
         const alphabetElement = document.getElementById('alphabet-row');
         if (gridElement) gridElement.innerHTML = '';
         if (alphabetElement) alphabetElement.innerHTML = '';
+    }
+    
+    // Show letter picker panel when puzzle is loaded
+    const letterPickerPanel = document.getElementById('letterPickerPanel');
+    if (letterPickerPanel) {
+        letterPickerPanel.style.display = 'block';
     }
     
     currentPuzzle = new CryptogramPuzzle(puzzleData);
