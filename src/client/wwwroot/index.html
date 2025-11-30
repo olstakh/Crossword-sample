@@ -14,14 +14,6 @@
                 <div id="userStats" class="user-stats"></div>
             </div>
             <div class="toggles-container">
-                <div class="input-mode-toggle">
-                    <label class="toggle-label">
-                        <span class="toggle-text">⌨️ Keyboard</span>
-                        <input type="checkbox" id="inputModeToggle" class="toggle-checkbox">
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-text">🖱️ Mouse</span>
-                    </label>
-                </div>
                 <div class="difficulty-mode-toggle">
                     <label class="toggle-label">
                         <span class="toggle-text">😊 Easy</span>
@@ -44,27 +36,18 @@
                 
                 <div class="selector-group">
                     <label class="selector-label">Language</label>
-                    <select id="languageSelector" class="language-dropdown">
-                        <option value="English" selected>English</option>
-                        <option value="Russian">Русский (Russian)</option>
-                        <option value="Ukrainian">Українська (Ukrainian)</option>
-                    </select>
-                </div>
-                
-                <div class="selector-group">
-                    <label class="selector-label">Size</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="puzzleSize" value="small">
-                            <span>Small</span>
+                            <input type="radio" name="puzzleLanguage" value="English" checked>
+                            <span>English</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="puzzleSize" value="medium" checked>
-                            <span>Medium</span>
+                            <input type="radio" name="puzzleLanguage" value="Russian">
+                            <span>Русский</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="puzzleSize" value="big">
-                            <span>Big</span>
+                            <input type="radio" name="puzzleLanguage" value="Ukrainian">
+                            <span>Українська</span>
                         </label>
                     </div>
                 </div>
@@ -78,6 +61,11 @@
                     <div id="alphabet-row"></div>
                 </div>
             </div>
+            <aside class="letter-picker-panel" id="letterPickerPanel">
+                <h3>Select Letter</h3>
+                <div id="letterPickerGrid" class="letter-picker-grid"></div>
+                <button id="letterPickerClear" class="letter-picker-clear-btn">⌫ Clear</button>
+            </aside>
         </main>
     </div>
     

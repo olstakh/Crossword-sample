@@ -6,7 +6,7 @@ namespace CrossWords.Services.Testing;
 /// In-memory implementation of user progress repository for testing
 /// Thread-safe for parallel test execution
 /// </summary>
-public class InMemoryUserProgressRepository : IUserProgressRepository
+public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter
 {
     private readonly Dictionary<string, HashSet<string>> _userProgress = new();
     private readonly object _lock = new();
@@ -32,6 +32,22 @@ public class InMemoryUserProgressRepository : IUserProgressRepository
         }
     }
 
+    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    {
+        lock (_lock)
+        {
+            if (!_userProgress.TryGetValue(userId, out var solvedPuzzles))
+            {
+                return;
+            }
+
+            foreach (var puzzleId in puzzleIds)
+            {
+                solvedPuzzles.Remove(puzzleId);
+            }
+        }
+    }
+
     public HashSet<string> GetSolvedPuzzles(string userId)
     {
         lock (_lock)
@@ -41,6 +57,14 @@ public class InMemoryUserProgressRepository : IUserProgressRepository
                 return new HashSet<string>(solvedPuzzles);
             }
             return new HashSet<string>();
+        }
+    }
+
+    public IEnumerable<string> GetAllUsers()
+    {
+        lock (_lock)
+        {
+            return _userProgress.Keys.ToList();
         }
     }
 

@@ -8,7 +8,7 @@ namespace CrossWords.Services;
 /// SQLite-based implementation of user progress repository
 /// Stores data in a single SQLite database file
 /// </summary>
-internal class SqliteUserProgressRepository : IUserProgressRepository, IDisposable
+internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter, IDisposable
 {
     private readonly string _connectionString;
     private readonly ILogger<SqliteUserProgressRepository> _logger;
@@ -132,6 +132,50 @@ internal class SqliteUserProgressRepository : IUserProgressRepository, IDisposab
         }
     }
 
+    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    {
+        var puzzleIdList = puzzleIds.ToList();
+        if (puzzleIdList.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            
+            command.CommandText = @"
+                DELETE FROM UserProgress 
+                WHERE UserId = $userId AND PuzzleId = $puzzleId";
+            
+            var userIdParam = command.Parameters.Add("$userId", SqliteType.Text);
+            var puzzleIdParam = command.Parameters.Add("$puzzleId", SqliteType.Text);
+            
+            userIdParam.Value = userId;
+            
+            int totalDeleted = 0;
+            foreach (var puzzleId in puzzleIdList)
+            {
+                puzzleIdParam.Value = puzzleId;
+                totalDeleted += command.ExecuteNonQuery();
+            }
+            
+            transaction.Commit();
+            
+            _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", totalDeleted, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error forgetting puzzles for user {UserId}", userId);
+            throw;
+        }
+    }
+
     public HashSet<string> GetSolvedPuzzles(string userId)
     {
         var solvedPuzzles = new HashSet<string>();
@@ -161,6 +205,35 @@ internal class SqliteUserProgressRepository : IUserProgressRepository, IDisposab
         }
 
         return solvedPuzzles;
+    }
+
+    public IEnumerable<string> GetAllUsers()
+    {
+        var users = new List<string>();
+
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT DISTINCT UserId 
+                FROM UserProgress 
+                ORDER BY UserId";
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                users.Add(reader.GetString(0));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all users");
+        }
+
+        return users;
     }
 
     public void Dispose()

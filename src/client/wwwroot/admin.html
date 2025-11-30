@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cryptogram Puzzle Builder - Admin Panel</title>
     <link rel="stylesheet" href="admin.css">
+    <!-- Azure AD Authentication -->
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -14,8 +16,17 @@
             <nav class="admin-nav">
                 <a href="admin.html" class="nav-link active">Create Puzzles</a>
                 <a href="delete.html" class="nav-link">Manage Puzzles</a>
+                <a href="users.html" class="nav-link">Manage Users</a>
                 <a href="index.html" class="nav-link">Play Puzzles</a>
             </nav>
+            <div style="text-align: right; margin-top: 10px;">
+                <button id="logoutBtn" class="btn-secondary" style="display: none;">🚪 Logout</button>
+            </div>
+            <div class="database-actions">
+                <button id="downloadDbBtn" class="btn-secondary">📥 Download Database</button>
+                <button id="uploadDbBtn" class="btn-secondary">📤 Upload Puzzles</button>
+                <input type="file" id="uploadFileInput" accept=".json" style="display: none;">
+            </div>
         </header>
         
         <main>
@@ -49,6 +60,14 @@
                 <div class="form-group">
                     <label for="gridCols">Number of Columns:</label>
                     <input type="number" id="gridCols" min="3" max="25" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="revealedLetters">Revealed Letters (optional):</label>
+                    <input type="text" id="revealedLetters" placeholder="e.g., A B C" title="Space-separated letters to reveal. Leave empty for random 25% reveal.">
+                    <small style="display: block; margin-top: 5px; color: #666;">
+                        Space-separated letters (e.g., "A B C" or "А Б В"). All instances of these letters will be revealed. Leave empty for automatic 25% random reveal.
+                    </small>
                 </div>
                 
                 <button id="createGridBtn" class="btn-primary">Create Grid</button>
@@ -108,6 +127,7 @@
         </footer>
     </div>
     
+    <script src="azure-auth.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

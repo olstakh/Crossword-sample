@@ -26,10 +26,6 @@ public static class ServiceCollectionExtensions
         services.Configure<StorageConfiguration>(
             configuration.GetSection(StorageConfiguration.SectionName));
 
-        // Register business logic services
-        services.AddSingleton<ICrosswordService, CrosswordService>();
-        services.AddSingleton<IUserProgressService, UserProgressService>();
-
         // Register storage based on provider
         switch (storageConfig.Provider.ToLowerInvariant())
         {
@@ -74,9 +70,10 @@ public static class ServiceCollectionExtensions
     /// </summary>
     internal static IServiceCollection AddInMemoryRepositories(this IServiceCollection services)
     {
-        services.AddSingleton<IPuzzleRepository, Testing.InMemoryPuzzleRepository>();
-        services.AddSingleton<IPuzzleRepositoryPersister, Testing.InMemoryPuzzleRepository>();
-        services.AddSingleton<IUserProgressRepository, Testing.InMemoryUserProgressRepository>();
+        services.AddSingleton<IPuzzleRepositoryReader, Testing.InMemoryPuzzleRepository>();
+        services.AddSingleton<IPuzzleRepositoryWriter, Testing.InMemoryPuzzleRepository>();
+        services.AddSingleton<IUserProgressRepositoryReader, Testing.InMemoryUserProgressRepository>();
+        services.AddSingleton<IUserProgressRepositoryWriter, Testing.InMemoryUserProgressRepository>();
         return services;
     }
 
@@ -90,8 +87,8 @@ public static class ServiceCollectionExtensions
             var logger = sp.GetRequiredService<ILogger<SqlitePuzzleRepository>>();
             return new SqlitePuzzleRepository(dbFilePath, logger);
         });
-        services.AddSingleton<IPuzzleRepository>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
-        services.AddSingleton<IPuzzleRepositoryPersister>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
+        services.AddSingleton<IPuzzleRepositoryReader>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
+        services.AddSingleton<IPuzzleRepositoryWriter>(sp => sp.GetRequiredService<SqlitePuzzleRepository>());
         return services;
     }
 
@@ -100,11 +97,15 @@ public static class ServiceCollectionExtensions
     /// </summary>
     internal static IServiceCollection AddSqliteUserProgressRepository(this IServiceCollection services, string dbFilePath)
     {
-        services.AddSingleton<IUserProgressRepository>(sp =>
+        services.AddSingleton<SqliteUserProgressRepository>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<SqliteUserProgressRepository>>();
             return new SqliteUserProgressRepository(dbFilePath, logger);
         });
+
+        services.AddSingleton<IUserProgressRepositoryReader>(sp => sp.GetRequiredService<SqliteUserProgressRepository>());
+        services.AddSingleton<IUserProgressRepositoryWriter>(sp => sp.GetRequiredService<SqliteUserProgressRepository>());
+        
         return services;
     }
 

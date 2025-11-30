@@ -2,20 +2,22 @@ using CrossWords.Models;
 using CrossWords.Services.Models;
 using CrossWords.Services.Abstractions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CrossWords.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "AdminOnly")]
 public class AdminController : ControllerBase
 {
-    private readonly IPuzzleRepository _puzzleRepository;
-    private readonly IPuzzleRepositoryPersister _puzzlePersister;
+    private readonly IPuzzleRepositoryReader _puzzleRepository;
+    private readonly IPuzzleRepositoryWriter _puzzlePersister;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
-        IPuzzleRepository puzzleRepository, 
-        IPuzzleRepositoryPersister puzzlePersister,
+        IPuzzleRepositoryReader puzzleRepository, 
+        IPuzzleRepositoryWriter puzzlePersister,
         ILogger<AdminController> logger)
     {
         _puzzleRepository = puzzleRepository;
@@ -99,5 +101,56 @@ public class AdminController : ControllerBase
     {
         var puzzles = _puzzleRepository.LoadAllPuzzles();
         return Ok(puzzles);
+    }
+
+    /// <summary>
+    /// Upload multiple puzzles in bulk
+    /// </summary>
+    [HttpPost("puzzles/upload-bulk")]
+    public IActionResult UploadPuzzles([FromBody] List<CrosswordPuzzle> puzzles)
+    {
+        if (puzzles == null || puzzles.Count == 0)
+        {
+            return BadRequest(new { error = "At least one puzzle is required" });
+        }
+
+        var addedIds = new List<string>();
+        var errors = new List<string>();
+
+        foreach (var puzzle in puzzles)
+        {
+            try
+            {
+                puzzle.Validate();
+                addedIds.Add(puzzle.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Validation error for puzzle {PuzzleId}", puzzle.Id);
+                errors.Add($"{puzzle.Id}: {ex.Message}");
+            }
+        }
+
+        if (errors.Any())
+        {
+            return BadRequest(new { error = "Some puzzles failed validation", errors });
+        }
+
+        try
+        {
+            _puzzlePersister.AddPuzzles(puzzles);
+            _logger.LogInformation("Successfully uploaded {Count} puzzles via admin API", puzzles.Count);
+            
+            return Ok(new 
+            { 
+                message = $"Successfully uploaded {puzzles.Count} puzzle(s)", 
+                addedIds 
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading puzzles in bulk");
+            return StatusCode(500, new { error = "Failed to upload puzzles", message = ex.Message });
+        }
     }
 }

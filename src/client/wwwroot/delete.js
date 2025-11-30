@@ -32,7 +32,7 @@ async function loadPuzzles() {
     try {
         showMessage('Loading puzzles...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/puzzles`);
+        const response = await authenticatedFetch(`${API_BASE_URL}/puzzles`);
         
         if (!response.ok) {
             throw new Error(`Failed to load puzzles: ${response.statusText}`);
@@ -146,7 +146,7 @@ async function handleDeleteSingle(event) {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/puzzles/${puzzleId}`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/puzzles/${puzzleId}`, {
             method: 'DELETE'
         });
         
@@ -178,7 +178,7 @@ async function handleDeleteSelected() {
         deleteSelectedBtn.disabled = true;
         showMessage(`Deleting ${count} puzzle${count > 1 ? 's' : ''}...`, 'info');
         
-        const response = await fetch(`${API_BASE_URL}/puzzles/delete-bulk`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/puzzles/delete-bulk`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

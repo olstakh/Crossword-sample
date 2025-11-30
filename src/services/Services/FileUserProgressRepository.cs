@@ -8,7 +8,7 @@ namespace CrossWords.Services;
 /// File-based implementation of user progress repository
 /// Stores data as JSON: { "userId": ["puzzle1", "puzzle2", ...] }
 /// </summary>
-internal class FileUserProgressRepository : IUserProgressRepository
+internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter
 {
     private readonly string _filePath;
     private readonly ILogger<FileUserProgressRepository> _logger;
@@ -57,6 +57,32 @@ internal class FileUserProgressRepository : IUserProgressRepository
         }
     }
 
+    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    {
+        lock (_lock)
+        {
+            if (!_userProgress.ContainsKey(userId))
+            {
+                return;
+            }
+
+            int removedCount = 0;
+            foreach (var puzzleId in puzzleIds)
+            {
+                if (_userProgress[userId].Remove(puzzleId))
+                {
+                    removedCount++;
+                }
+            }
+
+            if (removedCount > 0)
+            {
+                _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", removedCount, userId);
+                SaveToFile();
+            }
+        }
+    }
+
     public HashSet<string> GetSolvedPuzzles(string userId)
     {
         lock (_lock)
@@ -64,6 +90,14 @@ internal class FileUserProgressRepository : IUserProgressRepository
             return _userProgress.ContainsKey(userId) 
                 ? new HashSet<string>(_userProgress[userId]) 
                 : new HashSet<string>();
+        }
+    }
+
+    public IEnumerable<string> GetAllUsers()
+    {
+        lock (_lock)
+        {
+            return _userProgress.Keys.ToList();
         }
     }
 

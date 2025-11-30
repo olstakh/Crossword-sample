@@ -94,14 +94,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             };
 
             // Remove the default in-memory repository registrations
-            services.RemoveAll<IPuzzleRepository>();
-            services.RemoveAll<IPuzzleRepositoryPersister>();
+            services.RemoveAll<IPuzzleRepositoryReader>();
+            services.RemoveAll<IPuzzleRepositoryWriter>();
 
             // Register with initial puzzles
-            services.AddSingleton<IPuzzleRepository>(sp => 
+            services.AddSingleton<IPuzzleRepositoryReader>(sp => 
                 new InMemoryPuzzleRepository(testPuzzles));
-            services.AddSingleton<IPuzzleRepositoryPersister>(sp => 
-                (InMemoryPuzzleRepository)sp.GetRequiredService<IPuzzleRepository>());
+            services.AddSingleton<IPuzzleRepositoryWriter>(sp => 
+                (InMemoryPuzzleRepository)sp.GetRequiredService<IPuzzleRepositoryReader>());
         });
     }
 }

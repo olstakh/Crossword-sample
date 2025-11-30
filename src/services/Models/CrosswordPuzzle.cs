@@ -10,6 +10,12 @@ public class CrosswordPuzzle
     public PuzzleLanguage Language { get; init; } = PuzzleLanguage.English;
     public PuzzleSize Size { get; init; } = new();
     public List<List<string>> Grid { get; init; } = new(); // Letters in the solution, "#" for black cells
+    
+    /// <summary>
+    /// Optional list of letters to reveal. Each letter that appears in this list will be revealed 
+    /// wherever it appears in the grid. If null or empty, client will reveal random 25% of letters.
+    /// </summary>
+    public List<string>? RevealedLetters { get; init; } = null;
 
     /// <exception cref="PuzzleValidationException">Thrown when the puzzle data is invalid.</exception>
     public void Validate()

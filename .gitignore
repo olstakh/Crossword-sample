@@ -59,6 +59,7 @@ nunit-*.xml
 # SARIF
 *.sarif
 # User data (should not be committed)
+src/server/Data/puzzles.db
 src/server/Data/user-progress.json
 src/server/Data/user-progress.db
 src/server/Data/user-progress.db-shm

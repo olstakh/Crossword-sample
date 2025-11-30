@@ -8,8 +8,7 @@ class CryptogramPuzzle {
         this.currentCell = null;
         this.userAnswers = {}; // number -> letter mapping from user
         this.language = data.language || 'English';
-        this.inputMode = localStorage.getItem('inputMode') || 'keyboard';
-        this.difficultyMode = localStorage.getItem('difficultyMode') || 'easy';
+        this.difficultyMode = localStorage.getItem('difficultyMode') || 'hard';
         
         // Generate numbers and letter mapping from grid
         this.generateCryptogramData();
@@ -49,9 +48,17 @@ class CryptogramPuzzle {
         // Store the mapping (number -> letter)
         this.data.letterMapping = numberToLetter;
 
-        // Reveal 25% of letters initially (at least 2)
-        const numbersToReveal = Math.max(2, Math.floor(letters.length * 0.25));
-        this.data.initiallyRevealed = shuffledNumbers.slice(0, numbersToReveal);
+        // Determine which letters to reveal
+        if (this.data.revealedLetters && this.data.revealedLetters.length > 0) {
+            // Use revealed letters from server - convert letters to their corresponding numbers
+            this.data.initiallyRevealed = this.data.revealedLetters
+                .map(letter => letterToNumber[letter])
+                .filter(num => num !== undefined); // Filter out letters not in the puzzle
+        } else {
+            // Fallback: Reveal 25% of letters randomly (at least 2)
+            const numbersToReveal = Math.max(2, Math.floor(letters.length * 0.25));
+            this.data.initiallyRevealed = shuffledNumbers.slice(0, numbersToReveal);
+        }
     }
 
     shuffleArray(array, seed) {
@@ -82,7 +89,7 @@ class CryptogramPuzzle {
         this.renderGrid();
         this.renderAlphabetDecoder();
         this.setupEventListeners();
-        this.updateInputMode();
+        this.initializeLetterPicker();
         
         // Initialize with revealed letters
         if (this.data.initiallyRevealed) {
@@ -139,11 +146,13 @@ class CryptogramPuzzle {
         input.maxLength = 1;
         input.dataset.answer = cellValue;
         input.dataset.number = cellNumber;
+        input.readOnly = true; // Always readonly, we handle input via keydown
+        input.style.cursor = 'pointer';
         
         // Check if this letter is initially revealed
         if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(cellNumber)) {
             input.value = cellValue;
-            input.readOnly = true;
+            input.setAttribute('data-originally-readonly', 'true');
             cellDiv.classList.add('revealed');
         }
 
@@ -203,61 +212,56 @@ class CryptogramPuzzle {
             const input = cell.querySelector('input');
             if (!input) return;
 
-            // Store original readonly state
-            if (!input.hasAttribute('data-originally-readonly')) {
-                input.setAttribute('data-originally-readonly', input.readOnly);
-            }
-
-            // Handle click events for mouse mode
+            // Handle click events - select cell for both keyboard and letter picker
             cell.addEventListener('click', (e) => {
                 const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
-                if (this.inputMode === 'mouse' && !originallyReadonly) {
+                if (!originallyReadonly) {
                     this.selectCell(cell);
-                    this.showLetterPopup(input);
+                    input.focus();
                 }
             });
 
-            input.addEventListener('focus', (e) => {
-                if (this.inputMode === 'keyboard') {
-                    this.selectCell(cell);
-                }
-            });
-
-            input.addEventListener('input', (e) => {
-                if (this.inputMode === 'keyboard') {
-                    let value = e.target.value.toUpperCase();
-                    
-                    // Allow letters from the current language's alphabet
-                    const alphabet = this.getAlphabetForLanguage().join('');
-                    const regex = new RegExp(`[^${alphabet}]`, 'g');
-                    value = value.replace(regex, '');
-                    e.target.value = value;
-
-                    if (value) {
-                        const number = parseInt(e.target.dataset.number);
-                        if (this.difficultyMode === 'easy') {
-                            // Easy mode: update all cells with same number
-                            this.userAnswers[number] = value;
-                            this.updateAllCells();
-                        }
-                        // Hard mode: cell already has value from input event
-                        this.checkNumberComplete(number);
-                        this.moveToNextCell();
-                    } else {
-                        const number = parseInt(e.target.dataset.number);
-                        if (this.difficultyMode === 'easy') {
-                            delete this.userAnswers[number];
-                            this.updateAllCells();
-                        }
-                        // Hard mode: cell already cleared from input event
-                        this.updateAlphabetDecoder();
-                    }
-                }
-            });
-
+            // Handle keyboard input when cell is focused
             input.addEventListener('keydown', (e) => {
-                if (this.inputMode === 'keyboard') {
-                    this.handleKeydown(e);
+                const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+                if (originallyReadonly) return;
+
+                // First handle arrow keys and backspace
+                this.handleKeydown(e);
+
+                // Handle letter input
+                const alphabet = this.getAlphabetForLanguage();
+                const key = e.key.toUpperCase();
+                
+                if (alphabet.includes(key)) {
+                    e.preventDefault();
+                    const number = parseInt(input.dataset.number);
+                    
+                    if (this.difficultyMode === 'easy') {
+                        // Easy mode: update all cells with same number
+                        this.userAnswers[number] = key;
+                        this.updateAllCells();
+                    } else {
+                        // Hard mode: only update current cell
+                        input.value = key;
+                    }
+                    
+                    this.checkNumberComplete(number);
+                    this.moveToNextCell();
+                } else if (e.key === 'Delete' || (e.key === 'Backspace' && input.value)) {
+                    e.preventDefault();
+                    const number = parseInt(input.dataset.number);
+                    
+                    if (this.difficultyMode === 'easy') {
+                        // Easy mode: clear all cells with same number
+                        delete this.userAnswers[number];
+                        this.updateAllCells();
+                    } else {
+                        // Hard mode: only clear current cell
+                        input.value = '';
+                    }
+                    
+                    this.updateAlphabetDecoder();
                 }
             });
         });
@@ -269,38 +273,29 @@ class CryptogramPuzzle {
         cell.classList.add('selected');
     }
 
-    showLetterPopup(input) {
-        // Remove any existing popup
-        const existingPopup = document.querySelector('.letter-popup-overlay');
-        if (existingPopup) {
-            existingPopup.remove();
-        }
+    initializeLetterPicker() {
+        const letterPickerGrid = document.getElementById('letterPickerGrid');
+        const clearButton = document.getElementById('letterPickerClear');
+        
+        if (!letterPickerGrid) return;
 
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'letter-popup-overlay';
-
-        // Create popup
-        const popup = document.createElement('div');
-        popup.className = 'letter-popup';
-
-        // Add title
-        const title = document.createElement('h3');
-        title.textContent = 'Select a Letter';
-        title.className = 'letter-popup-title';
-        popup.appendChild(title);
-
-        // Create alphabet grid
-        const alphabetGrid = document.createElement('div');
-        alphabetGrid.className = 'letter-popup-grid';
+        // Clear existing buttons
+        letterPickerGrid.innerHTML = '';
 
         const alphabet = this.getAlphabetForLanguage();
 
+        // Create letter buttons
         alphabet.forEach(letter => {
             const button = document.createElement('button');
-            button.className = 'letter-popup-button';
+            button.className = 'letter-picker-button';
             button.textContent = letter;
             button.addEventListener('click', () => {
+                const selectedCell = document.querySelector('.cell.selected');
+                if (!selectedCell) return;
+
+                const input = selectedCell.querySelector('input');
+                if (!input || input.readOnly && input.getAttribute('data-originally-readonly') === 'true') return;
+
                 const number = parseInt(input.dataset.number);
                 if (this.difficultyMode === 'easy') {
                     // Easy mode: update all cells with same number
@@ -311,88 +306,36 @@ class CryptogramPuzzle {
                     input.value = letter;
                 }
                 this.checkNumberComplete(number);
-                overlay.remove();
             });
-            alphabetGrid.appendChild(button);
+            letterPickerGrid.appendChild(button);
         });
 
-        popup.appendChild(alphabetGrid);
+        // Setup clear button
+        if (clearButton) {
+            clearButton.replaceWith(clearButton.cloneNode(true)); // Remove old listeners
+            const newClearButton = document.getElementById('letterPickerClear');
+            newClearButton.addEventListener('click', () => {
+                const selectedCell = document.querySelector('.cell.selected');
+                if (!selectedCell) return;
 
-        // Add clear button
-        const clearButton = document.createElement('button');
-        clearButton.className = 'letter-popup-button letter-popup-clear';
-        clearButton.textContent = '⌫ Clear';
-        clearButton.addEventListener('click', () => {
-            const number = parseInt(input.dataset.number);
-            if (this.difficultyMode === 'easy') {
-                // Easy mode: clear all cells with same number
-                delete this.userAnswers[number];
-                this.updateAllCells();
-            } else {
-                // Hard mode: only clear current cell
-                input.value = '';
-            }
-            this.updateAlphabetDecoder();
-            overlay.remove();
-        });
-        alphabetGrid.appendChild(clearButton);
+                const input = selectedCell.querySelector('input');
+                if (!input || input.readOnly && input.getAttribute('data-originally-readonly') === 'true') return;
 
-        // Add close button
-        const closeButton = document.createElement('button');
-        closeButton.className = 'letter-popup-close';
-        closeButton.textContent = '✕';
-        closeButton.addEventListener('click', () => {
-            overlay.remove();
-        });
-        popup.appendChild(closeButton);
-
-        overlay.appendChild(popup);
-        document.body.appendChild(overlay);
-
-        // Close on overlay click
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                overlay.remove();
-            }
-        });
-
-        // Close on Escape key
-        const escapeHandler = (e) => {
-            if (e.key === 'Escape') {
-                overlay.remove();
-                document.removeEventListener('keydown', escapeHandler);
-            }
-        };
-        document.addEventListener('keydown', escapeHandler);
-    }
-
-    updateInputMode() {
-        // Update all inputs based on current mode
-        const cells = document.querySelectorAll('.cell:not(.black) input');
-        cells.forEach(input => {
-            const wasReadOnly = input.getAttribute('data-originally-readonly') === 'true';
-            
-            if (this.inputMode === 'mouse') {
-                if (!wasReadOnly) {
-                    input.readOnly = true;
-                    input.style.cursor = 'pointer';
-                    input.parentElement.style.cursor = 'pointer';
+                const number = parseInt(input.dataset.number);
+                if (this.difficultyMode === 'easy') {
+                    // Easy mode: clear all cells with same number
+                    delete this.userAnswers[number];
+                    this.updateAllCells();
+                } else {
+                    // Hard mode: only clear current cell
+                    input.value = '';
                 }
-            } else {
-                if (!wasReadOnly) {
-                    input.readOnly = false;
-                    input.style.cursor = 'text';
-                    input.parentElement.style.cursor = 'default';
-                }
-            }
-        });
+                this.updateAlphabetDecoder();
+            });
+        }
     }
 
-    setInputMode(mode) {
-        this.inputMode = mode;
-        localStorage.setItem('inputMode', mode);
-        this.updateInputMode();
-    }
+
 
     setDifficultyMode(mode) {
         this.difficultyMode = mode;
@@ -506,7 +449,8 @@ class CryptogramPuzzle {
                 this.moveCell(row - 1, col);
                 break;
             case 'Backspace':
-                if (!e.target.value && !e.target.readOnly) {
+                const originallyReadonly = e.target.getAttribute('data-originally-readonly') === 'true';
+                if (!e.target.value && !originallyReadonly) {
                     e.preventDefault();
                     this.moveToPreviousCell();
                 }
@@ -525,7 +469,8 @@ class CryptogramPuzzle {
         }
 
         const input = cell.querySelector('input');
-        if (input && !input.readOnly) {
+        const originallyReadonly = input && input.getAttribute('data-originally-readonly') === 'true';
+        if (input && !originallyReadonly) {
             input.focus();
         }
     }
@@ -707,6 +652,7 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
     const gridElement = document.getElementById('crossword-grid');
     const alphabetElement = document.getElementById('alphabet-row');
     const puzzleSection = document.querySelector('.puzzle-section');
+    const letterPickerPanel = document.getElementById('letterPickerPanel');
     
     if (gridElement) {
         gridElement.innerHTML = `
@@ -730,6 +676,11 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
     
     if (alphabetElement) {
         alphabetElement.innerHTML = '';
+    }
+    
+    // Hide letter picker panel when no puzzle to solve
+    if (letterPickerPanel) {
+        letterPickerPanel.style.display = 'none';
     }
     
     // Fade in the message
@@ -862,11 +813,6 @@ async function loadPuzzle() {
                     // Check if this is all-solved case
                     if (error.isAllSolved) {
                         showAllPuzzlesSolvedMessage(error.message, size, language);
-                        // Update radio buttons to match
-                        const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
-                        if (radioButton) {
-                            radioButton.checked = true;
-                        }
                         return;
                     }
                     
@@ -877,7 +823,8 @@ async function loadPuzzle() {
                         try {
                             puzzleData = await fetchPuzzleBySize(size, 'English', seed);
                             if (puzzleData) {
-                                document.getElementById('languageSelector').value = 'English';
+                                const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
+                                if (englishRadio) englishRadio.checked = true;
                                 initializePuzzle(puzzleData, size);
                             }
                         } catch (fallbackError) {
@@ -894,11 +841,6 @@ async function loadPuzzle() {
                     return;
                 }
                 throw error;
-            }
-            // Update radio buttons to match
-            const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
-            if (radioButton) {
-                radioButton.checked = true;
             }
         } else if (puzzleId) {
             // Load by specific ID
@@ -930,7 +872,8 @@ async function loadPuzzle() {
                     if (language !== 'English') {
                         try {
                             puzzleData = await fetchPuzzleBySize('medium', 'English');
-                            document.getElementById('languageSelector').value = 'English';
+                            const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
+                            if (englishRadio) englishRadio.checked = true;
                         } catch (fallbackError) {
                             if (fallbackError.isAllSolved) {
                                 showAllPuzzlesSolvedMessage(fallbackError.message, 'medium', 'English');
@@ -956,17 +899,11 @@ async function loadPuzzle() {
 }
 
 function initializePuzzle(puzzleData, size = null) {
-    // Update language selector to match
-    const languageSelector = document.getElementById('languageSelector');
-    if (languageSelector && puzzleData.language) {
-        languageSelector.value = puzzleData.language;
-    }
-    
-    // Update radio buttons if size provided
-    if (size) {
-        const radioButton = document.querySelector(`input[name="puzzleSize"][value="${size}"]`);
-        if (radioButton) {
-            radioButton.checked = true;
+    // Update language radio button to match
+    if (puzzleData.language) {
+        const languageRadio = document.querySelector(`input[name="puzzleLanguage"][value="${puzzleData.language}"]`);
+        if (languageRadio) {
+            languageRadio.checked = true;
         }
     }
     
@@ -981,6 +918,12 @@ function initializePuzzle(puzzleData, size = null) {
         const alphabetElement = document.getElementById('alphabet-row');
         if (gridElement) gridElement.innerHTML = '';
         if (alphabetElement) alphabetElement.innerHTML = '';
+    }
+    
+    // Show letter picker panel when puzzle is loaded
+    const letterPickerPanel = document.getElementById('letterPickerPanel');
+    if (letterPickerPanel) {
+        letterPickerPanel.style.display = 'block';
     }
     
     currentPuzzle = new CryptogramPuzzle(puzzleData);
@@ -1076,83 +1019,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         newPuzzleBtn.addEventListener('click', async (e) => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
-            const selectedRadio = document.querySelector('input[name="puzzleSize"]:checked');
-            const languageSelector = document.getElementById('languageSelector');
-            const selectedLanguage = languageSelector ? languageSelector.value : 'English';
-            console.log('Selected radio:', selectedRadio);
+            const selectedLanguageRadio = document.querySelector('input[name="puzzleLanguage"]:checked');
+            const selectedLanguage = selectedLanguageRadio ? selectedLanguageRadio.value : 'English';
             console.log('Selected language:', selectedLanguage);
-            if (selectedRadio) {
-                const selectedSize = selectedRadio.value;
-                console.log('Selected size:', selectedSize);
+            
+            // Always use 'any' for size
+            const selectedSize = 'any';
+            console.log('Selected size:', selectedSize);
+            
+            // Disable button and show loading state
+            newPuzzleBtn.disabled = true;
+            const originalText = newPuzzleBtn.textContent;
+            newPuzzleBtn.textContent = 'Loading...';
+            
+            try {
+                await loadNewPuzzle(selectedSize, selectedLanguage);
+            } catch (error) {
+                console.error('Error loading new puzzle:', error);
                 
-                // Disable button and show loading state
-                newPuzzleBtn.disabled = true;
-                const originalText = newPuzzleBtn.textContent;
-                newPuzzleBtn.textContent = 'Loading...';
-                
-                try {
-                    // Try to load an unsolved puzzle if userAuth is available
-                    if (typeof userAuth !== 'undefined') {
-                        const available = await userAuth.getAvailablePuzzles(selectedLanguage);
-                        if (available && available.unsolvedPuzzleIds.length > 0) {
-                            console.log(`Found ${available.unsolvedPuzzleIds.length} unsolved puzzles`);
-                            // Fetch new puzzle without reload
-                            await loadNewPuzzle(selectedSize, selectedLanguage);
-                            return;
-                        } else if (available && available.totalSolved > 0) {
-                            // All puzzles solved for this language
-                            showErrorMessage(
-                                'All Puzzles Completed! 🎉',
-                                `Congratulations! You've solved all ${available.totalSolved} available puzzles in ${selectedLanguage}. Try a different language or replay puzzles!`,
-                                async () => {
-                                    await loadNewPuzzle(selectedSize, selectedLanguage);
-                                }
-                            );
-                            return;
-                        }
-                    }
-                    
-                    // Fallback: Load puzzle normally
-                    await loadNewPuzzle(selectedSize, selectedLanguage);
-                } catch (error) {
-                    console.error('Error loading new puzzle:', error);
-                    
-                    // Only show generic error if it's not the all-solved case (which loadNewPuzzle already handled)
-                    if (!(error.status === 404 && error.isAllSolved)) {
-                        showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
-                    }
-                } finally {
-                    // Re-enable button
-                    newPuzzleBtn.disabled = false;
-                    newPuzzleBtn.textContent = originalText;
+                // Only show generic error if it's not the all-solved case (which loadNewPuzzle already handled)
+                if (!(error.status === 404 && error.isAllSolved)) {
+                    showErrorMessage('Error', 'Failed to load new puzzle. Please try again.');
                 }
+            } finally {
+                // Re-enable button
+                newPuzzleBtn.disabled = false;
+                newPuzzleBtn.textContent = originalText;
             }
         });
     } else {
         console.error('New Puzzle button not found!');
     }
 
-    // Setup input mode toggle
-    const inputModeToggle = document.getElementById('inputModeToggle');
-    if (inputModeToggle) {
-        // Initialize toggle state from localStorage
-        const savedMode = localStorage.getItem('inputMode') || 'keyboard';
-        inputModeToggle.checked = (savedMode === 'mouse');
-        
-        // Handle toggle changes
-        inputModeToggle.addEventListener('change', (e) => {
-            const newMode = e.target.checked ? 'mouse' : 'keyboard';
-            if (currentPuzzle) {
-                currentPuzzle.setInputMode(newMode);
-            }
-        });
-    }
-
     // Setup difficulty mode toggle
     const difficultyModeToggle = document.getElementById('difficultyModeToggle');
     if (difficultyModeToggle) {
         // Initialize toggle state from localStorage
-        const savedDifficulty = localStorage.getItem('difficultyMode') || 'easy';
+        const savedDifficulty = localStorage.getItem('difficultyMode') || 'hard';
         difficultyModeToggle.checked = (savedDifficulty === 'hard');
         
         // Handle toggle changes
