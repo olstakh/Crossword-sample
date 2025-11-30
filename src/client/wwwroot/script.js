@@ -648,7 +648,7 @@ class CryptogramPuzzle {
 }
 
 // Show congratulations message in place of puzzle grid
-function showAllPuzzlesSolvedMessage(message, size, language) {
+function showAllPuzzlesSolvedMessage(message, language) {
     const gridElement = document.getElementById('crossword-grid');
     const alphabetElement = document.getElementById('alphabet-row');
     const puzzleSection = document.querySelector('.puzzle-section');
@@ -663,7 +663,6 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
                 <div class="all-solved-actions">
                     <p>Try:</p>
                     <ul>
-                        <li>Selecting a different <strong>size category</strong></li>
                         <li>Choosing a different <strong>language</strong></li>
                         <li>Replaying your favorite puzzles!</li>
                     </ul>
@@ -754,11 +753,11 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
     }
 }
 
-async function fetchPuzzleBySize(size = 'medium', seed = null) {
+async function fetchPuzzleBySize(seed = null) {
     try {
-        let url = `${API_BASE_URL}/api/crossword/puzzle?size=${size}`;
+        let url = `${API_BASE_URL}/api/crossword/puzzle`;
         if (seed) {
-            url += `&seed=${seed}`;
+            url += `?seed=${seed}`;
         }
         
         // Add userId header if userAuth is available
@@ -778,7 +777,6 @@ async function fetchPuzzleBySize(size = 'medium', seed = null) {
                 const errorData = await response.json();
                 const error = new Error(errorData.error || 'Puzzle not found');
                 error.status = 404;
-                error.requestedSize = size;
                 error.requestedLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
                 error.isAllSolved = errorData.error && errorData.error.includes('solved all');
                 throw error;
@@ -810,20 +808,20 @@ async function loadPuzzle() {
         let puzzleData;
         
         if (size) {
-            // Load by size
+            // Legacy URL parameter support - just load puzzle with seed
             try {
-                puzzleData = await fetchPuzzleBySize(size, seed);
+                puzzleData = await fetchPuzzleBySize(seed);
             } catch (error) {
                 if (error.status === 404) {
                     // Check if this is all-solved case
                     if (error.isAllSolved) {
-                        showAllPuzzlesSolvedMessage(error.message, size, language);
+                        showAllPuzzlesSolvedMessage(error.message, language);
                         return;
                     }
                     
                     // Show error message
                     showErrorMessage('No Puzzles Available', 
-                        'Sorry, no puzzles are available for this size and language. Please try a different size or change your language preference.');
+                        'Sorry, no puzzles are available for this language. Please try changing your language preference.');
                     return;
                 }
                 throw error;
@@ -837,20 +835,20 @@ async function loadPuzzle() {
                     showErrorMessage('Puzzle Not Found', 
                         `The puzzle "${puzzleId}" could not be found. Loading a default puzzle instead...`);
                     // Fallback to default
-                    puzzleData = await fetchPuzzleBySize('medium');
+                    puzzleData = await fetchPuzzleBySize();
                 } else {
                     throw error;
                 }
             }
         } else {
-            // Default: load medium puzzle in current locale
+            // Default: load puzzle in current locale
             try {
-                puzzleData = await fetchPuzzleBySize('medium');
+                puzzleData = await fetchPuzzleBySize();
             } catch (error) {
                 if (error.status === 404) {
                     // Check if all-solved
                     if (error.isAllSolved) {
-                        showAllPuzzlesSolvedMessage(error.message, 'medium', language);
+                        showAllPuzzlesSolvedMessage(error.message, language);
                         return;
                     }
                     
@@ -900,7 +898,7 @@ function initializePuzzle(puzzleData, size = null) {
 }
 
 // Load a new puzzle without page reload (with smooth transition)
-async function loadNewPuzzle(size) {
+async function loadNewPuzzle() {
     const puzzleSection = document.querySelector('.puzzle-section');
     
     // Fade out
@@ -915,12 +913,12 @@ async function loadNewPuzzle(size) {
     try {
         // Fetch new puzzle
         const seed = Date.now().toString(); // Use timestamp for variety
-        const puzzleData = await fetchPuzzleBySize(size, seed);
+        const puzzleData = await fetchPuzzleBySize(seed);
         
         // Update URL without reload (optional - keeps URL in sync)
         const url = new URL(window.location);
-        url.searchParams.set('size', size);
         url.searchParams.set('seed', seed);
+        url.searchParams.delete('size');
         url.searchParams.delete('language');
         url.searchParams.delete('puzzle');
         window.history.pushState({}, '', url.toString());
@@ -942,7 +940,7 @@ async function loadNewPuzzle(size) {
         // Handle all-puzzles-solved case with congratulatory message
         if (error.status === 404 && error.isAllSolved) {
             const currentLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
-            showAllPuzzlesSolvedMessage(error.message, size, currentLanguage);
+            showAllPuzzlesSolvedMessage(error.message, currentLanguage);
             return; // Don't re-throw, we handled it
         }
         
@@ -991,17 +989,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
             
-            // Always use 'any' for size
-            const selectedSize = 'any';
-            console.log('Selected size:', selectedSize);
-            
             // Disable button and show loading state
             newPuzzleBtn.disabled = true;
             const originalText = newPuzzleBtn.textContent;
             newPuzzleBtn.textContent = 'Loading...';
             
             try {
-                await loadNewPuzzle(selectedSize);
+                await loadNewPuzzle();
             } catch (error) {
                 console.error('Error loading new puzzle:', error);
                 

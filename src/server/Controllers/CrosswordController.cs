@@ -52,14 +52,12 @@ public class CrosswordController : ControllerBase
     }
 
     /// <summary>
-    /// Get a puzzle by size (Small, Medium, or Big)
+    /// Get a puzzle in the current language
     /// Language is determined from Accept-Language header.
     /// </summary>
-    /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), Big (15x15-20x20), or Any (all sizes)</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
     [HttpGet("puzzle")]
     public ActionResult<CrosswordPuzzle> GetPuzzle(
-        [FromQuery] PuzzleSizeCategory size = PuzzleSizeCategory.Any, 
         [FromQuery] string? seed = null,
         [FromHeader(Name = "X-User-Id")] string? userId = null,
         [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
@@ -69,13 +67,13 @@ public class CrosswordController : ControllerBase
         
         var request = new PuzzleRequest
         {
-            SizeCategory = size,
+            SizeCategory = PuzzleSizeCategory.Any,
             Language = puzzleLanguage,
             UserId = userId
         };     
         
         var puzzles = _puzzleRepositoryReader
-            .GetPuzzles(sizeCategory: size, language: puzzleLanguage)
+            .GetPuzzles(sizeCategory: PuzzleSizeCategory.Any, language: puzzleLanguage)
             .Where(p => userId == null || !_userProgressRepositoryReader.IsPuzzleSolved(userId, p.Id))
             .ToList();
 
@@ -83,7 +81,7 @@ public class CrosswordController : ControllerBase
         {
             // Should this be a 404 instead?
             throw new PuzzleNotFoundException(
-                $"No puzzles found for language '{puzzleLanguage}' and size '{size}', you probably solved all. Please try a different combination.");
+                $"No puzzles found for language '{puzzleLanguage}', you probably solved all. Please try a different language.");
         }
         return Ok(puzzles[Random.Shared.Next(puzzles.Count)]);
     }
