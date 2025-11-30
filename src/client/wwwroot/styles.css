@@ -82,8 +82,7 @@ h1 {
     flex-wrap: wrap;
 }
 
-/* Input Mode Toggle */
-.input-mode-toggle,
+/* Difficulty Mode Toggle */
 .difficulty-mode-toggle {
     display: flex;
     justify-content: center;
@@ -529,7 +528,7 @@ main {
 
 /* Letter Picker Panel (for mouse mode) */
 .letter-picker-panel {
-    display: none;
+    display: block;
     background: white;
     padding: 20px;
     border-radius: 10px;

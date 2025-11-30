@@ -8,7 +8,6 @@ class CryptogramPuzzle {
         this.currentCell = null;
         this.userAnswers = {}; // number -> letter mapping from user
         this.language = data.language || 'English';
-        this.inputMode = localStorage.getItem('inputMode') || 'keyboard';
         this.difficultyMode = localStorage.getItem('difficultyMode') || 'easy';
         
         // Generate numbers and letter mapping from grid
@@ -90,7 +89,7 @@ class CryptogramPuzzle {
         this.renderGrid();
         this.renderAlphabetDecoder();
         this.setupEventListeners();
-        this.updateInputMode();
+        this.initializeLetterPicker();
         
         // Initialize with revealed letters
         if (this.data.initiallyRevealed) {
@@ -147,11 +146,13 @@ class CryptogramPuzzle {
         input.maxLength = 1;
         input.dataset.answer = cellValue;
         input.dataset.number = cellNumber;
+        input.readOnly = true; // Always readonly, we handle input via keydown
+        input.style.cursor = 'pointer';
         
         // Check if this letter is initially revealed
         if (this.data.initiallyRevealed && this.data.initiallyRevealed.includes(cellNumber)) {
             input.value = cellValue;
-            input.readOnly = true;
+            input.setAttribute('data-originally-readonly', 'true');
             cellDiv.classList.add('revealed');
         }
 
@@ -211,61 +212,56 @@ class CryptogramPuzzle {
             const input = cell.querySelector('input');
             if (!input) return;
 
-            // Store original readonly state
-            if (!input.hasAttribute('data-originally-readonly')) {
-                input.setAttribute('data-originally-readonly', input.readOnly);
-            }
-
-            // Handle click events for mouse mode
+            // Handle click events - select cell for both keyboard and letter picker
             cell.addEventListener('click', (e) => {
                 const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
-                if (this.inputMode === 'mouse' && !originallyReadonly) {
+                if (!originallyReadonly) {
                     this.selectCell(cell);
-                    // In mouse mode, just select the cell - letter picker panel is always visible
+                    input.focus();
                 }
             });
 
-            input.addEventListener('focus', (e) => {
-                if (this.inputMode === 'keyboard') {
-                    this.selectCell(cell);
-                }
-            });
-
-            input.addEventListener('input', (e) => {
-                if (this.inputMode === 'keyboard') {
-                    let value = e.target.value.toUpperCase();
-                    
-                    // Allow letters from the current language's alphabet
-                    const alphabet = this.getAlphabetForLanguage().join('');
-                    const regex = new RegExp(`[^${alphabet}]`, 'g');
-                    value = value.replace(regex, '');
-                    e.target.value = value;
-
-                    if (value) {
-                        const number = parseInt(e.target.dataset.number);
-                        if (this.difficultyMode === 'easy') {
-                            // Easy mode: update all cells with same number
-                            this.userAnswers[number] = value;
-                            this.updateAllCells();
-                        }
-                        // Hard mode: cell already has value from input event
-                        this.checkNumberComplete(number);
-                        this.moveToNextCell();
-                    } else {
-                        const number = parseInt(e.target.dataset.number);
-                        if (this.difficultyMode === 'easy') {
-                            delete this.userAnswers[number];
-                            this.updateAllCells();
-                        }
-                        // Hard mode: cell already cleared from input event
-                        this.updateAlphabetDecoder();
-                    }
-                }
-            });
-
+            // Handle keyboard input when cell is focused
             input.addEventListener('keydown', (e) => {
-                if (this.inputMode === 'keyboard') {
-                    this.handleKeydown(e);
+                const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
+                if (originallyReadonly) return;
+
+                // First handle arrow keys and backspace
+                this.handleKeydown(e);
+
+                // Handle letter input
+                const alphabet = this.getAlphabetForLanguage();
+                const key = e.key.toUpperCase();
+                
+                if (alphabet.includes(key)) {
+                    e.preventDefault();
+                    const number = parseInt(input.dataset.number);
+                    
+                    if (this.difficultyMode === 'easy') {
+                        // Easy mode: update all cells with same number
+                        this.userAnswers[number] = key;
+                        this.updateAllCells();
+                    } else {
+                        // Hard mode: only update current cell
+                        input.value = key;
+                    }
+                    
+                    this.checkNumberComplete(number);
+                    this.moveToNextCell();
+                } else if (e.key === 'Delete' || (e.key === 'Backspace' && input.value)) {
+                    e.preventDefault();
+                    const number = parseInt(input.dataset.number);
+                    
+                    if (this.difficultyMode === 'easy') {
+                        // Easy mode: clear all cells with same number
+                        delete this.userAnswers[number];
+                        this.updateAllCells();
+                    } else {
+                        // Hard mode: only clear current cell
+                        input.value = '';
+                    }
+                    
+                    this.updateAlphabetDecoder();
                 }
             });
         });
@@ -339,44 +335,7 @@ class CryptogramPuzzle {
         }
     }
 
-    updateInputMode() {
-        // Update all inputs based on current mode
-        const cells = document.querySelectorAll('.cell:not(.black) input');
-        cells.forEach(input => {
-            const wasReadOnly = input.getAttribute('data-originally-readonly') === 'true';
-            
-            if (this.inputMode === 'mouse') {
-                if (!wasReadOnly) {
-                    input.readOnly = true;
-                    input.style.cursor = 'pointer';
-                    input.parentElement.style.cursor = 'pointer';
-                }
-            } else {
-                if (!wasReadOnly) {
-                    input.readOnly = false;
-                    input.style.cursor = 'text';
-                    input.parentElement.style.cursor = 'default';
-                }
-            }
-        });
 
-        // Show/hide letter picker panel based on mode
-        const letterPickerPanel = document.getElementById('letterPickerPanel');
-        if (letterPickerPanel) {
-            if (this.inputMode === 'mouse') {
-                letterPickerPanel.classList.add('visible');
-                this.initializeLetterPicker();
-            } else {
-                letterPickerPanel.classList.remove('visible');
-            }
-        }
-    }
-
-    setInputMode(mode) {
-        this.inputMode = mode;
-        localStorage.setItem('inputMode', mode);
-        this.updateInputMode();
-    }
 
     setDifficultyMode(mode) {
         this.difficultyMode = mode;
@@ -490,7 +449,8 @@ class CryptogramPuzzle {
                 this.moveCell(row - 1, col);
                 break;
             case 'Backspace':
-                if (!e.target.value && !e.target.readOnly) {
+                const originallyReadonly = e.target.getAttribute('data-originally-readonly') === 'true';
+                if (!e.target.value && !originallyReadonly) {
                     e.preventDefault();
                     this.moveToPreviousCell();
                 }
@@ -509,7 +469,8 @@ class CryptogramPuzzle {
         }
 
         const input = cell.querySelector('input');
-        if (input && !input.readOnly) {
+        const originallyReadonly = input && input.getAttribute('data-originally-readonly') === 'true';
+        if (input && !originallyReadonly) {
             input.focus();
         }
     }
@@ -1076,22 +1037,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     } else {
         console.error('New Puzzle button not found!');
-    }
-
-    // Setup input mode toggle
-    const inputModeToggle = document.getElementById('inputModeToggle');
-    if (inputModeToggle) {
-        // Initialize toggle state from localStorage
-        const savedMode = localStorage.getItem('inputMode') || 'keyboard';
-        inputModeToggle.checked = (savedMode === 'mouse');
-        
-        // Handle toggle changes
-        inputModeToggle.addEventListener('change', (e) => {
-            const newMode = e.target.checked ? 'mouse' : 'keyboard';
-            if (currentPuzzle) {
-                currentPuzzle.setInputMode(newMode);
-            }
-        });
     }
 
     // Setup difficulty mode toggle
