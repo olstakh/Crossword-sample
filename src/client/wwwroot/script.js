@@ -767,6 +767,11 @@ async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = n
             headers['X-User-Id'] = userAuth.userId;
         }
         
+        // Add Accept-Language header if localeManager is available
+        if (typeof localeManager !== 'undefined') {
+            headers['Accept-Language'] = localeManager.getAcceptLanguageHeader();
+        }
+        
         const response = await fetch(url, { headers });
         if (!response.ok) {
             if (response.status === 404) {
@@ -799,7 +804,7 @@ async function loadPuzzle() {
         const urlParams = new URLSearchParams(window.location.search);
         const puzzleId = urlParams.get('puzzle');
         const size = urlParams.get('size');
-        const language = urlParams.get('language') || 'English';
+        const language = urlParams.get('language') || (typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English');
         const seed = urlParams.get('seed');
         
         let puzzleData;
@@ -899,12 +904,10 @@ async function loadPuzzle() {
 }
 
 function initializePuzzle(puzzleData, size = null) {
-    // Update language radio button to match
-    if (puzzleData.language) {
-        const languageRadio = document.querySelector(`input[name="puzzleLanguage"][value="${puzzleData.language}"]`);
-        if (languageRadio) {
-            languageRadio.checked = true;
-        }
+    // Update locale to match puzzle language
+    if (puzzleData.language && typeof localeManager !== 'undefined') {
+        localeManager.setLocale(puzzleData.language);
+        localeManager.updateActiveButton();
     }
     
     // Update page title if puzzle has a title
@@ -1019,8 +1022,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         newPuzzleBtn.addEventListener('click', async (e) => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
-            const selectedLanguageRadio = document.querySelector('input[name="puzzleLanguage"]:checked');
-            const selectedLanguage = selectedLanguageRadio ? selectedLanguageRadio.value : 'English';
+            const selectedLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
             console.log('Selected language:', selectedLanguage);
             
             // Always use 'any' for size

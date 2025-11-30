@@ -34,6 +34,44 @@ header {
     text-align: center;
 }
 
+.locale-selector {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 8px;
+}
+
+.locale-flag-btn {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border: 3px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.locale-flag-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    border-color: #3498db;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.locale-flag-btn.active {
+    border-color: #3498db;
+    background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    transform: scale(1.05);
+}
+
+.locale-flag-btn:active {
+    transform: translateY(0) scale(1.02);
+}
+
 .user-stats {
     position: absolute;
     right: 0;
@@ -839,6 +877,26 @@ main {
         left: 10px;
         min-width: auto;
         top: 80px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .locale-selector {
+        position: static;
+        transform: none;
+    }
+
+    .user-stats {
+        position: static;
+        transform: none;
+    }
+
+    .locale-flag-btn {
+        font-size: 1.5rem;
+        padding: 6px 10px;
     }
 }
 

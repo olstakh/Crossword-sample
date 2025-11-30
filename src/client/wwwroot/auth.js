@@ -107,13 +107,17 @@ class UserAuth {
     /**
      * Get available (unsolved) puzzles for current language
      */
-    async getAvailablePuzzles(language = 'English') {
+    async getAvailablePuzzles(language = null) {
+        // Use provided language or get from localeManager, fallback to English
+        const lang = language || (typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English');
+        
         try {
             const response = await fetch(
-                `${API_BASE_URL}/api/user/available?language=${language}`,
+                `${API_BASE_URL}/api/user/available?language=${lang}`,
                 {
                     headers: {
-                        'X-User-Id': this.userId
+                        'X-User-Id': this.userId,
+                        'Accept-Language': typeof localeManager !== 'undefined' ? localeManager.getAcceptLanguageHeader() : 'en'
                     }
                 }
             );
