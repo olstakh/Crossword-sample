@@ -26,4 +26,7 @@ EXPOSE 8081
 COPY --from=publish /app/publish .
 COPY --from=build /src/src/client /app/client
 
+# Declare volume for SQLite databases
+VOLUME ["/app/Data"]
+
 ENTRYPOINT ["dotnet", "CrossWords.dll"]
