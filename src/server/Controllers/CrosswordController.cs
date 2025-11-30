@@ -53,20 +53,19 @@ public class CrosswordController : ControllerBase
 
     /// <summary>
     /// Get a puzzle by size (Small, Medium, or Big)
+    /// Language is determined from Accept-Language header.
     /// </summary>
     /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), Big (15x15-20x20), or Any (all sizes)</param>
-    /// <param name="language">Language of the puzzle (English, Russian, Ukrainian). If not provided, uses Accept-Language header.</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
     [HttpGet("puzzle")]
     public ActionResult<CrosswordPuzzle> GetPuzzle(
         [FromQuery] PuzzleSizeCategory size = PuzzleSizeCategory.Any, 
-        [FromQuery] PuzzleLanguage? language = null, 
         [FromQuery] string? seed = null,
         [FromHeader(Name = "X-User-Id")] string? userId = null,
         [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
     {
-        // Use query parameter if provided, otherwise try to parse Accept-Language header
-        var puzzleLanguage = language ?? ParseAcceptLanguage(acceptLanguage);
+        // Get language from Accept-Language header
+        var puzzleLanguage = ParseAcceptLanguage(acceptLanguage);
         
         var request = new PuzzleRequest
         {

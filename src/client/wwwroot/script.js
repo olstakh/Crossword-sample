@@ -754,9 +754,9 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
     }
 }
 
-async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = null) {
+async function fetchPuzzleBySize(size = 'medium', seed = null) {
     try {
-        let url = `${API_BASE_URL}/api/crossword/puzzle?size=${size}&language=${language}`;
+        let url = `${API_BASE_URL}/api/crossword/puzzle?size=${size}`;
         if (seed) {
             url += `&seed=${seed}`;
         }
@@ -779,7 +779,7 @@ async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = n
                 const error = new Error(errorData.error || 'Puzzle not found');
                 error.status = 404;
                 error.requestedSize = size;
-                error.requestedLanguage = language;
+                error.requestedLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
                 error.isAllSolved = errorData.error && errorData.error.includes('solved all');
                 throw error;
             }
@@ -810,9 +810,9 @@ async function loadPuzzle() {
         let puzzleData;
         
         if (size) {
-            // Load by size and language
+            // Load by size
             try {
-                puzzleData = await fetchPuzzleBySize(size, language, seed);
+                puzzleData = await fetchPuzzleBySize(size, seed);
             } catch (error) {
                 if (error.status === 404) {
                     // Check if this is all-solved case
@@ -821,28 +821,9 @@ async function loadPuzzle() {
                         return;
                     }
                     
-                    // Show user-friendly error with option to try English
-                    const message = `${error.message}\n\nWould you like to try loading an English puzzle instead?`;
-                    showErrorMessage('Puzzle Not Available', message, async () => {
-                        // Fallback to English
-                        try {
-                            puzzleData = await fetchPuzzleBySize(size, 'English', seed);
-                            if (puzzleData) {
-                                const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
-                                if (englishRadio) englishRadio.checked = true;
-                                initializePuzzle(puzzleData, size);
-                            }
-                        } catch (fallbackError) {
-                            if (fallbackError.status === 404) {
-                                if (fallbackError.isAllSolved) {
-                                    showAllPuzzlesSolvedMessage(fallbackError.message, size, 'English');
-                                } else {
-                                    showErrorMessage('No Puzzles Available', 
-                                        'Sorry, no puzzles are available for this size. Please try a different size.');
-                                }
-                            }
-                        }
-                    });
+                    // Show error message
+                    showErrorMessage('No Puzzles Available', 
+                        'Sorry, no puzzles are available for this size and language. Please try a different size or change your language preference.');
                     return;
                 }
                 throw error;
@@ -856,15 +837,15 @@ async function loadPuzzle() {
                     showErrorMessage('Puzzle Not Found', 
                         `The puzzle "${puzzleId}" could not be found. Loading a default puzzle instead...`);
                     // Fallback to default
-                    puzzleData = await fetchPuzzleBySize('medium', 'English');
+                    puzzleData = await fetchPuzzleBySize('medium');
                 } else {
                     throw error;
                 }
             }
         } else {
-            // Default: load medium puzzle in selected language
+            // Default: load medium puzzle in current locale
             try {
-                puzzleData = await fetchPuzzleBySize('medium', language);
+                puzzleData = await fetchPuzzleBySize('medium');
             } catch (error) {
                 if (error.status === 404) {
                     // Check if all-solved
@@ -873,25 +854,11 @@ async function loadPuzzle() {
                         return;
                     }
                     
-                    // Try fallback to English
-                    if (language !== 'English') {
-                        try {
-                            puzzleData = await fetchPuzzleBySize('medium', 'English');
-                            const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
-                            if (englishRadio) englishRadio.checked = true;
-                        } catch (fallbackError) {
-                            if (fallbackError.isAllSolved) {
-                                showAllPuzzlesSolvedMessage(fallbackError.message, 'medium', 'English');
-                                return;
-                            }
-                            throw fallbackError;
-                        }
-                    } else {
-                        throw error;
-                    }
-                } else {
-                    throw error;
+                    showErrorMessage('No Puzzles Available', 
+                        'Sorry, no puzzles are available. Please try changing your language preference.');
+                    return;
                 }
+                throw error;
             }
         }
         
@@ -933,7 +900,7 @@ function initializePuzzle(puzzleData, size = null) {
 }
 
 // Load a new puzzle without page reload (with smooth transition)
-async function loadNewPuzzle(size, language) {
+async function loadNewPuzzle(size) {
     const puzzleSection = document.querySelector('.puzzle-section');
     
     // Fade out
@@ -948,13 +915,13 @@ async function loadNewPuzzle(size, language) {
     try {
         // Fetch new puzzle
         const seed = Date.now().toString(); // Use timestamp for variety
-        const puzzleData = await fetchPuzzleBySize(size, language, seed);
+        const puzzleData = await fetchPuzzleBySize(size, seed);
         
         // Update URL without reload (optional - keeps URL in sync)
         const url = new URL(window.location);
         url.searchParams.set('size', size);
-        url.searchParams.set('language', language);
         url.searchParams.set('seed', seed);
+        url.searchParams.delete('language');
         url.searchParams.delete('puzzle');
         window.history.pushState({}, '', url.toString());
         
@@ -1022,8 +989,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         newPuzzleBtn.addEventListener('click', async (e) => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
-            const selectedLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
-            console.log('Selected language:', selectedLanguage);
             
             // Always use 'any' for size
             const selectedSize = 'any';
@@ -1035,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             newPuzzleBtn.textContent = 'Loading...';
             
             try {
-                await loadNewPuzzle(selectedSize, selectedLanguage);
+                await loadNewPuzzle(selectedSize);
             } catch (error) {
                 console.error('Error loading new puzzle:', error);
                 
