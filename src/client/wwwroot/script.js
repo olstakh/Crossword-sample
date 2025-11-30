@@ -688,6 +688,48 @@ function showAllPuzzlesSolvedMessage(message, language) {
     }
 }
 
+// Show puzzle not found message in place of puzzle grid
+function showPuzzleNotFoundMessage(puzzleId) {
+    const gridElement = document.getElementById('crossword-grid');
+    const alphabetElement = document.getElementById('alphabet-row');
+    const puzzleSection = document.querySelector('.puzzle-section');
+    const letterPickerPanel = document.getElementById('letterPickerPanel');
+    
+    if (gridElement) {
+        gridElement.innerHTML = `
+            <div class="all-solved-message">
+                <div class="celebration-icon">🔍</div>
+                <h2>Puzzle Not Found</h2>
+                <p>The puzzle "${puzzleId}" could not be found.</p>
+                <div class="all-solved-actions">
+                    <p>You can:</p>
+                    <ul>
+                        <li>Check the puzzle ID and try again</li>
+                        <li>Click <strong>New Puzzle</strong> to get a random puzzle</li>
+                        <li>Choose a different language if needed</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        gridElement.style.gridTemplateColumns = '1fr';
+        gridElement.style.gridTemplateRows = '1fr';
+    }
+    
+    if (alphabetElement) {
+        alphabetElement.innerHTML = '';
+    }
+    
+    // Hide letter picker panel when no puzzle to display
+    if (letterPickerPanel) {
+        letterPickerPanel.style.display = 'none';
+    }
+    
+    // Fade in the message
+    if (puzzleSection) {
+        puzzleSection.style.opacity = '1';
+    }
+}
+
 // Show user-friendly error message
 function showErrorMessage(title, message, onRetry = null) {
     // Create modal overlay
@@ -800,7 +842,7 @@ let currentPuzzle = null;
 async function loadPuzzle() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
-        const puzzleId = urlParams.get('puzzle');
+        const puzzleId = urlParams.get('puzzleId') || urlParams.get('puzzle'); // Support both for backwards compatibility
         const size = urlParams.get('size');
         const language = urlParams.get('language') || (typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English');
         const seed = urlParams.get('seed');
@@ -832,10 +874,8 @@ async function loadPuzzle() {
                 puzzleData = await fetchPuzzle(puzzleId);
             } catch (error) {
                 if (error.status === 404) {
-                    showErrorMessage('Puzzle Not Found', 
-                        `The puzzle "${puzzleId}" could not be found. Loading a default puzzle instead...`);
-                    // Fallback to default
-                    puzzleData = await fetchPuzzleBySize();
+                    showPuzzleNotFoundMessage(puzzleId);
+                    return;
                 } else {
                     throw error;
                 }
