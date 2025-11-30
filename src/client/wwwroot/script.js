@@ -951,17 +951,18 @@ async function loadNewPuzzle() {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     try {
-        // Fetch new puzzle
-        const seed = Date.now().toString(); // Use timestamp for variety
-        const puzzleData = await fetchPuzzleBySize(seed);
-        
-        // Update URL without reload (optional - keeps URL in sync)
+        // Update URL first to remove puzzleId before fetching
         const url = new URL(window.location);
+        const seed = Date.now().toString(); // Use timestamp for variety
         url.searchParams.set('seed', seed);
         url.searchParams.delete('size');
         url.searchParams.delete('language');
         url.searchParams.delete('puzzle');
+        url.searchParams.delete('puzzleId');
         window.history.pushState({}, '', url.toString());
+        
+        // Fetch new puzzle
+        const puzzleData = await fetchPuzzleBySize(seed);
         
         // Initialize new puzzle
         initializePuzzle(puzzleData);
