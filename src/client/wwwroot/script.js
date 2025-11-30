@@ -221,7 +221,7 @@ class CryptogramPuzzle {
                 const originallyReadonly = input.getAttribute('data-originally-readonly') === 'true';
                 if (this.inputMode === 'mouse' && !originallyReadonly) {
                     this.selectCell(cell);
-                    this.showLetterPopup(input);
+                    // In mouse mode, just select the cell - letter picker panel is always visible
                 }
             });
 
@@ -277,38 +277,29 @@ class CryptogramPuzzle {
         cell.classList.add('selected');
     }
 
-    showLetterPopup(input) {
-        // Remove any existing popup
-        const existingPopup = document.querySelector('.letter-popup-overlay');
-        if (existingPopup) {
-            existingPopup.remove();
-        }
+    initializeLetterPicker() {
+        const letterPickerGrid = document.getElementById('letterPickerGrid');
+        const clearButton = document.getElementById('letterPickerClear');
+        
+        if (!letterPickerGrid) return;
 
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'letter-popup-overlay';
-
-        // Create popup
-        const popup = document.createElement('div');
-        popup.className = 'letter-popup';
-
-        // Add title
-        const title = document.createElement('h3');
-        title.textContent = 'Select a Letter';
-        title.className = 'letter-popup-title';
-        popup.appendChild(title);
-
-        // Create alphabet grid
-        const alphabetGrid = document.createElement('div');
-        alphabetGrid.className = 'letter-popup-grid';
+        // Clear existing buttons
+        letterPickerGrid.innerHTML = '';
 
         const alphabet = this.getAlphabetForLanguage();
 
+        // Create letter buttons
         alphabet.forEach(letter => {
             const button = document.createElement('button');
-            button.className = 'letter-popup-button';
+            button.className = 'letter-picker-button';
             button.textContent = letter;
             button.addEventListener('click', () => {
+                const selectedCell = document.querySelector('.cell.selected');
+                if (!selectedCell) return;
+
+                const input = selectedCell.querySelector('input');
+                if (!input || input.readOnly && input.getAttribute('data-originally-readonly') === 'true') return;
+
                 const number = parseInt(input.dataset.number);
                 if (this.difficultyMode === 'easy') {
                     // Easy mode: update all cells with same number
@@ -319,59 +310,33 @@ class CryptogramPuzzle {
                     input.value = letter;
                 }
                 this.checkNumberComplete(number);
-                overlay.remove();
             });
-            alphabetGrid.appendChild(button);
+            letterPickerGrid.appendChild(button);
         });
 
-        popup.appendChild(alphabetGrid);
+        // Setup clear button
+        if (clearButton) {
+            clearButton.replaceWith(clearButton.cloneNode(true)); // Remove old listeners
+            const newClearButton = document.getElementById('letterPickerClear');
+            newClearButton.addEventListener('click', () => {
+                const selectedCell = document.querySelector('.cell.selected');
+                if (!selectedCell) return;
 
-        // Add clear button
-        const clearButton = document.createElement('button');
-        clearButton.className = 'letter-popup-button letter-popup-clear';
-        clearButton.textContent = '⌫ Clear';
-        clearButton.addEventListener('click', () => {
-            const number = parseInt(input.dataset.number);
-            if (this.difficultyMode === 'easy') {
-                // Easy mode: clear all cells with same number
-                delete this.userAnswers[number];
-                this.updateAllCells();
-            } else {
-                // Hard mode: only clear current cell
-                input.value = '';
-            }
-            this.updateAlphabetDecoder();
-            overlay.remove();
-        });
-        alphabetGrid.appendChild(clearButton);
+                const input = selectedCell.querySelector('input');
+                if (!input || input.readOnly && input.getAttribute('data-originally-readonly') === 'true') return;
 
-        // Add close button
-        const closeButton = document.createElement('button');
-        closeButton.className = 'letter-popup-close';
-        closeButton.textContent = '✕';
-        closeButton.addEventListener('click', () => {
-            overlay.remove();
-        });
-        popup.appendChild(closeButton);
-
-        overlay.appendChild(popup);
-        document.body.appendChild(overlay);
-
-        // Close on overlay click
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                overlay.remove();
-            }
-        });
-
-        // Close on Escape key
-        const escapeHandler = (e) => {
-            if (e.key === 'Escape') {
-                overlay.remove();
-                document.removeEventListener('keydown', escapeHandler);
-            }
-        };
-        document.addEventListener('keydown', escapeHandler);
+                const number = parseInt(input.dataset.number);
+                if (this.difficultyMode === 'easy') {
+                    // Easy mode: clear all cells with same number
+                    delete this.userAnswers[number];
+                    this.updateAllCells();
+                } else {
+                    // Hard mode: only clear current cell
+                    input.value = '';
+                }
+                this.updateAlphabetDecoder();
+            });
+        }
     }
 
     updateInputMode() {
@@ -394,6 +359,17 @@ class CryptogramPuzzle {
                 }
             }
         });
+
+        // Show/hide letter picker panel based on mode
+        const letterPickerPanel = document.getElementById('letterPickerPanel');
+        if (letterPickerPanel) {
+            if (this.inputMode === 'mouse') {
+                letterPickerPanel.classList.add('visible');
+                this.initializeLetterPicker();
+            } else {
+                letterPickerPanel.classList.remove('visible');
+            }
+        }
     }
 
     setInputMode(mode) {

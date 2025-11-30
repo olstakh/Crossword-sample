@@ -275,7 +275,7 @@ main {
     justify-content: center;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 0;
+    gap: 20px;
 }
 
 .puzzle-section {
@@ -527,6 +527,89 @@ main {
     background-color: #c0392b;
 }
 
+/* Letter Picker Panel (for mouse mode) */
+.letter-picker-panel {
+    display: none;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: fit-content;
+    flex-shrink: 0;
+}
+
+.letter-picker-panel.visible {
+    display: block;
+}
+
+.letter-picker-panel h3 {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.letter-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 50px);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.letter-picker-button {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #bdc3c7;
+    border-radius: 8px;
+    background: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.letter-picker-button:hover {
+    background-color: #3498db;
+    color: white;
+    border-color: #2980b9;
+    transform: scale(1.05);
+}
+
+.letter-picker-button:active {
+    transform: scale(0.95);
+}
+
+.letter-picker-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.letter-picker-clear-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.letter-picker-clear-btn:hover {
+    background-color: #c0392b;
+}
+
+.letter-picker-clear-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
     .header-content {
         flex-direction: column;
@@ -573,6 +656,11 @@ main {
     
     main {
         flex-direction: column;
+    }
+
+    .letter-picker-panel {
+        width: 100%;
+        order: -1; /* Show above puzzle on mobile */
     }
 
     .letter-popup {
