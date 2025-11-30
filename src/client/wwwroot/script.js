@@ -941,7 +941,8 @@ async function loadNewPuzzle(size) {
         
         // Handle all-puzzles-solved case with congratulatory message
         if (error.status === 404 && error.isAllSolved) {
-            showAllPuzzlesSolvedMessage(error.message, size, language);
+            const currentLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
+            showAllPuzzlesSolvedMessage(error.message, size, currentLanguage);
             return; // Don't re-throw, we handled it
         }
         
