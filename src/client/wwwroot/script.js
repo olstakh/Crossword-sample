@@ -924,7 +924,7 @@ async function loadNewPuzzle() {
         window.history.pushState({}, '', url.toString());
         
         // Initialize new puzzle
-        initializePuzzle(puzzleData, size);
+        initializePuzzle(puzzleData);
         
         // Fade in
         if (puzzleSection) {
