@@ -79,9 +79,11 @@ public class CrosswordController : ControllerBase
 
         if (puzzles.Count == 0)
         {
-            // Should this be a 404 instead?
-            throw new PuzzleNotFoundException(
-                $"No puzzles found for language '{puzzleLanguage}', you probably solved all. Please try a different language.");
+            return NotFound(new 
+            { 
+                error = $"No puzzles found for language '{puzzleLanguage}', you probably solved all. Please try a different language.",
+                allSolved = true
+            });
         }
         return Ok(puzzles[Random.Shared.Next(puzzles.Count)]);
     }

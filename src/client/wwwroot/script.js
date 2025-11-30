@@ -778,7 +778,7 @@ async function fetchPuzzleBySize(seed = null) {
                 const error = new Error(errorData.error || 'Puzzle not found');
                 error.status = 404;
                 error.requestedLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
-                error.isAllSolved = errorData.error && errorData.error.includes('solved all');
+                error.isAllSolved = errorData.allSolved === true;
                 throw error;
             }
             throw new Error(`HTTP error! status: ${response.status}`);
