@@ -755,7 +755,7 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
 
 async function fetchPuzzleBySize(seed = null) {
     try {
-        let url = `${API_BASE_URL}/api/crossword/puzzle`;
+        let url = `${API_BASE_URL}/api/crossword/unsolvedpuzzle`;
         if (seed) {
             url += `?seed=${seed}`;
         }

@@ -39,25 +39,25 @@ public class CrosswordController : ControllerBase
     /// Get a specific puzzle by ID
     /// </summary>
     [HttpGet("puzzle/{id}")]
-    public ActionResult<CrosswordPuzzle> GetPuzzle(string id)
+    public ActionResult<CrosswordPuzzle> GetPuzzleById(string id)
     {
         var puzzle = _puzzleRepositoryReader.GetPuzzle(id);
 
         if (puzzle == null)
         {
-            throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
+            return NotFound(new { error = $"Puzzle with ID '{id}' was not found." });
         }
 
         return Ok(puzzle);
     }
 
     /// <summary>
-    /// Get a puzzle in the current language
+    /// Get a random unsolved puzzle in the current language
     /// Language is determined from Accept-Language header.
     /// </summary>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
-    [HttpGet("puzzle")]
-    public ActionResult<CrosswordPuzzle> GetPuzzle(
+    [HttpGet("unsolvedpuzzle")]
+    public ActionResult<CrosswordPuzzle> GetUnsolvedPuzzle(
         [FromQuery] string? seed = null,
         [FromHeader(Name = "X-User-Id")] string? userId = null,
         [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
