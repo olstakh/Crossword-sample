@@ -202,8 +202,7 @@ h1 {
 }
 
 .new-puzzle-container #newPuzzleBtn {
-    width: 100%;
-    max-width: 680px;
+    width: calc(3 * 150px + 2 * 10px);
     padding: 12px 20px;
     background-color: #27ae60;
     font-size: 1.1rem;
