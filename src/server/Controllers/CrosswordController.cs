@@ -3,6 +3,7 @@ using CrossWords.Services;
 using CrossWords.Services.Abstractions;
 using CrossWords.Services.Models;
 using CrossWords.Services.Exceptions;
+using CrossWords.Models;
 
 namespace CrossWords.Controllers;
 
@@ -33,6 +34,32 @@ public class CrosswordController : ControllerBase
             .ToList();
 
         return Ok(puzzleIds);
+    }
+
+    /// <summary>
+    /// Get all puzzles with their solved status for the current user
+    /// </summary>
+    [HttpGet("allpuzzles")]
+    public ActionResult<List<PuzzleListItem>> GetAllPuzzles(
+        [FromHeader(Name = "X-User-Id")] string? userId = null,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
+    {
+        // Get language from Accept-Language header
+        var puzzleLanguage = ParseAcceptLanguage(acceptLanguage);
+        
+        var puzzles = _puzzleRepositoryReader
+            .GetPuzzles(sizeCategory: PuzzleSizeCategory.Any, language: puzzleLanguage)
+            .Select(p => new PuzzleListItem
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Language = p.Language,
+                Size = p.Size,
+                IsSolved = userId != null && _userProgressRepositoryReader.IsPuzzleSolved(userId, p.Id)
+            })
+            .ToList();
+
+        return Ok(puzzles);
     }
 
     /// <summary>

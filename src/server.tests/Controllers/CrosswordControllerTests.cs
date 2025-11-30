@@ -30,6 +30,48 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
         Assert.Contains("puzzle2", puzzleIds);
     }
 
+    [Fact]
+    public async Task GetAllPuzzles_ReturnsSuccessAndPuzzlesWithSolvedStatus()
+    {
+        // Arrange
+        var userId = "test_user_" + Guid.NewGuid();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/allpuzzles");
+        request.Headers.Add("X-User-Id", userId);
+        request.Headers.Add("Accept-Language", "en");
+
+        // Act
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var puzzles = await response.Content.ReadFromJsonAsync<List<PuzzleListItem>>(cancellationToken: TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(puzzles);
+        Assert.NotEmpty(puzzles);
+        Assert.All(puzzles, p => Assert.NotNull(p.Title));
+        Assert.All(puzzles, p => Assert.NotNull(p.Id));
+        Assert.All(puzzles, p => Assert.True(p.Size.Rows > 0 && p.Size.Cols > 0));
+    }
+
+    [Fact]
+    public async Task GetAllPuzzles_WithoutUserId_ReturnsPuzzlesWithUnsolvedStatus()
+    {
+        // Arrange
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/crossword/allpuzzles");
+        request.Headers.Add("Accept-Language", "en");
+
+        // Act
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var puzzles = await response.Content.ReadFromJsonAsync<List<PuzzleListItem>>(cancellationToken: TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(puzzles);
+        Assert.NotEmpty(puzzles);
+        Assert.All(puzzles, p => Assert.False(p.IsSolved)); // Without userId, all should be unsolved
+    }
+
     [Theory]
     [InlineData("puzzle2")]
     [InlineData("puzzle3")]

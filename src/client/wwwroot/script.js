@@ -1079,9 +1079,103 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectPuzzleHeader.classList.add('collapsed');
         puzzleListContent.classList.add('collapsed');
         
-        selectPuzzleHeader.addEventListener('click', () => {
+        selectPuzzleHeader.addEventListener('click', async () => {
+            const wasCollapsed = selectPuzzleHeader.classList.contains('collapsed');
             selectPuzzleHeader.classList.toggle('collapsed');
             puzzleListContent.classList.toggle('collapsed');
+            
+            // Load puzzle list when expanding for the first time
+            if (wasCollapsed && !puzzleListContent.dataset.loaded) {
+                await loadPuzzleList();
+                puzzleListContent.dataset.loaded = 'true';
+            }
         });
     }
 });
+
+// Fetch and populate the puzzle list
+async function loadPuzzleList() {
+    try {
+        const headers = {
+            'Accept-Language': localeManager.getAcceptLanguageHeader()
+        };
+        
+        // Add user ID if available
+        if (typeof userAuth !== 'undefined' && userAuth.userId) {
+            headers['X-User-Id'] = userAuth.userId;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/crossword/allpuzzles`, {
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load puzzle list: ${response.status}`);
+        }
+        
+        const puzzles = await response.json();
+        populatePuzzleTable(puzzles);
+    } catch (error) {
+        console.error('Error loading puzzle list:', error);
+        const tbody = document.getElementById('puzzleTableBody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">Failed to load puzzles</td></tr>';
+        }
+    }
+}
+
+// Populate the puzzle table with data
+function populatePuzzleTable(puzzles) {
+    const tbody = document.getElementById('puzzleTableBody');
+    if (!tbody) return;
+    
+    if (puzzles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">No puzzles available</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = puzzles.map(puzzle => {
+        const solvedText = puzzle.isSolved 
+            ? localeManager.t('yes') 
+            : localeManager.t('no');
+        
+        return `
+            <tr data-puzzle-id="${puzzle.id}" style="cursor: pointer;">
+                <td>${puzzle.title}</td>
+                <td>${puzzle.size.rows} × ${puzzle.size.cols}</td>
+                <td>${solvedText}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Add click handlers to load specific puzzles
+    tbody.querySelectorAll('tr[data-puzzle-id]').forEach(row => {
+        row.addEventListener('click', () => {
+            const puzzleId = row.dataset.puzzleId;
+            loadPuzzleById(puzzleId);
+        });
+    });
+}
+
+// Load a specific puzzle by ID
+async function loadPuzzleById(puzzleId) {
+    try {
+        // Update URL with puzzle ID
+        const url = new URL(window.location);
+        url.searchParams.set('puzzleId', puzzleId);
+        window.history.pushState({}, '', url);
+        
+        // Fetch and load the puzzle
+        await loadPuzzle();
+        
+        // Collapse the puzzle selector
+        const selectPuzzleHeader = document.getElementById('selectPuzzleHeader');
+        const puzzleListContent = document.getElementById('puzzleListContent');
+        if (selectPuzzleHeader && puzzleListContent) {
+            selectPuzzleHeader.classList.add('collapsed');
+            puzzleListContent.classList.add('collapsed');
+        }
+    } catch (error) {
+        console.error('Error loading puzzle by ID:', error);
+    }
+}

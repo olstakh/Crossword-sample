@@ -154,6 +154,12 @@ class LocaleManager {
                 this.setLocale(localeName);
                 this.updateActiveButton();
                 
+                // Clear puzzleId from URL before reloading
+                const url = new URL(window.location);
+                url.searchParams.delete('puzzleId');
+                url.searchParams.delete('seed');
+                window.history.pushState({}, '', url);
+                
                 // Reload the page to fetch content in new locale
                 // This will trigger server requests with new Accept-Language header
                 // and allow for future localization of UI text
