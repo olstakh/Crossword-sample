@@ -8,7 +8,7 @@ class CryptogramPuzzle {
         this.currentCell = null;
         this.userAnswers = {}; // number -> letter mapping from user
         this.language = data.language || 'English';
-        this.difficultyMode = localStorage.getItem('difficultyMode') || 'easy';
+        this.difficultyMode = localStorage.getItem('difficultyMode') || 'hard';
         
         // Generate numbers and letter mapping from grid
         this.generateCryptogramData();
@@ -1043,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const difficultyModeToggle = document.getElementById('difficultyModeToggle');
     if (difficultyModeToggle) {
         // Initialize toggle state from localStorage
-        const savedDifficulty = localStorage.getItem('difficultyMode') || 'easy';
+        const savedDifficulty = localStorage.getItem('difficultyMode') || 'hard';
         difficultyModeToggle.checked = (savedDifficulty === 'hard');
         
         // Handle toggle changes
