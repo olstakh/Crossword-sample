@@ -1069,4 +1069,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    // Setup collapsible Select Puzzle section
+    const selectPuzzleHeader = document.getElementById('selectPuzzleHeader');
+    const puzzleListContent = document.getElementById('puzzleListContent');
+    
+    if (selectPuzzleHeader && puzzleListContent) {
+        // Start collapsed by default
+        selectPuzzleHeader.classList.add('collapsed');
+        puzzleListContent.classList.add('collapsed');
+        
+        selectPuzzleHeader.addEventListener('click', () => {
+            selectPuzzleHeader.classList.toggle('collapsed');
+            puzzleListContent.classList.toggle('collapsed');
+        });
+    }
 });
