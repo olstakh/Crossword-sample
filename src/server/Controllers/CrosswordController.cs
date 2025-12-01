@@ -13,15 +13,10 @@ public class CrosswordController : ControllerBase
 {
     private readonly IPuzzleRepositoryReader _puzzleRepositoryReader;
     private readonly IUserProgressRepositoryReader _userProgressRepositoryReader;
-    private readonly IPuzzleRepositoryReader _puzzleRepositoryReader;
-    private readonly IUserProgressRepositoryReader _userProgressRepositoryReader;
     private readonly ILogger<CrosswordController> _logger;
 
     public CrosswordController(IPuzzleRepositoryReader puzzleRepositoryReader, IUserProgressRepositoryReader userProgressRepositoryReader, ILogger<CrosswordController> logger)
-    public CrosswordController(IPuzzleRepositoryReader puzzleRepositoryReader, IUserProgressRepositoryReader userProgressRepositoryReader, ILogger<CrosswordController> logger)
     {
-        _puzzleRepositoryReader = puzzleRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
-        _userProgressRepositoryReader = userProgressRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
         _puzzleRepositoryReader = puzzleRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
         _userProgressRepositoryReader = userProgressRepositoryReader ?? throw new ArgumentNullException(nameof(puzzleRepositoryReader));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,11 +28,6 @@ public class CrosswordController : ControllerBase
     [HttpGet("puzzles")]
     public ActionResult<List<string>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
     {
-        var puzzleIds = _puzzleRepositoryReader
-            .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
-            .Select(p => p.Id)
-            .ToList();
-
         var puzzleIds = _puzzleRepositoryReader
             .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
             .Select(p => p.Id)
