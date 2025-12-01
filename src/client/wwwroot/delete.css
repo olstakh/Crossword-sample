@@ -270,11 +270,24 @@ input[type="checkbox"] {
     accent-color: #667eea;
 }
 
-/* Puzzle ID styling */
+/* Puzzle ID and link styling */
 .puzzle-id {
     font-family: 'Courier New', monospace;
     font-weight: 600;
     color: #667eea;
+}
+
+.puzzle-link {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s, text-decoration 0.2s;
+}
+
+.puzzle-link:hover {
+    color: #4834df;
+    text-decoration: underline;
 }
 
 /* Responsive Design */
