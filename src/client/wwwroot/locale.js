@@ -4,7 +4,7 @@
 class LocaleManager {
     constructor() {
         this.supportedLocales = {
-            'English': { code: 'en', flag: '🇬🇧', name: 'English' },
+            'English': { code: 'en', flag: '🇺🇸', name: 'English' },
             'Russian': { code: 'ru', flag: '🇷🇺', name: 'Русский' },
             'Ukrainian': { code: 'uk', flag: '🇺🇦', name: 'Українська' }
         };
