@@ -161,4 +161,54 @@ public class UserController : ControllerBase
         var users = _repositoryReader.GetAllUsers().ToList();
         return Ok(users);
     }
+
+    /// <summary>
+    /// Download all user progress data (for backup)
+    /// </summary>
+    [HttpGet("progress/download")]
+    [Authorize(Policy = "AdminOnly")]
+    public IActionResult DownloadUserProgress()
+    {
+        try
+        {
+            var records = _repositoryReader.GetAllUserProgress();
+            _logger.LogInformation("Downloaded user progress data via admin API");
+            return Ok(records);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading user progress");
+            return StatusCode(500, new { error = "Failed to download user progress", message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Upload user progress data (replaces existing data)
+    /// </summary>
+    [HttpPost("progress/upload")]
+    [Authorize(Policy = "AdminOnly")]
+    public IActionResult UploadUserProgress([FromBody] List<UserProgressRecord> records)
+    {
+        if (records == null || records.Count == 0)
+        {
+            return BadRequest(new { error = "At least one user progress record is required" });
+        }
+
+        try
+        {
+            _repositoryWriter.ImportUserProgress(records);
+            _logger.LogInformation("Successfully uploaded {Count} user progress records via admin API", records.Count);
+            
+            return Ok(new 
+            { 
+                message = $"Successfully uploaded {records.Count} user progress record(s)",
+                count = records.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading user progress");
+            return StatusCode(500, new { error = "Failed to upload user progress", message = ex.Message });
+        }
+    }
 }

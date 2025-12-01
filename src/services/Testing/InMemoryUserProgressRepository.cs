@@ -8,7 +8,7 @@ namespace CrossWords.Services.Testing;
 /// </summary>
 public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter
 {
-    private readonly Dictionary<string, HashSet<string>> _userProgress = new();
+    private readonly Dictionary<string, Dictionary<string, DateTime>> _userProgress = new();
     private readonly object _lock = new();
 
     public bool IsPuzzleSolved(string userId, string puzzleId)
@@ -16,7 +16,7 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         lock (_lock)
         {
             return _userProgress.TryGetValue(userId, out var solvedPuzzles) 
-                && solvedPuzzles.Contains(puzzleId);
+                && solvedPuzzles.ContainsKey(puzzleId);
         }
     }
 
@@ -26,9 +26,9 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         {
             if (!_userProgress.ContainsKey(userId))
             {
-                _userProgress[userId] = new HashSet<string>();
+                _userProgress[userId] = new Dictionary<string, DateTime>();
             }
-            _userProgress[userId].Add(puzzleId);
+            _userProgress[userId][puzzleId] = DateTime.UtcNow;
         }
     }
 
@@ -54,7 +54,7 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         {
             if (_userProgress.TryGetValue(userId, out var solvedPuzzles))
             {
-                return new HashSet<string>(solvedPuzzles);
+                return new HashSet<string>(solvedPuzzles.Keys);
             }
             return new HashSet<string>();
         }
@@ -65,6 +65,44 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         lock (_lock)
         {
             return _userProgress.Keys.ToList();
+        }
+    }
+
+    public IEnumerable<UserProgressRecord> GetAllUserProgress()
+    {
+        lock (_lock)
+        {
+            var records = new List<UserProgressRecord>();
+            foreach (var (userId, puzzles) in _userProgress)
+            {
+                foreach (var (puzzleId, solvedAt) in puzzles)
+                {
+                    records.Add(new UserProgressRecord
+                    {
+                        UserId = userId,
+                        PuzzleId = puzzleId,
+                        SolvedAt = solvedAt
+                    });
+                }
+            }
+            return records;
+        }
+    }
+
+    public void ImportUserProgress(IEnumerable<UserProgressRecord> records)
+    {
+        lock (_lock)
+        {
+            _userProgress.Clear();
+            
+            foreach (var record in records)
+            {
+                if (!_userProgress.ContainsKey(record.UserId))
+                {
+                    _userProgress[record.UserId] = new Dictionary<string, DateTime>();
+                }
+                _userProgress[record.UserId][record.PuzzleId] = record.SolvedAt;
+            }
         }
     }
 

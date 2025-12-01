@@ -11,4 +11,9 @@ public interface IUserProgressRepositoryWriter
     /// Remove solved puzzle records for a user
     /// </summary>
     void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds);
+
+    /// <summary>
+    /// Import user progress records (replaces existing data)
+    /// </summary>
+    void ImportUserProgress(IEnumerable<UserProgressRecord> records);
 }
