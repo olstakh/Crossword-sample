@@ -33,6 +33,27 @@ public static class ServiceCollectionExtensions
                 services.AddInMemoryRepositories();
                 break;
 
+            case "file":
+                if (storageConfig.File == null)
+                {
+                    throw new InvalidOperationException(
+                        "File configuration is required when Provider is 'File'");
+                }
+
+                var puzzlesFilePath = Path.IsPathRooted(storageConfig.File.PuzzlesFilePath)
+                    ? storageConfig.File.PuzzlesFilePath
+                    : Path.Combine(contentRootPath ?? Directory.GetCurrentDirectory(), 
+                        storageConfig.File.PuzzlesFilePath);
+
+                var userProgressFilePath = Path.IsPathRooted(storageConfig.File.UserProgressFilePath)
+                    ? storageConfig.File.UserProgressFilePath
+                    : Path.Combine(contentRootPath ?? Directory.GetCurrentDirectory(), 
+                        storageConfig.File.UserProgressFilePath);
+
+                services.AddFilePuzzleRepository(puzzlesFilePath);
+                services.AddFileUserProgressRepository(userProgressFilePath);
+                break;
+
             case "sqlite":
                 if (storageConfig.Sqlite == null)
                 {
@@ -57,7 +78,7 @@ public static class ServiceCollectionExtensions
             default:
                 throw new InvalidOperationException(
                     $"Unknown storage provider: {storageConfig.Provider}. " +
-                    $"Supported providers: InMemory, Sqlite, SqlServer");
+                    $"Supported providers: InMemory, File, Sqlite");
         }
 
         return services;
@@ -74,6 +95,39 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPuzzleRepositoryWriter, Testing.InMemoryPuzzleRepository>();
         services.AddSingleton<IUserProgressRepositoryReader, Testing.InMemoryUserProgressRepository>();
         services.AddSingleton<IUserProgressRepositoryWriter, Testing.InMemoryUserProgressRepository>();
+        return services;
+    }
+
+    /// <summary>
+    /// Add file-based puzzle repository (read-only)
+    /// </summary>
+    internal static IServiceCollection AddFilePuzzleRepository(this IServiceCollection services, string filePath)
+    {
+        services.AddSingleton<FilePuzzleRepository>(sp => 
+        {
+            var logger = sp.GetRequiredService<ILogger<FilePuzzleRepository>>();
+            return new FilePuzzleRepository(filePath, logger);
+        });
+        services.AddSingleton<IPuzzleRepositoryReader>(sp => sp.GetRequiredService<FilePuzzleRepository>());
+        services.AddSingleton<IPuzzleRepositoryWriter>(sp => sp.GetRequiredService<FilePuzzleRepository>());
+        
+        return services;
+    }
+
+    /// <summary>
+    /// Add file-based user progress repository
+    /// </summary>
+    internal static IServiceCollection AddFileUserProgressRepository(this IServiceCollection services, string filePath)
+    {
+        services.AddSingleton<FileUserProgressRepository>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<FileUserProgressRepository>>();
+            return new FileUserProgressRepository(filePath, logger);
+        });
+
+        services.AddSingleton<IUserProgressRepositoryReader>(sp => sp.GetRequiredService<FileUserProgressRepository>());
+        services.AddSingleton<IUserProgressRepositoryWriter>(sp => sp.GetRequiredService<FileUserProgressRepository>());
+        
         return services;
     }
 
