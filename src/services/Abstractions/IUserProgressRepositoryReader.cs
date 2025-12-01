@@ -19,4 +19,19 @@ public interface IUserProgressRepositoryReader
     /// Get all user IDs that have progress records
     /// </summary>
     IEnumerable<string> GetAllUsers();
+
+    /// <summary>
+    /// Get all user progress records (for export/backup)
+    /// </summary>
+    IEnumerable<UserProgressRecord> GetAllUserProgress();
+}
+
+/// <summary>
+/// Represents a single user progress record for export/import
+/// </summary>
+public class UserProgressRecord
+{
+    public string UserId { get; init; } = string.Empty;
+    public string PuzzleId { get; init; } = string.Empty;
+    public DateTime SolvedAt { get; init; }
 }

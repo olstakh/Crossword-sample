@@ -236,6 +236,102 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         return users;
     }
 
+    public IEnumerable<UserProgressRecord> GetAllUserProgress()
+    {
+        var records = new List<UserProgressRecord>();
+
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT UserId, PuzzleId, SolvedAt 
+                FROM UserProgress 
+                ORDER BY UserId, SolvedAt";
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var userId = reader.GetString(0);
+                var puzzleId = reader.GetString(1);
+                var solvedAtStr = reader.GetString(2);
+                
+                if (DateTime.TryParse(solvedAtStr, out var solvedAt))
+                {
+                    records.Add(new UserProgressRecord
+                    {
+                        UserId = userId,
+                        PuzzleId = puzzleId,
+                        SolvedAt = solvedAt
+                    });
+                }
+            }
+
+            _logger.LogInformation("Exported {Count} user progress records", records.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all user progress");
+            throw;
+        }
+
+        return records;
+    }
+
+    public void ImportUserProgress(IEnumerable<UserProgressRecord> records)
+    {
+        var recordsList = records.ToList();
+        
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+            
+            // Clear existing data
+            var clearCommand = connection.CreateCommand();
+            clearCommand.Transaction = transaction;
+            clearCommand.CommandText = "DELETE FROM UserProgress";
+            var deletedCount = clearCommand.ExecuteNonQuery();
+            
+            _logger.LogInformation("Cleared {Count} existing user progress records", deletedCount);
+
+            // Insert new data
+            var insertCommand = connection.CreateCommand();
+            insertCommand.Transaction = transaction;
+            insertCommand.CommandText = @"
+                INSERT INTO UserProgress (UserId, PuzzleId, SolvedAt)
+                VALUES ($userId, $puzzleId, $solvedAt)";
+            
+            var userIdParam = insertCommand.Parameters.Add("$userId", SqliteType.Text);
+            var puzzleIdParam = insertCommand.Parameters.Add("$puzzleId", SqliteType.Text);
+            var solvedAtParam = insertCommand.Parameters.Add("$solvedAt", SqliteType.Text);
+            
+            int importedCount = 0;
+            foreach (var record in recordsList)
+            {
+                userIdParam.Value = record.UserId;
+                puzzleIdParam.Value = record.PuzzleId;
+                solvedAtParam.Value = record.SolvedAt.ToString("O");
+                
+                insertCommand.ExecuteNonQuery();
+                importedCount++;
+            }
+            
+            transaction.Commit();
+            
+            _logger.LogInformation("Imported {Count} user progress records", importedCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing user progress");
+            throw;
+        }
+    }
+
     public void Dispose()
     {
         // SQLite connections are disposed in using blocks

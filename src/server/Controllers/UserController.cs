@@ -79,12 +79,15 @@ public class UserController : ControllerBase
     [HttpGet("available")]
     public ActionResult<AvailablePuzzlesResponse> GetAvailablePuzzles(
         [FromHeader(Name = "X-User-Id")] string? userId,
-        [FromQuery] PuzzleLanguage? language = null)
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
     {
         if (string.IsNullOrWhiteSpace(userId))
         {
             return BadRequest(new { error = "User ID is required in X-User-Id header" });
         }
+
+        // Parse language from Accept-Language header
+        var language = ParseLanguageFromHeader(acceptLanguage);
 
         var allPuzzles = _puzzleRepositoryReader
             .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
@@ -160,5 +163,78 @@ public class UserController : ControllerBase
     {
         var users = _repositoryReader.GetAllUsers().ToList();
         return Ok(users);
+    }
+
+    /// <summary>
+    /// Download all user progress data (for backup)
+    /// </summary>
+    [HttpGet("progress/download")]
+    [Authorize(Policy = "AdminOnly")]
+    public IActionResult DownloadUserProgress()
+    {
+        try
+        {
+            var records = _repositoryReader.GetAllUserProgress();
+            _logger.LogInformation("Downloaded user progress data via admin API");
+            return Ok(records);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading user progress");
+            return StatusCode(500, new { error = "Failed to download user progress", message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Upload user progress data (replaces existing data)
+    /// </summary>
+    [HttpPost("progress/upload")]
+    [Authorize(Policy = "AdminOnly")]
+    public IActionResult UploadUserProgress([FromBody] List<UserProgressRecord> records)
+    {
+        if (records == null || records.Count == 0)
+        {
+            return BadRequest(new { error = "At least one user progress record is required" });
+        }
+
+        try
+        {
+            _repositoryWriter.ImportUserProgress(records);
+            _logger.LogInformation("Successfully uploaded {Count} user progress records via admin API", records.Count);
+            
+            return Ok(new 
+            { 
+                message = $"Successfully uploaded {records.Count} user progress record(s)",
+                count = records.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading user progress");
+            return StatusCode(500, new { error = "Failed to upload user progress", message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Parse Accept-Language header to determine puzzle language
+    /// </summary>
+    private static PuzzleLanguage? ParseLanguageFromHeader(string? acceptLanguage)
+    {
+        if (string.IsNullOrWhiteSpace(acceptLanguage))
+        {
+            return null;
+        }
+
+        // Accept-Language format: "en-US,en;q=0.9,ru;q=0.8"
+        // We'll take the first language code
+        var languageCode = acceptLanguage.Split(',')[0].Split('-')[0].Trim().ToLower();
+
+        return languageCode switch
+        {
+            "en" => PuzzleLanguage.English,
+            "ru" => PuzzleLanguage.Russian,
+            "uk" => PuzzleLanguage.Ukrainian,
+            _ => null
+        };
     }
 }

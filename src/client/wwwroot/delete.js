@@ -75,7 +75,7 @@ function renderPuzzlesTable() {
             <td class="checkbox-cell">
                 <input type="checkbox" class="puzzle-checkbox" data-puzzle-id="${puzzle.id}">
             </td>
-            <td><span class="puzzle-id">${puzzle.id}</span></td>
+            <td><a href="index.html?puzzleId=${puzzle.id}" class="puzzle-link" title="Play this puzzle">${puzzle.id}</a></td>
             <td>${escapeHtml(puzzle.title)}</td>
             <td>${escapeHtml(puzzle.language)}</td>
             <td class="size-cell">${puzzle.grid.length}</td>

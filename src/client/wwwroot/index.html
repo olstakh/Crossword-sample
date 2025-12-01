@@ -11,64 +11,63 @@
         <header>
             <div class="header-content">
                 <h1>Cryptogram Puzzle</h1>
+                <div class="locale-selector" id="localeSelector"></div>
                 <div id="userStats" class="user-stats"></div>
             </div>
             <div class="toggles-container">
                 <div class="difficulty-mode-toggle">
                     <label class="toggle-label">
-                        <span class="toggle-text">😊 Easy</span>
+                        <span class="toggle-text" data-i18n="easy">😊 Easy</span>
                         <input type="checkbox" id="difficultyModeToggle" class="toggle-checkbox">
                         <span class="toggle-slider difficulty-slider"></span>
-                        <span class="toggle-text">💪 Hard</span>
+                        <span class="toggle-text" data-i18n="hard">💪 Hard</span>
                     </label>
                 </div>
             </div>
             <div class="controls">
-                <button id="checkBtn">Check Answers</button>
-                <button id="revealBtn">Reveal Solution</button>
-                <button id="clearBtn">Clear Grid</button>
+                <button id="checkBtn" data-i18n="checkAnswers">Check Answers</button>
+                <button id="revealBtn" data-i18n="revealSolution">Reveal Solution</button>
+                <button id="clearBtn" data-i18n="clearGrid">Clear Grid</button>
+            </div>
+            <div class="new-puzzle-container">
+                <button id="newPuzzleBtn" data-i18n="newPuzzle">New Puzzle</button>
             </div>
         </header>
         
         <main>
-            <aside class="size-selector">
-                <h3>Puzzle Settings</h3>
-                
-                <div class="selector-group">
-                    <label class="selector-label">Language</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="puzzleLanguage" value="English" checked>
-                            <span>English</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="puzzleLanguage" value="Russian">
-                            <span>Русский</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="puzzleLanguage" value="Ukrainian">
-                            <span>Українська</span>
-                        </label>
-                    </div>
+            <aside class="puzzle-selector">
+                <h3 id="selectPuzzleHeader" class="collapsible-header" data-i18n="selectPuzzle">Select Puzzle</h3>
+                <div id="puzzleListContent" class="collapsible-content">
+                    <table id="puzzleTable" class="puzzle-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="puzzleName">Name</th>
+                                <th data-i18n="puzzleSize">Size</th>
+                                <th data-i18n="puzzleSolved">Is Solved</th>
+                            </tr>
+                        </thead>
+                        <tbody id="puzzleTableBody">
+                            <!-- Puzzle rows will be populated here -->
+                        </tbody>
+                    </table>
                 </div>
-                
-                <button id="newPuzzleBtn">New Puzzle</button>
             </aside>
             <div class="puzzle-section">
                 <div id="crossword-grid"></div>
                 <div class="alphabet-decoder">
-                    <h2>Letter Decoder</h2>
+                    <h2 data-i18n="letterDecoder">Letter Decoder</h2>
                     <div id="alphabet-row"></div>
                 </div>
             </div>
             <aside class="letter-picker-panel" id="letterPickerPanel">
-                <h3>Select Letter</h3>
+                <h3 data-i18n="selectLetter">Select Letter</h3>
                 <div id="letterPickerGrid" class="letter-picker-grid"></div>
-                <button id="letterPickerClear" class="letter-picker-clear-btn">⌫ Clear</button>
+                <button id="letterPickerClear" class="letter-picker-clear-btn" data-i18n="clear">⌫ Clear</button>
             </aside>
         </main>
     </div>
     
+    <script src="locale.js"></script>
     <script src="auth.js"></script>
     <script src="script.js"></script>
 </body>

@@ -63,6 +63,18 @@ h1 {
     color: #667eea;
 }
 
+.database-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.database-actions .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+}
+
 .panel-section {
     background: white;
     border-radius: 12px;
@@ -270,11 +282,24 @@ input[type="checkbox"] {
     accent-color: #667eea;
 }
 
-/* Puzzle ID styling */
+/* Puzzle ID and link styling */
 .puzzle-id {
     font-family: 'Courier New', monospace;
     font-weight: 600;
     color: #667eea;
+}
+
+.puzzle-link {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s, text-decoration 0.2s;
+}
+
+.puzzle-link:hover {
+    color: #4834df;
+    text-decoration: underline;
 }
 
 /* Responsive Design */

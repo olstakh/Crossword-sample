@@ -648,7 +648,7 @@ class CryptogramPuzzle {
 }
 
 // Show congratulations message in place of puzzle grid
-function showAllPuzzlesSolvedMessage(message, size, language) {
+function showAllPuzzlesSolvedMessage(message, language) {
     const gridElement = document.getElementById('crossword-grid');
     const alphabetElement = document.getElementById('alphabet-row');
     const puzzleSection = document.querySelector('.puzzle-section');
@@ -663,7 +663,6 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
                 <div class="all-solved-actions">
                     <p>Try:</p>
                     <ul>
-                        <li>Selecting a different <strong>size category</strong></li>
                         <li>Choosing a different <strong>language</strong></li>
                         <li>Replaying your favorite puzzles!</li>
                     </ul>
@@ -679,6 +678,48 @@ function showAllPuzzlesSolvedMessage(message, size, language) {
     }
     
     // Hide letter picker panel when no puzzle to solve
+    if (letterPickerPanel) {
+        letterPickerPanel.style.display = 'none';
+    }
+    
+    // Fade in the message
+    if (puzzleSection) {
+        puzzleSection.style.opacity = '1';
+    }
+}
+
+// Show puzzle not found message in place of puzzle grid
+function showPuzzleNotFoundMessage(puzzleId) {
+    const gridElement = document.getElementById('crossword-grid');
+    const alphabetElement = document.getElementById('alphabet-row');
+    const puzzleSection = document.querySelector('.puzzle-section');
+    const letterPickerPanel = document.getElementById('letterPickerPanel');
+    
+    if (gridElement) {
+        gridElement.innerHTML = `
+            <div class="all-solved-message">
+                <div class="celebration-icon">🔍</div>
+                <h2>Puzzle Not Found</h2>
+                <p>The puzzle "${puzzleId}" could not be found.</p>
+                <div class="all-solved-actions">
+                    <p>You can:</p>
+                    <ul>
+                        <li>Check the puzzle ID and try again</li>
+                        <li>Click <strong>New Puzzle</strong> to get a random puzzle</li>
+                        <li>Choose a different language if needed</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        gridElement.style.gridTemplateColumns = '1fr';
+        gridElement.style.gridTemplateRows = '1fr';
+    }
+    
+    if (alphabetElement) {
+        alphabetElement.innerHTML = '';
+    }
+    
+    // Hide letter picker panel when no puzzle to display
     if (letterPickerPanel) {
         letterPickerPanel.style.display = 'none';
     }
@@ -754,11 +795,11 @@ async function fetchPuzzle(puzzleId = 'puzzle1') {
     }
 }
 
-async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = null) {
+async function fetchPuzzleBySize(seed = null) {
     try {
-        let url = `${API_BASE_URL}/api/crossword/puzzle?size=${size}&language=${language}`;
+        let url = `${API_BASE_URL}/api/crossword/unsolvedpuzzle`;
         if (seed) {
-            url += `&seed=${seed}`;
+            url += `?seed=${seed}`;
         }
         
         // Add userId header if userAuth is available
@@ -767,15 +808,19 @@ async function fetchPuzzleBySize(size = 'medium', language = 'English', seed = n
             headers['X-User-Id'] = userAuth.userId;
         }
         
+        // Add Accept-Language header if localeManager is available
+        if (typeof localeManager !== 'undefined') {
+            headers['Accept-Language'] = localeManager.getAcceptLanguageHeader();
+        }
+        
         const response = await fetch(url, { headers });
         if (!response.ok) {
             if (response.status === 404) {
                 const errorData = await response.json();
                 const error = new Error(errorData.error || 'Puzzle not found');
                 error.status = 404;
-                error.requestedSize = size;
-                error.requestedLanguage = language;
-                error.isAllSolved = errorData.error && errorData.error.includes('solved all');
+                error.requestedLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
+                error.isAllSolved = errorData.allSolved === true;
                 throw error;
             }
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -797,47 +842,28 @@ let currentPuzzle = null;
 async function loadPuzzle() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
-        const puzzleId = urlParams.get('puzzle');
+        const puzzleId = urlParams.get('puzzleId') || urlParams.get('puzzle'); // Support both for backwards compatibility
         const size = urlParams.get('size');
-        const language = urlParams.get('language') || 'English';
+        const language = urlParams.get('language') || (typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English');
         const seed = urlParams.get('seed');
         
         let puzzleData;
         
         if (size) {
-            // Load by size and language
+            // Legacy URL parameter support - just load puzzle with seed
             try {
-                puzzleData = await fetchPuzzleBySize(size, language, seed);
+                puzzleData = await fetchPuzzleBySize(seed);
             } catch (error) {
                 if (error.status === 404) {
                     // Check if this is all-solved case
                     if (error.isAllSolved) {
-                        showAllPuzzlesSolvedMessage(error.message, size, language);
+                        showAllPuzzlesSolvedMessage(error.message, language);
                         return;
                     }
                     
-                    // Show user-friendly error with option to try English
-                    const message = `${error.message}\n\nWould you like to try loading an English puzzle instead?`;
-                    showErrorMessage('Puzzle Not Available', message, async () => {
-                        // Fallback to English
-                        try {
-                            puzzleData = await fetchPuzzleBySize(size, 'English', seed);
-                            if (puzzleData) {
-                                const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
-                                if (englishRadio) englishRadio.checked = true;
-                                initializePuzzle(puzzleData, size);
-                            }
-                        } catch (fallbackError) {
-                            if (fallbackError.status === 404) {
-                                if (fallbackError.isAllSolved) {
-                                    showAllPuzzlesSolvedMessage(fallbackError.message, size, 'English');
-                                } else {
-                                    showErrorMessage('No Puzzles Available', 
-                                        'Sorry, no puzzles are available for this size. Please try a different size.');
-                                }
-                            }
-                        }
-                    });
+                    // Show error message
+                    showErrorMessage('No Puzzles Available', 
+                        'Sorry, no puzzles are available for this language. Please try changing your language preference.');
                     return;
                 }
                 throw error;
@@ -848,45 +874,29 @@ async function loadPuzzle() {
                 puzzleData = await fetchPuzzle(puzzleId);
             } catch (error) {
                 if (error.status === 404) {
-                    showErrorMessage('Puzzle Not Found', 
-                        `The puzzle "${puzzleId}" could not be found. Loading a default puzzle instead...`);
-                    // Fallback to default
-                    puzzleData = await fetchPuzzleBySize('medium', 'English');
+                    showPuzzleNotFoundMessage(puzzleId);
+                    return;
                 } else {
                     throw error;
                 }
             }
         } else {
-            // Default: load medium puzzle in selected language
+            // Default: load puzzle in current locale
             try {
-                puzzleData = await fetchPuzzleBySize('medium', language);
+                puzzleData = await fetchPuzzleBySize();
             } catch (error) {
                 if (error.status === 404) {
                     // Check if all-solved
                     if (error.isAllSolved) {
-                        showAllPuzzlesSolvedMessage(error.message, 'medium', language);
+                        showAllPuzzlesSolvedMessage(error.message, language);
                         return;
                     }
                     
-                    // Try fallback to English
-                    if (language !== 'English') {
-                        try {
-                            puzzleData = await fetchPuzzleBySize('medium', 'English');
-                            const englishRadio = document.querySelector('input[name="puzzleLanguage"][value="English"]');
-                            if (englishRadio) englishRadio.checked = true;
-                        } catch (fallbackError) {
-                            if (fallbackError.isAllSolved) {
-                                showAllPuzzlesSolvedMessage(fallbackError.message, 'medium', 'English');
-                                return;
-                            }
-                            throw fallbackError;
-                        }
-                    } else {
-                        throw error;
-                    }
-                } else {
-                    throw error;
+                    showErrorMessage('No Puzzles Available', 
+                        'Sorry, no puzzles are available. Please try changing your language preference.');
+                    return;
                 }
+                throw error;
             }
         }
         
@@ -899,12 +909,10 @@ async function loadPuzzle() {
 }
 
 function initializePuzzle(puzzleData, size = null) {
-    // Update language radio button to match
-    if (puzzleData.language) {
-        const languageRadio = document.querySelector(`input[name="puzzleLanguage"][value="${puzzleData.language}"]`);
-        if (languageRadio) {
-            languageRadio.checked = true;
-        }
+    // Update locale to match puzzle language
+    if (puzzleData.language && typeof localeManager !== 'undefined') {
+        localeManager.setLocale(puzzleData.language);
+        localeManager.updateActiveButton();
     }
     
     // Update page title if puzzle has a title
@@ -930,7 +938,7 @@ function initializePuzzle(puzzleData, size = null) {
 }
 
 // Load a new puzzle without page reload (with smooth transition)
-async function loadNewPuzzle(size, language) {
+async function loadNewPuzzle() {
     const puzzleSection = document.querySelector('.puzzle-section');
     
     // Fade out
@@ -943,20 +951,21 @@ async function loadNewPuzzle(size, language) {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     try {
-        // Fetch new puzzle
-        const seed = Date.now().toString(); // Use timestamp for variety
-        const puzzleData = await fetchPuzzleBySize(size, language, seed);
-        
-        // Update URL without reload (optional - keeps URL in sync)
+        // Update URL first to remove puzzleId before fetching
         const url = new URL(window.location);
-        url.searchParams.set('size', size);
-        url.searchParams.set('language', language);
+        const seed = Date.now().toString(); // Use timestamp for variety
         url.searchParams.set('seed', seed);
+        url.searchParams.delete('size');
+        url.searchParams.delete('language');
         url.searchParams.delete('puzzle');
+        url.searchParams.delete('puzzleId');
         window.history.pushState({}, '', url.toString());
         
+        // Fetch new puzzle
+        const puzzleData = await fetchPuzzleBySize(seed);
+        
         // Initialize new puzzle
-        initializePuzzle(puzzleData, size);
+        initializePuzzle(puzzleData);
         
         // Fade in
         if (puzzleSection) {
@@ -971,7 +980,8 @@ async function loadNewPuzzle(size, language) {
         
         // Handle all-puzzles-solved case with congratulatory message
         if (error.status === 404 && error.isAllSolved) {
-            showAllPuzzlesSolvedMessage(error.message, size, language);
+            const currentLanguage = typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English';
+            showAllPuzzlesSolvedMessage(error.message, currentLanguage);
             return; // Don't re-throw, we handled it
         }
         
@@ -1019,13 +1029,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         newPuzzleBtn.addEventListener('click', async (e) => {
             console.log('New Puzzle button clicked');
             e.preventDefault();
-            const selectedLanguageRadio = document.querySelector('input[name="puzzleLanguage"]:checked');
-            const selectedLanguage = selectedLanguageRadio ? selectedLanguageRadio.value : 'English';
-            console.log('Selected language:', selectedLanguage);
-            
-            // Always use 'any' for size
-            const selectedSize = 'any';
-            console.log('Selected size:', selectedSize);
             
             // Disable button and show loading state
             newPuzzleBtn.disabled = true;
@@ -1033,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             newPuzzleBtn.textContent = 'Loading...';
             
             try {
-                await loadNewPuzzle(selectedSize, selectedLanguage);
+                await loadNewPuzzle();
             } catch (error) {
                 console.error('Error loading new puzzle:', error);
                 
@@ -1066,4 +1069,113 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    // Setup collapsible Select Puzzle section
+    const selectPuzzleHeader = document.getElementById('selectPuzzleHeader');
+    const puzzleListContent = document.getElementById('puzzleListContent');
+    
+    if (selectPuzzleHeader && puzzleListContent) {
+        // Start collapsed by default
+        selectPuzzleHeader.classList.add('collapsed');
+        puzzleListContent.classList.add('collapsed');
+        
+        selectPuzzleHeader.addEventListener('click', async () => {
+            const wasCollapsed = selectPuzzleHeader.classList.contains('collapsed');
+            selectPuzzleHeader.classList.toggle('collapsed');
+            puzzleListContent.classList.toggle('collapsed');
+            
+            // Load puzzle list when expanding for the first time
+            if (wasCollapsed && !puzzleListContent.dataset.loaded) {
+                await loadPuzzleList();
+                puzzleListContent.dataset.loaded = 'true';
+            }
+        });
+    }
 });
+
+// Fetch and populate the puzzle list
+async function loadPuzzleList() {
+    try {
+        const headers = {
+            'Accept-Language': localeManager.getAcceptLanguageHeader()
+        };
+        
+        // Add user ID if available
+        if (typeof userAuth !== 'undefined' && userAuth.userId) {
+            headers['X-User-Id'] = userAuth.userId;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/crossword/allpuzzles`, {
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load puzzle list: ${response.status}`);
+        }
+        
+        const puzzles = await response.json();
+        populatePuzzleTable(puzzles);
+    } catch (error) {
+        console.error('Error loading puzzle list:', error);
+        const tbody = document.getElementById('puzzleTableBody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">Failed to load puzzles</td></tr>';
+        }
+    }
+}
+
+// Populate the puzzle table with data
+function populatePuzzleTable(puzzles) {
+    const tbody = document.getElementById('puzzleTableBody');
+    if (!tbody) return;
+    
+    if (puzzles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">No puzzles available</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = puzzles.map(puzzle => {
+        const solvedIcon = puzzle.isSolved 
+            ? '<span style="color: #27ae60; font-size: 1.3rem;">✓</span>' 
+            : '<span style="color: #e74c3c; font-size: 1.3rem;">✗</span>';
+        
+        return `
+            <tr data-puzzle-id="${puzzle.id}">
+                <td>${puzzle.title}</td>
+                <td>${puzzle.size.rows} × ${puzzle.size.cols}</td>
+                <td>${solvedIcon}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Add click handlers to load specific puzzles
+    tbody.querySelectorAll('tr[data-puzzle-id]').forEach(row => {
+        row.addEventListener('click', () => {
+            const puzzleId = row.dataset.puzzleId;
+            loadPuzzleById(puzzleId);
+        });
+    });
+}
+
+// Load a specific puzzle by ID
+async function loadPuzzleById(puzzleId) {
+    try {
+        // Update URL with puzzle ID
+        const url = new URL(window.location);
+        url.searchParams.set('puzzleId', puzzleId);
+        window.history.pushState({}, '', url);
+        
+        // Fetch and load the puzzle
+        await loadPuzzle();
+        
+        // Collapse the puzzle selector
+        const selectPuzzleHeader = document.getElementById('selectPuzzleHeader');
+        const puzzleListContent = document.getElementById('puzzleListContent');
+        if (selectPuzzleHeader && puzzleListContent) {
+            selectPuzzleHeader.classList.add('collapsed');
+            puzzleListContent.classList.add('collapsed');
+        }
+    } catch (error) {
+        console.error('Error loading puzzle by ID:', error);
+    }
+}

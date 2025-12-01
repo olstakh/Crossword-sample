@@ -13,13 +13,13 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
     private readonly string _filePath;
     private readonly ILogger<FileUserProgressRepository> _logger;
     private readonly object _lock = new();
-    private Dictionary<string, HashSet<string>> _userProgress;
+    private Dictionary<string, Dictionary<string, DateTime>> _userProgress;
 
     public FileUserProgressRepository(string filePath, ILogger<FileUserProgressRepository> logger)
     {
         _filePath = filePath;
         _logger = logger;
-        _userProgress = new Dictionary<string, HashSet<string>>();
+        _userProgress = new Dictionary<string, Dictionary<string, DateTime>>();
         
         // Create directory if it doesn't exist
         var directory = Path.GetDirectoryName(_filePath);
@@ -36,7 +36,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
     {
         lock (_lock)
         {
-            return _userProgress.ContainsKey(userId) && _userProgress[userId].Contains(puzzleId);
+            return _userProgress.ContainsKey(userId) && _userProgress[userId].ContainsKey(puzzleId);
         }
     }
 
@@ -46,11 +46,12 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         {
             if (!_userProgress.ContainsKey(userId))
             {
-                _userProgress[userId] = new HashSet<string>();
+                _userProgress[userId] = new Dictionary<string, DateTime>();
             }
 
-            if (_userProgress[userId].Add(puzzleId))
+            if (!_userProgress[userId].ContainsKey(puzzleId))
             {
+                _userProgress[userId][puzzleId] = DateTime.UtcNow;
                 _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId, puzzleId);
                 SaveToFile();
             }
@@ -88,7 +89,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         lock (_lock)
         {
             return _userProgress.ContainsKey(userId) 
-                ? new HashSet<string>(_userProgress[userId]) 
+                ? new HashSet<string>(_userProgress[userId].Keys) 
                 : new HashSet<string>();
         }
     }
@@ -101,6 +102,47 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         }
     }
 
+    public IEnumerable<UserProgressRecord> GetAllUserProgress()
+    {
+        lock (_lock)
+        {
+            var records = new List<UserProgressRecord>();
+            foreach (var (userId, puzzles) in _userProgress)
+            {
+                foreach (var (puzzleId, solvedAt) in puzzles)
+                {
+                    records.Add(new UserProgressRecord
+                    {
+                        UserId = userId,
+                        PuzzleId = puzzleId,
+                        SolvedAt = solvedAt
+                    });
+                }
+            }
+            return records;
+        }
+    }
+
+    public void ImportUserProgress(IEnumerable<UserProgressRecord> records)
+    {
+        lock (_lock)
+        {
+            _userProgress.Clear();
+            
+            foreach (var record in records)
+            {
+                if (!_userProgress.ContainsKey(record.UserId))
+                {
+                    _userProgress[record.UserId] = new Dictionary<string, DateTime>();
+                }
+                _userProgress[record.UserId][record.PuzzleId] = record.SolvedAt;
+            }
+            
+            SaveToFile();
+            _logger.LogInformation("Imported user progress: {Count} records", records.Count());
+        }
+    }
+
     private void LoadFromFile()
     {
         try
@@ -108,14 +150,11 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
             if (File.Exists(_filePath))
             {
                 var json = File.ReadAllText(_filePath);
-                var data = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+                var data = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, DateTime>>>(json);
                 
                 if (data != null)
                 {
-                    _userProgress = data.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => new HashSet<string>(kvp.Value)
-                    );
+                    _userProgress = data;
                     
                     var totalUsers = _userProgress.Count;
                     var totalSolved = _userProgress.Sum(kvp => kvp.Value.Count);
@@ -133,7 +172,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading user progress from {FilePath}", _filePath);
-            _userProgress = new Dictionary<string, HashSet<string>>();
+            _userProgress = new Dictionary<string, Dictionary<string, DateTime>>();
         }
     }
 
@@ -141,18 +180,12 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
     {
         try
         {
-            // Convert HashSet to List for JSON serialization
-            var data = _userProgress.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToList()
-            );
-            
             var options = new JsonSerializerOptions 
             { 
                 WriteIndented = true 
             };
             
-            var json = JsonSerializer.Serialize(data, options);
+            var json = JsonSerializer.Serialize(_userProgress, options);
             File.WriteAllText(_filePath, json);
             
             _logger.LogDebug("Saved user progress to {FilePath}", _filePath);

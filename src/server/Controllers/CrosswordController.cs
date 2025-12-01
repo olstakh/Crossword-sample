@@ -3,6 +3,7 @@ using CrossWords.Services;
 using CrossWords.Services.Abstractions;
 using CrossWords.Services.Models;
 using CrossWords.Services.Exceptions;
+using CrossWords.Models;
 
 namespace CrossWords.Controllers;
 
@@ -36,52 +37,104 @@ public class CrosswordController : ControllerBase
     }
 
     /// <summary>
+    /// Get all puzzles with their solved status for the current user
+    /// </summary>
+    [HttpGet("allpuzzles")]
+    public ActionResult<List<PuzzleListItem>> GetAllPuzzles(
+        [FromHeader(Name = "X-User-Id")] string? userId = null,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
+    {
+        // Get language from Accept-Language header
+        var puzzleLanguage = ParseAcceptLanguage(acceptLanguage);
+        
+        var puzzles = _puzzleRepositoryReader
+            .GetPuzzles(sizeCategory: PuzzleSizeCategory.Any, language: puzzleLanguage)
+            .Select(p => new PuzzleListItem
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Language = p.Language,
+                Size = p.Size,
+                IsSolved = userId != null && _userProgressRepositoryReader.IsPuzzleSolved(userId, p.Id)
+            })
+            .ToList();
+
+        return Ok(puzzles);
+    }
+
+    /// <summary>
     /// Get a specific puzzle by ID
     /// </summary>
     [HttpGet("puzzle/{id}")]
-    public ActionResult<CrosswordPuzzle> GetPuzzle(string id)
+    public ActionResult<CrosswordPuzzle> GetPuzzleById(string id)
     {
         var puzzle = _puzzleRepositoryReader.GetPuzzle(id);
 
         if (puzzle == null)
         {
-            throw new PuzzleNotFoundException($"Puzzle with ID '{id}' was not found.");
+            return NotFound(new { error = $"Puzzle with ID '{id}' was not found." });
         }
 
         return Ok(puzzle);
     }
 
     /// <summary>
-    /// Get a puzzle by size (Small, Medium, or Big)
+    /// Get a random unsolved puzzle in the current language
+    /// Language is determined from Accept-Language header.
     /// </summary>
-    /// <param name="size">Size of puzzle: Small (5x5-8x8), Medium (9x9-14x14), Big (15x15-20x20), or Any (all sizes)</param>
-    /// <param name="language">Language of the puzzle (English, Russian, Ukrainian)</param>
     /// <param name="seed">Optional seed for deterministic generation. If not provided, uses current date.</param>
-    [HttpGet("puzzle")]
-    public ActionResult<CrosswordPuzzle> GetPuzzle(
-        [FromQuery] PuzzleSizeCategory size = PuzzleSizeCategory.Any, 
-        [FromQuery] PuzzleLanguage language = PuzzleLanguage.English, 
+    [HttpGet("unsolvedpuzzle")]
+    public ActionResult<CrosswordPuzzle> GetUnsolvedPuzzle(
         [FromQuery] string? seed = null,
-        [FromHeader(Name = "X-User-Id")] string? userId = null)
+        [FromHeader(Name = "X-User-Id")] string? userId = null,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
     {
+        // Get language from Accept-Language header
+        var puzzleLanguage = ParseAcceptLanguage(acceptLanguage);
+        
         var request = new PuzzleRequest
         {
-            SizeCategory = size,
-            Language = language,
+            SizeCategory = PuzzleSizeCategory.Any,
+            Language = puzzleLanguage,
             UserId = userId
         };     
         
         var puzzles = _puzzleRepositoryReader
-            .GetPuzzles(sizeCategory: size, language: language)
+            .GetPuzzles(sizeCategory: PuzzleSizeCategory.Any, language: puzzleLanguage)
             .Where(p => userId == null || !_userProgressRepositoryReader.IsPuzzleSolved(userId, p.Id))
             .ToList();
 
         if (puzzles.Count == 0)
         {
-            // Should this be a 404 instead?
-            throw new PuzzleNotFoundException(
-                $"No puzzles found for language '{language}' and size '{size}', you probably solved all. Please try a different combination.");
+            return NotFound(new 
+            { 
+                error = $"No puzzles found for language '{puzzleLanguage}', you probably solved all. Please try a different language.",
+                allSolved = true
+            });
         }
         return Ok(puzzles[Random.Shared.Next(puzzles.Count)]);
+    }
+
+    /// <summary>
+    /// Parse Accept-Language header to determine puzzle language
+    /// </summary>
+    private static PuzzleLanguage ParseAcceptLanguage(string? acceptLanguage)
+    {
+        if (string.IsNullOrWhiteSpace(acceptLanguage))
+        {
+            return PuzzleLanguage.English;
+        }
+
+        // Accept-Language format: "en-US,en;q=0.9,ru;q=0.8"
+        // We'll take the first language code
+        var languageCode = acceptLanguage.Split(',')[0].Split('-')[0].Trim().ToLower();
+
+        return languageCode switch
+        {
+            "en" => PuzzleLanguage.English,
+            "ru" => PuzzleLanguage.Russian,
+            "uk" => PuzzleLanguage.Ukrainian,
+            _ => PuzzleLanguage.English
+        };
     }
 }
