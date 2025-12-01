@@ -22,15 +22,17 @@
             <div style="text-align: right; margin-top: 10px;">
                 <button id="logoutBtn" class="btn-secondary" style="display: none;">🚪 Logout</button>
             </div>
+            <div class="database-actions">
+                <button id="downloadDbBtn" class="btn-secondary">📥 Download Database</button>
+                <button id="uploadDbBtn" class="btn-secondary">📤 Upload Database</button>
+                <input type="file" id="fileInput" accept=".json" style="display: none;">
+            </div>
         </header>
         
         <main>
             <div class="panel-section">
                 <div class="controls-bar">
                     <button id="refreshBtn" class="btn-secondary">Refresh List</button>
-                    <button id="downloadDbBtn" class="btn-primary">💾 Download Database</button>
-                    <button id="uploadDbBtn" class="btn-primary">📤 Upload Database</button>
-                    <input type="file" id="fileInput" accept=".json" style="display: none;">
                     <span id="userCount" class="selection-info">0 users</span>
                 </div>
                 
