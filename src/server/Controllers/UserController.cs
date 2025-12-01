@@ -79,12 +79,15 @@ public class UserController : ControllerBase
     [HttpGet("available")]
     public ActionResult<AvailablePuzzlesResponse> GetAvailablePuzzles(
         [FromHeader(Name = "X-User-Id")] string? userId,
-        [FromQuery] PuzzleLanguage? language = null)
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null)
     {
         if (string.IsNullOrWhiteSpace(userId))
         {
             return BadRequest(new { error = "User ID is required in X-User-Id header" });
         }
+
+        // Parse language from Accept-Language header
+        var language = ParseLanguageFromHeader(acceptLanguage);
 
         var allPuzzles = _puzzleRepositoryReader
             .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
@@ -210,5 +213,28 @@ public class UserController : ControllerBase
             _logger.LogError(ex, "Error uploading user progress");
             return StatusCode(500, new { error = "Failed to upload user progress", message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Parse Accept-Language header to determine puzzle language
+    /// </summary>
+    private static PuzzleLanguage? ParseLanguageFromHeader(string? acceptLanguage)
+    {
+        if (string.IsNullOrWhiteSpace(acceptLanguage))
+        {
+            return null;
+        }
+
+        // Accept-Language format: "en-US,en;q=0.9,ru;q=0.8"
+        // We'll take the first language code
+        var languageCode = acceptLanguage.Split(',')[0].Split('-')[0].Trim().ToLower();
+
+        return languageCode switch
+        {
+            "en" => PuzzleLanguage.English,
+            "ru" => PuzzleLanguage.Russian,
+            "uk" => PuzzleLanguage.Ukrainian,
+            _ => null
+        };
     }
 }

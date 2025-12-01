@@ -107,13 +107,10 @@ class UserAuth {
     /**
      * Get available (unsolved) puzzles for current language
      */
-    async getAvailablePuzzles(language = null) {
-        // Use provided language or get from localeManager, fallback to English
-        const lang = language || (typeof localeManager !== 'undefined' ? localeManager.getLocale() : 'English');
-        
+    async getAvailablePuzzles() {
         try {
             const response = await fetch(
-                `${API_BASE_URL}/api/user/available?language=${lang}`,
+                `${API_BASE_URL}/api/user/available`,
                 {
                     headers: {
                         'X-User-Id': this.userId,
