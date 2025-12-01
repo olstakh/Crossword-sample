@@ -4,9 +4,9 @@
 class LocaleManager {
     constructor() {
         this.supportedLocales = {
-            'English': { code: 'en', flag: '🇺🇸', name: 'English' },
-            'Russian': { code: 'ru', flag: '🇷🇺', name: 'Русский' },
-            'Ukrainian': { code: 'uk', flag: '🇺🇦', name: 'Українська' }
+            'English': { code: 'en', flagCode: 'us', name: 'English' },
+            'Russian': { code: 'ru', flagCode: 'ru', name: 'Русский' },
+            'Ukrainian': { code: 'uk', flagCode: 'ua', name: 'Українська' }
         };
         
         this.currentLocale = this.getStoredLocale() || 'English';
@@ -137,7 +137,14 @@ class LocaleManager {
             button.className = 'locale-flag-btn';
             button.dataset.locale = localeName;
             button.title = info.name;
-            button.innerHTML = info.flag;
+            
+            // Create flag image using flagcdn.com
+            const img = document.createElement('img');
+            img.src = `https://flagcdn.com/w40/${info.flagCode}.png`;
+            img.srcset = `https://flagcdn.com/w80/${info.flagCode}.png 2x`;
+            img.alt = info.name;
+            img.className = 'flag-img';
+            button.appendChild(img);
             
             // Mark current locale as active
             if (localeName === this.currentLocale) {
