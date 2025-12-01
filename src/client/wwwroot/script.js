@@ -1135,15 +1135,15 @@ function populatePuzzleTable(puzzles) {
     }
     
     tbody.innerHTML = puzzles.map(puzzle => {
-        const solvedText = puzzle.isSolved 
-            ? localeManager.t('yes') 
-            : localeManager.t('no');
+        const solvedIcon = puzzle.isSolved 
+            ? '<span style="color: #27ae60; font-size: 1.3rem;">✓</span>' 
+            : '<span style="color: #e74c3c; font-size: 1.3rem;">✗</span>';
         
         return `
-            <tr data-puzzle-id="${puzzle.id}" style="cursor: pointer;">
+            <tr data-puzzle-id="${puzzle.id}">
                 <td>${puzzle.title}</td>
                 <td>${puzzle.size.rows} × ${puzzle.size.cols}</td>
-                <td>${solvedText}</td>
+                <td>${solvedIcon}</td>
             </tr>
         `;
     }).join('');

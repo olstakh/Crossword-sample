@@ -219,8 +219,8 @@ h1 {
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin-right: 20px;
-    min-width: 250px;
-    max-width: 300px;
+    min-width: 320px;
+    max-width: 400px;
 }
 
 .collapsible-header {
@@ -279,9 +279,29 @@ h1 {
     border-bottom: 2px solid #2980b9;
 }
 
+.puzzle-table th:last-child {
+    text-align: center;
+}
+
 .puzzle-table td {
     padding: 10px 8px;
     border-bottom: 1px solid #e0e0e0;
+}
+
+.puzzle-table td:first-child {
+    color: #3498db;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.puzzle-table td:first-child:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+.puzzle-table td:last-child {
+    text-align: center;
+    font-size: 1.2rem;
 }
 
 .puzzle-table tbody tr {
