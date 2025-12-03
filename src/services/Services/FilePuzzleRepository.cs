@@ -119,15 +119,17 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
         lock (_lock)
         {
             var existingIndex = _puzzles.FindIndex(p => p.Id == puzzle.Id);
+            // Sanitize puzzle.Id to prevent log forging
+            var sanitizedId = puzzle.Id?.Replace("\r", "").Replace("\n", "");
             if (existingIndex >= 0)
             {
                 _puzzles[existingIndex] = puzzle;
-                _logger.LogInformation("Updated puzzle {PuzzleId}", puzzle.Id);
+                _logger.LogInformation("Updated puzzle {PuzzleId}", sanitizedId);
             }
             else
             {
                 _puzzles.Add(puzzle);
-                _logger.LogInformation("Added new puzzle {PuzzleId}", puzzle.Id);
+                _logger.LogInformation("Added new puzzle {PuzzleId}", sanitizedId);
             }
             SaveToFile();
         }
