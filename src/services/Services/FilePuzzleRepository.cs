@@ -5,32 +5,82 @@ using Microsoft.Extensions.Logging;
 
 namespace CrossWords.Services;
 
-internal class FilePuzzleRepository : IPuzzleRepositoryReader
+internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepositoryWriter
 {
     private readonly string _puzzlesFilePath;
     private readonly ILogger<FilePuzzleRepository> _logger;
+    private readonly object _lock = new();
+    private List<CrosswordPuzzle> _puzzles;
 
     public FilePuzzleRepository(string puzzlesFilePath, ILogger<FilePuzzleRepository> logger)
     {
         _puzzlesFilePath = puzzlesFilePath;
         _logger = logger;
+        _puzzles = new List<CrosswordPuzzle>();
+        
+        // Create directory if it doesn't exist
+        var directory = Path.GetDirectoryName(_puzzlesFilePath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+            _logger.LogInformation("Created directory for puzzles at {Directory}", directory);
+        }
+        
+        LoadFromFile();
+    }
+
+    private void LoadFromFile()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                if (File.Exists(_puzzlesFilePath))
+                {
+                    var jsonContent = File.ReadAllText(_puzzlesFilePath);
+                    var puzzleList = JsonSerializer.Deserialize<List<CrosswordPuzzle>>(jsonContent);
+                    _puzzles = puzzleList ?? new List<CrosswordPuzzle>();
+                    _logger.LogInformation("Loaded {Count} puzzles from {FilePath}", _puzzles.Count, _puzzlesFilePath);
+                }
+                else
+                {
+                    _logger.LogWarning("Puzzles file not found at {FilePath}, starting with empty collection", _puzzlesFilePath);
+                    _puzzles = new List<CrosswordPuzzle>();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading puzzles from file: {FilePath}", _puzzlesFilePath);
+                _puzzles = new List<CrosswordPuzzle>();
+            }
+        }
+    }
+
+    private void SaveToFile()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                var jsonContent = JsonSerializer.Serialize(_puzzles, new JsonSerializerOptions 
+                { 
+                    WriteIndented = true 
+                });
+                File.WriteAllText(_puzzlesFilePath, jsonContent);
+                _logger.LogInformation("Saved {Count} puzzles to {FilePath}", _puzzles.Count, _puzzlesFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving puzzles to file: {FilePath}", _puzzlesFilePath);
+            }
+        }
     }
 
     public IEnumerable<CrosswordPuzzle> LoadAllPuzzles()
     {
-        try
+        lock (_lock)
         {
-            // Load puzzles from JSON file
-            var jsonContent = File.ReadAllText(_puzzlesFilePath);
-            var puzzleList = JsonSerializer.Deserialize<List<CrosswordPuzzle>>(jsonContent);
-
-            return puzzleList ?? Enumerable.Empty<CrosswordPuzzle>();
-        }
-        catch (Exception ex)
-        {
-            // Log the error and return empty collection
-            _logger.LogError(ex, "Error loading puzzles from file: {FilePath}", _puzzlesFilePath);
-            return Enumerable.Empty<CrosswordPuzzle>();
+            return _puzzles.ToList();
         }
     }
 
@@ -58,7 +108,69 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader
 
     public CrosswordPuzzle? GetPuzzle(string puzzleId)
     {
-        var allPuzzles = LoadAllPuzzles();
-        return allPuzzles.FirstOrDefault(p => p.Id == puzzleId);
+        lock (_lock)
+        {
+            return _puzzles.FirstOrDefault(p => p.Id == puzzleId);
+        }
+    }
+
+    private static string? SanitizePuzzleId(string? puzzleId) =>
+        puzzleId?.Replace("\r", "").Replace("\n", "");
+
+    public void AddPuzzle(CrosswordPuzzle puzzle)
+    {
+        lock (_lock)
+        {
+            var existingIndex = _puzzles.FindIndex(p => p.Id == puzzle.Id);
+            if (existingIndex >= 0)
+            {
+                _puzzles[existingIndex] = puzzle;
+                _logger.LogInformation("Updated puzzle {PuzzleId}", SanitizePuzzleId(puzzle.Id));
+            }
+            else
+            {
+                _puzzles.Add(puzzle);
+                _logger.LogInformation("Added new puzzle {PuzzleId}", SanitizePuzzleId(puzzle.Id));
+            }
+            SaveToFile();
+        }
+    }
+
+    public void DeletePuzzle(string puzzleId)
+    {
+        lock (_lock)
+        {
+            var removed = _puzzles.RemoveAll(p => p.Id == puzzleId);
+            if (removed > 0)
+            {
+                _logger.LogInformation("Deleted puzzle {PuzzleId}", SanitizePuzzleId(puzzleId));
+                SaveToFile();
+            }
+            else
+            {
+                _logger.LogWarning("Attempted to delete non-existent puzzle {PuzzleId}", SanitizePuzzleId(puzzleId));
+            }
+        }
+    }
+
+    public void AddPuzzles(IEnumerable<CrosswordPuzzle> puzzles)
+    {
+        lock (_lock)
+        {
+            foreach (var puzzle in puzzles)
+            {
+                var existingIndex = _puzzles.FindIndex(p => p.Id == puzzle.Id);
+                if (existingIndex >= 0)
+                {
+                    _puzzles[existingIndex] = puzzle;
+                }
+                else
+                {
+                    _puzzles.Add(puzzle);
+                }
+            }
+            _logger.LogInformation("Added/updated {Count} puzzles", puzzles.Count());
+            SaveToFile();
+        }
     }
 }
