@@ -1,0 +1,21 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/" />
+  <Folder Name="/src/server.tests.end2end/">
+    <Project Path="src/server.tests.end2end/CrossWords.Tests.End2End.csproj" />
+  </Folder>
+  <Folder Name="/src/server.tests/">
+    <Project Path="src/server.tests/CrossWords.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/services.tests/">
+    <Project Path="src/services.tests/CrossWords.Services.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/services/">
+    <Project Path="src/services/CrossWords.Services.csproj" />
+  </Folder>
+  <Project Path="src/server/CrossWords.csproj" />
+</Solution>

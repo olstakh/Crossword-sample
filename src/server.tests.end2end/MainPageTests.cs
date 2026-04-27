@@ -10,7 +10,7 @@ public class MainPageTests : PageTest
 {
     private const string BaseUrl = "http://localhost:5000";
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task MainPage_Should_Load_Successfully()
     {
         // Act
@@ -22,7 +22,7 @@ public class MainPageTests : PageTest
         Assert.Contains("Cryptogram Puzzle", await Page.TitleAsync());
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task MainPage_Should_Display_Header_Elements()
     {
         // Act
@@ -39,7 +39,7 @@ public class MainPageTests : PageTest
         await Assertions.Expect(Page.Locator("button#newPuzzleBtn")).ToBeVisibleAsync();
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task MainPage_Should_Display_Locale_Selector()
     {
         // Act
@@ -55,7 +55,7 @@ public class MainPageTests : PageTest
         await Assertions.Expect(flagButtons).ToHaveCountAsync(3);
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task MainPage_Should_Switch_Language_When_Flag_Clicked()
     {
         // Act
@@ -73,7 +73,7 @@ public class MainPageTests : PageTest
         Assert.Contains("Cryptogram Puzzle", await Page.TitleAsync());
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task PuzzleGrid_Should_Be_Displayed()
     {
         // Act
@@ -88,7 +88,7 @@ public class MainPageTests : PageTest
         Assert.NotNull(puzzleGrid);
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task DifficultyToggle_Should_Switch_Modes()
     {
         // Act
@@ -112,7 +112,7 @@ public class MainPageTests : PageTest
         Assert.NotEqual(initiallyChecked, afterClick);
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task NewPuzzleButton_Should_Load_New_Puzzle()
     {
         // Act
@@ -139,7 +139,7 @@ public class MainPageTests : PageTest
         Assert.True(hasUrlChanged || gridIsVisible, "Expected new puzzle to load");
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task ClearButton_Should_Clear_User_Input()
     {
         // Act
@@ -167,7 +167,7 @@ public class MainPageTests : PageTest
         }
     }
 
-    [Fact]
+    [FactRequiresServerRunning]
     public async Task AlphabetDecoder_Should_Be_Visible()
     {
         // Act

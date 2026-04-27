@@ -1,11 +1,13 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore dependencies
-COPY ["src/server/CrossWords.csproj", "src/server/"]
+# Copy csproj, props, and restore dependencies
+COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
 COPY ["global.json", "."]
+COPY ["src/server/CrossWords.csproj", "src/server/"]
+COPY ["src/services/CrossWords.Services.csproj", "src/services/"]
 RUN dotnet restore "src/server/CrossWords.csproj"
 
 # Copy everything else and build
@@ -18,7 +20,7 @@ FROM build AS publish
 RUN dotnet publish "CrossWords.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081

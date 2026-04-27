@@ -1,5 +1,5 @@
 # Debug Dockerfile - optimized for development with remote debugging support
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 5001
@@ -8,10 +8,12 @@ EXPOSE 5001
 RUN apt-get update && apt-get install -y unzip && \
     curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
 
-# Copy csproj and restore dependencies
-COPY ["src/server/CrossWords.csproj", "src/server/"]
+# Copy csproj, props, and restore dependencies
+COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
 COPY ["global.json", "."]
+COPY ["src/server/CrossWords.csproj", "src/server/"]
+COPY ["src/services/CrossWords.Services.csproj", "src/services/"]
 RUN dotnet restore "src/server/CrossWords.csproj"
 
 # Copy everything
