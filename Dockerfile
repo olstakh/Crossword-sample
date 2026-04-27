@@ -2,10 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore dependencies
-COPY ["src/server/CrossWords.csproj", "src/server/"]
+# Copy csproj, props, and restore dependencies
+COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
 COPY ["global.json", "."]
+COPY ["src/server/CrossWords.csproj", "src/server/"]
+COPY ["src/services/CrossWords.Services.csproj", "src/services/"]
 RUN dotnet restore "src/server/CrossWords.csproj"
 
 # Copy everything else and build

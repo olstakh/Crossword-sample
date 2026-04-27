@@ -90,63 +90,9 @@ The debug configuration includes:
    http://localhost:5000
    ```
 
-### API Endpoints
-
-- `GET /api/crossword/puzzles` - Get list of available puzzle IDs
-- `GET /api/crossword/puzzle` - Get the default puzzle (puzzle1)
-- `GET /api/crossword/puzzle/{id}` - Get a specific puzzle by ID
-
-### Available Puzzles
-
-- `puzzle1` - Easy Crossword (10x10)
-- `puzzle2` - Animals & Nature (8x8)
-
-You can switch between puzzles by adding `?puzzle=puzzle2` to the URL.
-
-## Project Structure
-
-```
-CrossWords/
-├── src/
-│   ├── server/                   # Backend API
-│   │   ├── Controllers/
-│   │   │   └── CrosswordController.cs    # API endpoints
-│   │   ├── Models/
-│   │   │   └── CrosswordPuzzle.cs        # Data models
-│   │   ├── Services/
-│   │   │   └── CrosswordService.cs       # Business logic and hardcoded puzzles
-│   │   ├── Properties/
-│   │   │   └── launchSettings.json       # Launch configuration
-│   │   ├── Program.cs                    # Application entry point
-│   │   ├── CrossWords.csproj             # Project file
-│   │   ├── Directory.Packages.props      # Central package management
-│   │   └── global.json                   # SDK version
-│   └── client/                   # Frontend
-│       └── wwwroot/
-│           ├── index.html        # Main page
-│           ├── styles.css        # Styling
-│           └── script.js         # Frontend logic
-├── Dockerfile                    # Docker image definition
-├── docker-compose.yml            # Docker Compose configuration
-├── .dockerignore                 # Docker ignore file
-└── README.md
-```
-
-## Future Enhancements
-
-- Database integration for puzzle storage
-- Puzzle generation algorithms
-- User accounts and progress tracking
-- Puzzle difficulty levels
-- Daily puzzles
-- Multiplayer functionality
-
 ## Development
 
 The application uses:
-- ASP.NET Core 9.0 for the backend
+- ASP.NET Core 10.0 for the backend
 - Vanilla JavaScript for the frontend
 - Central package management with Directory.Packages.props
-- No external dependencies (yet!)
-
-To add more puzzles, edit `src/server/Services/CrosswordService.cs` and add entries to the `InitializePuzzles()` method.
