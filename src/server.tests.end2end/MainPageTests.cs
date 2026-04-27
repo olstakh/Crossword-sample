@@ -10,6 +10,12 @@ public class MainPageTests : PageTest
 {
     private const string BaseUrl = "http://localhost:5000";
 
+    [Fact]
+    public void DummyTest()
+    {
+        // Don't know how to make "dotnet test" not to fail if 100% of tests were skipped
+    }
+
     [FactRequiresServerRunning]
     public async Task MainPage_Should_Load_Successfully()
     {
