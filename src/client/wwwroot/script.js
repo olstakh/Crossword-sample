@@ -1,6 +1,13 @@
 // Configuration
 const API_BASE_URL = window.location.origin;
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 class CryptogramPuzzle {
     constructor(data) {
         this.data = data;
@@ -659,7 +666,7 @@ function showAllPuzzlesSolvedMessage(message, language) {
             <div class="all-solved-message">
                 <div class="celebration-icon">🎉🏆🎊</div>
                 <h2>Congratulations!</h2>
-                <p>${message}</p>
+                <p>${escapeHtml(message)}</p>
                 <div class="all-solved-actions">
                     <p>Try:</p>
                     <ul>
@@ -700,7 +707,7 @@ function showPuzzleNotFoundMessage(puzzleId) {
             <div class="all-solved-message">
                 <div class="celebration-icon">🔍</div>
                 <h2>Puzzle Not Found</h2>
-                <p>The puzzle "${puzzleId}" could not be found.</p>
+                <p>The puzzle "${escapeHtml(puzzleId)}" could not be found.</p>
                 <div class="all-solved-actions">
                     <p>You can:</p>
                     <ul>
@@ -740,8 +747,8 @@ function showErrorMessage(title, message, onRetry = null) {
     modal.className = 'error-modal';
     
     modal.innerHTML = `
-        <h2>${title}</h2>
-        <p>${message}</p>
+        <h2>${escapeHtml(title)}</h2>
+        <p>${escapeHtml(message)}</p>
         <div class="error-actions">
             ${onRetry ? '<button class="btn-retry">Try Different Settings</button>' : ''}
             <button class="btn-close">OK</button>
@@ -1140,8 +1147,8 @@ function populatePuzzleTable(puzzles) {
             : '<span style="color: #e74c3c; font-size: 1.3rem;">✗</span>';
         
         return `
-            <tr data-puzzle-id="${puzzle.id}">
-                <td>${puzzle.title}</td>
+            <tr data-puzzle-id="${escapeHtml(puzzle.id)}">
+                <td>${escapeHtml(puzzle.title)}</td>
                 <td>${puzzle.size.rows} × ${puzzle.size.cols}</td>
                 <td>${solvedIcon}</td>
             </tr>
