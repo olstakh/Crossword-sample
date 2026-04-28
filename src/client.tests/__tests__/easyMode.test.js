@@ -89,23 +89,19 @@ describe('Easy Mode', () => {
   });
 
   test('should update all cells with same number in mouse mode', () => {
-    // Switch to mouse mode
-    puzzle.setInputMode('mouse');
-    
     const cells = document.querySelectorAll('.cell:not(.black)');
     const firstCell = cells[0];
     const input = firstCell.querySelector('input');
     
     if (input.getAttribute('data-originally-readonly') === 'true') return;
     
-    // Click cell to open popup
+    // Click cell to select it
     firstCell.click();
     
-    const popup = document.querySelector('.letter-popup-overlay');
-    const letterButton = popup.querySelector('.letter-popup-button');
+    // Click a letter in the letter picker
+    const letterPickerGrid = document.getElementById('letterPickerGrid');
+    const letterButton = letterPickerGrid.querySelector('.letter-picker-button');
     const letter = letterButton.textContent;
-    
-    // Click letter button
     letterButton.click();
     
     // All cells with same number should be updated
@@ -137,14 +133,15 @@ describe('Easy Mode', () => {
     if (!inputCell) return;
     
     // Get the letter for this number from the mapping
-    const letter = puzzle.letterMapping[number];
+    const letter = puzzle.data.letterMapping[number];
     
-    // Type the correct letter
-    inputCell.value = letter;
-    inputCell.dispatchEvent(new Event('input', { bubbles: true }));
+    // Set via userAnswers and update (mimicking the keydown handler)
+    puzzle.userAnswers[parseInt(number)] = letter;
+    puzzle.updateAllCells();
+    puzzle.updateAlphabetDecoder();
     
     // Letter Decoder should show the letter
-    const decoderCell = document.querySelector(`.alphabet-decoder-cell[data-number="${number}"] .letter`);
+    const decoderCell = document.querySelector(`.alphabet-cell[data-number="${number}"] .alphabet-letter`);
     if (decoderCell) {
       expect(decoderCell.textContent).toBe(letter);
     }

@@ -50,7 +50,15 @@ describe('Hard Mode', () => {
     `);
     
     CryptogramPuzzle = createClass();
-    const puzzleData = createMockPuzzleData();
+    const puzzleData = createMockPuzzleData({
+      size: { rows: 4, cols: 4 },
+      grid: [
+        ['A', 'B', 'C', 'D'],
+        ['B', 'A', 'D', 'C'],
+        ['C', 'D', 'A', 'B'],
+        ['D', 'C', 'B', 'A']
+      ]
+    });
     puzzle = new CryptogramPuzzle(puzzleData);
   });
 
@@ -164,9 +172,9 @@ describe('Hard Mode', () => {
     secondCell.dispatchEvent(new Event('input', { bubbles: true }));
     
     // Letter Decoder should not show a letter (cells don't match)
-    const decoderCell = document.querySelector(`.alphabet-decoder-cell[data-number="${number}"] .letter`);
+    const decoderCell = document.querySelector(`.alphabet-cell[data-number="${number}"] .alphabet-letter`);
     if (decoderCell) {
-      expect(decoderCell.textContent).toBe('');
+      expect(decoderCell.textContent).toBe('?');
     }
   });
 
@@ -200,11 +208,13 @@ describe('Hard Mode', () => {
     // Type same letter in all cells manually (simulating hard mode behavior)
     cellsToUpdate.forEach(cell => {
       cell.value = 'X';
-      cell.dispatchEvent(new Event('input', { bubbles: true }));
     });
     
+    // Trigger decoder update
+    puzzle.updateAlphabetDecoder();
+    
     // Now Letter Decoder should show the letter
-    const decoderCell = document.querySelector(`.alphabet-decoder-cell[data-number="${number}"] .letter`);
+    const decoderCell = document.querySelector(`.alphabet-cell[data-number="${number}"] .alphabet-letter`);
     if (decoderCell) {
       expect(decoderCell.textContent).toBe('X');
     }

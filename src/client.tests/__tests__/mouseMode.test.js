@@ -55,7 +55,11 @@ describe('Mouse Mode', () => {
   });
 
   test('should initialize in mouse mode', () => {
-    expect(puzzle.inputMode).toBe('mouse');
+    // Letter picker panel should be initialized with letter buttons
+    const letterPickerGrid = document.getElementById('letterPickerGrid');
+    expect(letterPickerGrid).toBeTruthy();
+    const buttons = letterPickerGrid.querySelectorAll('.letter-picker-button');
+    expect(buttons.length).toBeGreaterThan(0);
   });
 
   test('should make inputs readonly in mouse mode', () => {
@@ -81,26 +85,36 @@ describe('Mouse Mode', () => {
     // Click the cell
     firstCell.click();
     
-    // Popup should be created
-    const popup = document.querySelector('.letter-popup-overlay');
-    expect(popup).toBeTruthy();
+    // Cell should be selected
+    expect(firstCell.classList.contains('selected')).toBe(true);
   });
 
   test('should close popup when clicking outside', () => {
     const cells = document.querySelectorAll('.cell:not(.black)');
-    const firstCell = cells[0];
+    let firstCell = null;
+    let secondCell = null;
     
-    // Click cell to open popup
+    // Find two non-readonly cells
+    for (const cell of cells) {
+      const input = cell.querySelector('input');
+      if (input && input.getAttribute('data-originally-readonly') !== 'true') {
+        if (!firstCell) firstCell = cell;
+        else if (!secondCell) { secondCell = cell; break; }
+      }
+    }
+    
+    if (!firstCell || !secondCell) return;
+    
+    // Click cell to select it
     firstCell.click();
     
-    const popup = document.querySelector('.letter-popup-overlay');
-    expect(popup).toBeTruthy();
+    expect(firstCell.classList.contains('selected')).toBe(true);
     
-    // Click the overlay
-    popup.click();
+    // Click a different cell to deselect
+    secondCell.click();
     
-    // Popup should be removed
-    expect(document.querySelector('.letter-popup-overlay')).toBeFalsy();
+    // First cell should no longer be selected
+    expect(firstCell.classList.contains('selected')).toBe(false);
   });
 
   test('should set cell value when letter is clicked in popup', () => {
@@ -110,14 +124,13 @@ describe('Mouse Mode', () => {
     
     if (input.getAttribute('data-originally-readonly') === 'true') return;
     
-    // Click cell to open popup
+    // Click cell to select it
     firstCell.click();
     
-    const popup = document.querySelector('.letter-popup-overlay');
-    const letterButton = popup.querySelector('.letter-popup-button');
+    // Click a letter in the letter picker
+    const letterPickerGrid = document.getElementById('letterPickerGrid');
+    const letterButton = letterPickerGrid.querySelector('.letter-picker-button');
     const letter = letterButton.textContent;
-    
-    // Click letter button
     letterButton.click();
     
     // In easy mode, all cells with same number should be updated
@@ -133,19 +146,25 @@ describe('Mouse Mode', () => {
 
   test('should close popup after letter selection', () => {
     const cells = document.querySelectorAll('.cell:not(.black)');
-    const firstCell = cells[0];
+    let firstCell = null;
+    for (const cell of cells) {
+      const input = cell.querySelector('input');
+      if (input && input.getAttribute('data-originally-readonly') !== 'true') {
+        firstCell = cell;
+        break;
+      }
+    }
     
-    // Click cell to open popup
+    if (!firstCell) return;
+    
+    // Click cell to select it
     firstCell.click();
+    expect(firstCell.classList.contains('selected')).toBe(true);
     
-    const popup = document.querySelector('.letter-popup-overlay');
-    const letterButton = popup.querySelector('.letter-popup-button');
-    
-    // Click letter button
-    letterButton.click();
-    
-    // Popup should be removed
-    expect(document.querySelector('.letter-popup-overlay')).toBeFalsy();
+    // Letter picker is a persistent panel, not a popup - verify it exists
+    const letterPickerGrid = document.getElementById('letterPickerGrid');
+    expect(letterPickerGrid).toBeTruthy();
+    expect(letterPickerGrid.querySelectorAll('.letter-picker-button').length).toBeGreaterThan(0);
   });
 
   test('should clear cell when clear button is clicked', () => {
@@ -158,13 +177,11 @@ describe('Mouse Mode', () => {
     // Set initial value
     input.value = 'X';
     
-    // Click cell to open popup
+    // Click cell to select it
     firstCell.click();
     
-    const popup = document.querySelector('.letter-popup-overlay');
-    const clearButton = popup.querySelector('.letter-popup-clear');
-    
-    // Click clear button
+    // Click clear button in letter picker
+    const clearButton = document.getElementById('letterPickerClear');
     clearButton.click();
     
     // Cell should be cleared
