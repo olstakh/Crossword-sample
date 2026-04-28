@@ -1,0 +1,86 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    branches: ['*']
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Run server tests
+        run: dotnet test src/server.tests --no-build
+
+      - name: Run services tests
+        run: dotnet test src/services.tests --no-build
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install client test dependencies
+        run: npm ci
+        working-directory: src/client.tests
+
+      - name: Run client tests
+        run: npm test
+        working-directory: src/client.tests
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build e2e test project
+        run: dotnet build src/server.tests.end2end
+
+      - name: Start application via Docker Compose
+        run: docker compose up -d --build
+
+      - name: Wait for application to be ready
+        run: |
+          echo "Waiting for application to start..."
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 | grep -q "200"; then
+              echo "Application is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30 - waiting 2s..."
+            sleep 2
+          done
+          echo "Application failed to start"
+          docker compose logs
+          exit 1
+
+      - name: Install Playwright browsers
+        run: pwsh src/server.tests.end2end/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: dotnet test src/server.tests.end2end --no-build
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker compose down
