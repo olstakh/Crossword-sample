@@ -41,7 +41,7 @@ jobs:
         run: pwsh src/server.tests.end2end/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: Run end-to-end tests
-        run: dotnet test src/server.tests.end2end --no-build
+        run: dotnet test --project src/server.tests.end2end --no-build
 
       - name: Stop Docker Compose
         if: always()

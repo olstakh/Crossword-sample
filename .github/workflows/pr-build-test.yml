@@ -24,10 +24,10 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Run server tests
-        run: dotnet test src/server.tests --no-build
+        run: dotnet test --project src/server.tests --no-build
 
       - name: Run services tests
-        run: dotnet test src/services.tests --no-build
+        run: dotnet test --project src/services.tests --no-build
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
