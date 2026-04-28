@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # Runs on any tag. Modify as needed for specific tags, e.g. 'v*' for versioned tags.
 
+permissions:
+  contents: read
+
 jobs:
   e2e-tests:
     uses: ./.github/workflows/e2e-tests.yml
