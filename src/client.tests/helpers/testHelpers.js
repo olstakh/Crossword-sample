@@ -14,15 +14,17 @@ export function createMockPuzzleData(overrides = {}) {
   };
 }
 
-// Helper to configure localStorage mock
+// Helper to configure localStorage values
 export function mockLocalStorage(values = {}) {
   const defaultValues = {
-    inputMode: 'keyboard',
     difficultyMode: 'easy',
     ...values
   };
   
-  global.localStorage.getItem = (key) => defaultValues[key] || null;
+  localStorage.clear();
+  Object.entries(defaultValues).forEach(([key, value]) => {
+    if (value != null) localStorage.setItem(key, value);
+  });
 }
 
 // Load the CryptogramPuzzle class from the client code
@@ -101,6 +103,11 @@ export function setupTestDOM() {
             <div id="alphabet-row"></div>
           </div>
         </div>
+        <aside class="letter-picker-panel" id="letterPickerPanel">
+          <h3>Letter Picker</h3>
+          <div id="letterPickerGrid" class="letter-picker-grid"></div>
+          <button id="letterPickerClear" class="letter-picker-clear-btn">⌫ Clear</button>
+        </aside>
       </main>
     </div>
   `;

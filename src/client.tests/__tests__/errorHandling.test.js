@@ -143,7 +143,9 @@ describe('Error Handling', () => {
     
     // Try to create puzzle with empty grid
     const puzzleData = {
+      id: 'empty-test',
       grid: [],
+      size: { rows: 0, cols: 0 },
       language: 'English'
     };
     

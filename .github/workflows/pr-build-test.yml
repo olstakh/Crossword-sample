@@ -1,0 +1,49 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    branches: ['*']
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Run server tests
+        run: dotnet test --project src/server.tests --no-build
+
+      - name: Run services tests
+        run: dotnet test --project src/services.tests --no-build
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install client test dependencies
+        run: npm ci
+        working-directory: src/client.tests
+
+      - name: Run client tests
+        run: npm test
+        working-directory: src/client.tests
+
+  e2e-tests:
+    uses: ./.github/workflows/e2e-tests.yml
