@@ -272,11 +272,11 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 }
             }
 
-            _logger.LogInformation("Puzzle {PuzzleId} not found", puzzleId);
+            _logger.LogInformation("Puzzle {PuzzleId} not found", puzzleId.SanitizeForLog());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading puzzle {PuzzleId} from SQLite database", puzzleId);
+            _logger.LogError(ex, "Error loading puzzle {PuzzleId} from SQLite database", puzzleId.SanitizeForLog());
         }
 
         return null;
@@ -313,11 +313,11 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
 
             command.ExecuteNonQuery();
             
-            _logger.LogInformation("Added puzzle {PuzzleId} ({Title}) to database", puzzle.Id, puzzle.Title);
+            _logger.LogInformation("Added puzzle {PuzzleId} ({Title}) to database", puzzle.Id.SanitizeForLog(), puzzle.Title.SanitizeForLog());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding puzzle {PuzzleId} to database", puzzle.Id);
+            _logger.LogError(ex, "Error adding puzzle {PuzzleId} to database", puzzle.Id.SanitizeForLog());
             throw;
         }
     }
@@ -401,16 +401,16 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
             
             if (rowsAffected > 0)
             {
-                _logger.LogInformation("Deleted puzzle {PuzzleId} from database", puzzleId);
+                _logger.LogInformation("Deleted puzzle {PuzzleId} from database", puzzleId.SanitizeForLog());
             }
             else
             {
-                _logger.LogWarning("Puzzle {PuzzleId} not found in database", puzzleId);
+                _logger.LogWarning("Puzzle {PuzzleId} not found in database", puzzleId.SanitizeForLog());
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting puzzle {PuzzleId} from database", puzzleId);
+            _logger.LogError(ex, "Error deleting puzzle {PuzzleId} from database", puzzleId.SanitizeForLog());
             throw;
         }
     }

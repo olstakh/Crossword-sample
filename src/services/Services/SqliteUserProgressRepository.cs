@@ -93,7 +93,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking if puzzle {PuzzleId} is solved for user {UserId}", 
-                puzzleId, userId);
+                puzzleId.SanitizeForLog(), userId.SanitizeForLog());
             return false;
         }
     }
@@ -117,18 +117,18 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             
             if (rowsAffected > 0)
             {
-                _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId, puzzleId);
+                _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId.SanitizeForLog(), puzzleId.SanitizeForLog());
             }
             else
             {
                 _logger.LogDebug("Puzzle {PuzzleId} already marked as solved for user {UserId}", 
-                    puzzleId, userId);
+                    puzzleId.SanitizeForLog(), userId.SanitizeForLog());
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error recording solved puzzle {PuzzleId} for user {UserId}", 
-                puzzleId, userId);
+                puzzleId.SanitizeForLog(), userId.SanitizeForLog());
         }
     }
 
@@ -167,11 +167,11 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             
             transaction.Commit();
             
-            _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", totalDeleted, userId);
+            _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", totalDeleted, userId.SanitizeForLog());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error forgetting puzzles for user {UserId}", userId);
+            _logger.LogError(ex, "Error forgetting puzzles for user {UserId}", userId.SanitizeForLog());
             throw;
         }
     }
@@ -201,7 +201,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting solved puzzles for user {UserId}", userId);
+            _logger.LogError(ex, "Error getting solved puzzles for user {UserId}", userId.SanitizeForLog());
         }
 
         return solvedPuzzles;

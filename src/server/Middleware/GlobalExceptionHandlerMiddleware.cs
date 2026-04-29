@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using CrossWords.Services;
 using CrossWords.Services.Exceptions;
 
 namespace CrossWords.Middleware;
@@ -74,15 +75,15 @@ public class GlobalExceptionHandlerMiddleware
         // Log based on severity
         if (statusCode == HttpStatusCode.InternalServerError)
         {
-            _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
+            _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message.SanitizeForLog());
         }
         else if (statusCode == HttpStatusCode.NotFound)
         {
-            _logger.LogWarning(exception, "Resource not found: {Message}", exception.Message);
+            _logger.LogWarning(exception, "Resource not found: {Message}", exception.Message.SanitizeForLog());
         }
         else
         {
-            _logger.LogInformation(exception, "Client error: {Message}", exception.Message);
+            _logger.LogInformation(exception, "Client error: {Message}", exception.Message.SanitizeForLog());
         }
 
         context.Response.StatusCode = (int)statusCode;

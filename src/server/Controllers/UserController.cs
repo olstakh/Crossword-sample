@@ -68,7 +68,7 @@ public class UserController : ControllerBase
         }
 
         _repositoryWriter.RecordSolvedPuzzle(userId, request.PuzzleId);
-        _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId, request.PuzzleId);
+        _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId.SanitizeForLog(), request.PuzzleId.SanitizeForLog());
         
         return Ok(new { success = true, message = "Puzzle marked as solved" });
     }
@@ -149,7 +149,7 @@ public class UserController : ControllerBase
         }
 
         _repositoryWriter.ForgetPuzzles(userId, request.PuzzleIds);
-        _logger.LogInformation("User {UserId} forgot {Count} puzzle(s)", userId, request.PuzzleIds.Count());
+        _logger.LogInformation("User {UserId} forgot {Count} puzzle(s)", userId.SanitizeForLog(), request.PuzzleIds.Count());
         
         return Ok(new { success = true, message = $"Forgot {request.PuzzleIds.Count()} puzzle(s)" });
     }

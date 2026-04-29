@@ -52,7 +52,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
             if (!_userProgress[userId].ContainsKey(puzzleId))
             {
                 _userProgress[userId][puzzleId] = DateTime.UtcNow;
-                _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId, puzzleId);
+                _logger.LogInformation("User {UserId} solved puzzle {PuzzleId}", userId.SanitizeForLog(), puzzleId.SanitizeForLog());
                 SaveToFile();
             }
         }
@@ -78,7 +78,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
 
             if (removedCount > 0)
             {
-                _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", removedCount, userId);
+                _logger.LogInformation("Forgot {Count} puzzle(s) for user {UserId}", removedCount, userId.SanitizeForLog());
                 SaveToFile();
             }
         }

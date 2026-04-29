@@ -1,4 +1,5 @@
 using CrossWords.Models;
+using CrossWords.Services;
 using CrossWords.Services.Models;
 using CrossWords.Services.Abstractions;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +35,7 @@ public class AdminController : ControllerBase
         puzzle.Validate();
 
         _puzzlePersister.AddPuzzle(puzzle);
-        _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id);
+        _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id.SanitizeForLog());
         
         return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
     }
@@ -51,7 +52,7 @@ public class AdminController : ControllerBase
         }
 
         _puzzlePersister.DeletePuzzle(puzzleId);
-        _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId);
+        _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId.SanitizeForLog());
         return Ok(new { message = "Puzzle deleted successfully", puzzleId });
     }
 
@@ -78,7 +79,7 @@ public class AdminController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting puzzle {PuzzleId}", puzzleId);
+                _logger.LogError(ex, "Error deleting puzzle {PuzzleId}", puzzleId.SanitizeForLog());
                 errors.Add($"{puzzleId}: {ex.Message}");
             }
         }
@@ -126,7 +127,7 @@ public class AdminController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Validation error for puzzle {PuzzleId}", puzzle.Id);
+                _logger.LogError(ex, "Validation error for puzzle {PuzzleId}", puzzle.Id.SanitizeForLog());
                 errors.Add($"{puzzle.Id}: {ex.Message}");
             }
         }
