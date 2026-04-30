@@ -5,7 +5,7 @@ namespace CrossWords.Services.Models;
 
 public class CrosswordPuzzle
 {
-    public string Id { get; init; } = string.Empty;
+    public PuzzleId Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public PuzzleLanguage Language { get; init; } = PuzzleLanguage.English;
     public PuzzleSize Size { get; init; } = new();
@@ -20,8 +20,8 @@ public class CrosswordPuzzle
     /// <exception cref="PuzzleValidationException">Thrown when the puzzle data is invalid.</exception>
     public void Validate()
     {
-        if (string.IsNullOrWhiteSpace(Id))
-            throw new PuzzleValidationException("Puzzle ID cannot be null or empty.");
+        if (Id == default)
+            throw new PuzzleValidationException("Puzzle ID cannot be zero.");
 
         if (string.IsNullOrWhiteSpace(Title))
             throw new PuzzleValidationException("Puzzle title cannot be null or empty.");

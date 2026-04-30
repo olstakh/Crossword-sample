@@ -43,13 +43,8 @@ public class AdminController : ControllerBase
     /// Delete a puzzle from the database
     /// </summary>
     [HttpDelete("puzzles/{puzzleId}")]
-    public IActionResult DeletePuzzle(string puzzleId)
+    public IActionResult DeletePuzzle(PuzzleId puzzleId)
     {
-        if (string.IsNullOrEmpty(puzzleId))
-        {
-            return BadRequest(new { error = "Puzzle ID is required" });
-        }
-
         _puzzlePersister.DeletePuzzle(puzzleId);
         _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId);
         return Ok(new { message = "Puzzle deleted successfully", puzzleId });
@@ -66,7 +61,7 @@ public class AdminController : ControllerBase
             return BadRequest(new { error = "At least one puzzle ID is required" });
         }
 
-        var deletedIds = new List<string>();
+        var deletedIds = new List<PuzzleId>();
         var errors = new List<string>();
 
         foreach (var puzzleId in request.PuzzleIds)
@@ -114,7 +109,7 @@ public class AdminController : ControllerBase
             return BadRequest(new { error = "At least one puzzle is required" });
         }
 
-        var addedIds = new List<string>();
+        var addedIds = new List<PuzzleId>();
         var errors = new List<string>();
 
         foreach (var puzzle in puzzles)

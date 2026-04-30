@@ -9,7 +9,7 @@ namespace CrossWords.Services.Testing;
 /// </summary>
 public class InMemoryPuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepositoryWriter
 {
-    private readonly Dictionary<string, CrosswordPuzzle> _puzzles = new();
+    private readonly Dictionary<PuzzleId, CrosswordPuzzle> _puzzles = new();
     private readonly object _lock = new();
 
     public InMemoryPuzzleRepository()
@@ -57,7 +57,7 @@ public class InMemoryPuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
         }
     }
 
-    public CrosswordPuzzle? GetPuzzle(string puzzleId)
+    public CrosswordPuzzle? GetPuzzle(PuzzleId puzzleId)
     {
         lock (_lock)
         {
@@ -84,7 +84,7 @@ public class InMemoryPuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
         }
     }
 
-    public void DeletePuzzle(string puzzleId)
+    public void DeletePuzzle(PuzzleId puzzleId)
     {
         lock (_lock)
         {

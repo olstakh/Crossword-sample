@@ -1,4 +1,5 @@
 using CrossWords.Services.Abstractions;
+using CrossWords.Services.Models;
 
 namespace CrossWords.Services.Testing;
 
@@ -8,10 +9,10 @@ namespace CrossWords.Services.Testing;
 /// </summary>
 public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUserProgressRepositoryWriter
 {
-    private readonly Dictionary<string, Dictionary<string, DateTime>> _userProgress = new();
+    private readonly Dictionary<string, Dictionary<PuzzleId, DateTime>> _userProgress = new();
     private readonly object _lock = new();
 
-    public bool IsPuzzleSolved(string userId, string puzzleId)
+    public bool IsPuzzleSolved(string userId, PuzzleId puzzleId)
     {
         lock (_lock)
         {
@@ -20,19 +21,19 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
-    public void RecordSolvedPuzzle(string userId, string puzzleId)
+    public void RecordSolvedPuzzle(string userId, PuzzleId puzzleId)
     {
         lock (_lock)
         {
             if (!_userProgress.ContainsKey(userId))
             {
-                _userProgress[userId] = new Dictionary<string, DateTime>();
+                _userProgress[userId] = new Dictionary<PuzzleId, DateTime>();
             }
             _userProgress[userId][puzzleId] = DateTime.UtcNow;
         }
     }
 
-    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    public void ForgetPuzzles(string userId, IEnumerable<PuzzleId> puzzleIds)
     {
         lock (_lock)
         {
@@ -48,15 +49,15 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
-    public HashSet<string> GetSolvedPuzzles(string userId)
+    public HashSet<PuzzleId> GetSolvedPuzzles(string userId)
     {
         lock (_lock)
         {
             if (_userProgress.TryGetValue(userId, out var solvedPuzzles))
             {
-                return new HashSet<string>(solvedPuzzles.Keys);
+                return new HashSet<PuzzleId>(solvedPuzzles.Keys);
             }
-            return new HashSet<string>();
+            return new HashSet<PuzzleId>();
         }
     }
 
@@ -99,7 +100,7 @@ public class InMemoryUserProgressRepository : IUserProgressRepositoryReader, IUs
             {
                 if (!_userProgress.ContainsKey(record.UserId))
                 {
-                    _userProgress[record.UserId] = new Dictionary<string, DateTime>();
+                    _userProgress[record.UserId] = new Dictionary<PuzzleId, DateTime>();
                 }
                 _userProgress[record.UserId][record.PuzzleId] = record.SolvedAt;
             }

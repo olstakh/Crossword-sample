@@ -1,4 +1,5 @@
 using CrossWords.Services.Abstractions;
+using CrossWords.Services.Models;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -13,13 +14,13 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
     private readonly string _filePath;
     private readonly ILogger<FileUserProgressRepository> _logger;
     private readonly object _lock = new();
-    private Dictionary<string, Dictionary<string, DateTime>> _userProgress;
+    private Dictionary<string, Dictionary<PuzzleId, DateTime>> _userProgress;
 
     public FileUserProgressRepository(string filePath, ILogger<FileUserProgressRepository> logger)
     {
         _filePath = filePath;
         _logger = logger;
-        _userProgress = new Dictionary<string, Dictionary<string, DateTime>>();
+        _userProgress = new Dictionary<string, Dictionary<PuzzleId, DateTime>>();
         
         // Create directory if it doesn't exist
         var directory = Path.GetDirectoryName(_filePath);
@@ -32,7 +33,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         LoadFromFile();
     }
 
-    public bool IsPuzzleSolved(string userId, string puzzleId)
+    public bool IsPuzzleSolved(string userId, PuzzleId puzzleId)
     {
         lock (_lock)
         {
@@ -40,13 +41,13 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         }
     }
 
-    public void RecordSolvedPuzzle(string userId, string puzzleId)
+    public void RecordSolvedPuzzle(string userId, PuzzleId puzzleId)
     {
         lock (_lock)
         {
             if (!_userProgress.ContainsKey(userId))
             {
-                _userProgress[userId] = new Dictionary<string, DateTime>();
+                _userProgress[userId] = new Dictionary<PuzzleId, DateTime>();
             }
 
             if (!_userProgress[userId].ContainsKey(puzzleId))
@@ -58,7 +59,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         }
     }
 
-    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    public void ForgetPuzzles(string userId, IEnumerable<PuzzleId> puzzleIds)
     {
         lock (_lock)
         {
@@ -84,13 +85,13 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         }
     }
 
-    public HashSet<string> GetSolvedPuzzles(string userId)
+    public HashSet<PuzzleId> GetSolvedPuzzles(string userId)
     {
         lock (_lock)
         {
             return _userProgress.ContainsKey(userId) 
-                ? new HashSet<string>(_userProgress[userId].Keys) 
-                : new HashSet<string>();
+                ? new HashSet<PuzzleId>(_userProgress[userId].Keys) 
+                : new HashSet<PuzzleId>();
         }
     }
 
@@ -133,7 +134,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
             {
                 if (!_userProgress.ContainsKey(record.UserId))
                 {
-                    _userProgress[record.UserId] = new Dictionary<string, DateTime>();
+                    _userProgress[record.UserId] = new Dictionary<PuzzleId, DateTime>();
                 }
                 _userProgress[record.UserId][record.PuzzleId] = record.SolvedAt;
             }
@@ -150,7 +151,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
             if (File.Exists(_filePath))
             {
                 var json = File.ReadAllText(_filePath);
-                var data = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, DateTime>>>(json);
+                var data = JsonSerializer.Deserialize<Dictionary<string, Dictionary<PuzzleId, DateTime>>>(json);
                 
                 if (data != null)
                 {
@@ -172,7 +173,7 @@ internal class FileUserProgressRepository : IUserProgressRepositoryReader, IUser
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading user progress from {FilePath}", _filePath);
-            _userProgress = new Dictionary<string, Dictionary<string, DateTime>>();
+            _userProgress = new Dictionary<string, Dictionary<PuzzleId, DateTime>>();
         }
     }
 

@@ -19,5 +19,5 @@ public interface IPuzzleRepositoryReader
     /// </summary>
     /// <param name="puzzleId">Id of a puzzle to look up.</param>
     /// <returns>Puzzle or <c>null</c> if given id not found.</returns>
-    CrosswordPuzzle? GetPuzzle(string puzzleId);
+    CrosswordPuzzle? GetPuzzle(PuzzleId puzzleId);
 }

@@ -35,7 +35,7 @@ class CryptogramPuzzle {
 
         // Create a random letter-to-number mapping
         const letters = Array.from(uniqueLetters);
-        const seed = this.data.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const seed = String(this.data.id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         const shuffledNumbers = this.shuffleArray([...Array(letters.length).keys()].map(i => i + 1), seed);
         
         // Create letterMapping: letter -> number

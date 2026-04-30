@@ -118,7 +118,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 {
                     puzzles.Add(new CrosswordPuzzle
                     {
-                        Id = id,
+                        Id = int.Parse(id),
                         Title = title,
                         Language = language,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
@@ -205,7 +205,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 {
                     puzzles.Add(new CrosswordPuzzle
                     {
-                        Id = id,
+                        Id = int.Parse(id),
                         Title = title,
                         Language = languageValue,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
@@ -227,7 +227,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
         return puzzles;
     }
 
-    public CrosswordPuzzle? GetPuzzle(string puzzleId)
+    public CrosswordPuzzle? GetPuzzle(PuzzleId puzzleId)
     {
         try
         {
@@ -240,7 +240,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 FROM Puzzles
                 WHERE Id = $id";
             
-            command.Parameters.AddWithValue("$id", puzzleId);
+            command.Parameters.AddWithValue("$id", puzzleId.ToString());
 
             using var reader = command.ExecuteReader();
             if (reader.Read())
@@ -262,7 +262,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 {
                     return new CrosswordPuzzle
                     {
-                        Id = id,
+                        Id = int.Parse(id),
                         Title = title,
                         Language = language,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
@@ -297,7 +297,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 INSERT OR REPLACE INTO Puzzles (Id, Title, Language, Rows, Cols, GridJson, RevealedLettersJson, CreatedAt)
                 VALUES ($id, $title, $language, $rows, $cols, $gridJson, $revealedLettersJson, $createdAt)";
             
-            command.Parameters.AddWithValue("$id", puzzle.Id);
+            command.Parameters.AddWithValue("$id", puzzle.Id.ToString());
             command.Parameters.AddWithValue("$title", puzzle.Title);
             command.Parameters.AddWithValue("$language", puzzle.Language.ToString());
             command.Parameters.AddWithValue("$rows", puzzle.Size.Rows);
@@ -358,7 +358,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
 
             foreach (var puzzle in puzzleList)
             {
-                idParam.Value = puzzle.Id;
+                idParam.Value = puzzle.Id.ToString();
                 titleParam.Value = puzzle.Title;
                 languageParam.Value = puzzle.Language.ToString();
                 rowsParam.Value = puzzle.Size.Rows;
@@ -383,7 +383,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
     /// <summary>
     /// Delete a puzzle from the database
     /// </summary>
-    public void DeletePuzzle(string puzzleId)
+    public void DeletePuzzle(PuzzleId puzzleId)
     {
         try
         {
@@ -395,7 +395,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 DELETE FROM Puzzles 
                 WHERE Id = $id";
             
-            command.Parameters.AddWithValue("$id", puzzleId);
+            command.Parameters.AddWithValue("$id", puzzleId.ToString());
 
             var rowsAffected = command.ExecuteNonQuery();
             

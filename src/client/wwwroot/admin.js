@@ -4,7 +4,7 @@ class PuzzleBuilder {
         this.rows = 5;
         this.cols = 5;
         this.currentCell = null;
-        this.puzzleId = 'puzzle4';
+        this.puzzleId = 4;
         this.puzzleTitle = 'My Custom Puzzle';
         this.puzzleLanguage = 'English';
         
@@ -19,7 +19,7 @@ class PuzzleBuilder {
     setupEventListeners() {
         // Settings inputs
         document.getElementById('puzzleId').addEventListener('input', (e) => {
-            this.puzzleId = e.target.value;
+            this.puzzleId = parseInt(e.target.value) || 0;
             this.updateJsonPreview();
         });
         
