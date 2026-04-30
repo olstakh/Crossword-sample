@@ -75,15 +75,15 @@ public class GlobalExceptionHandlerMiddleware
         // Log based on severity
         if (statusCode == HttpStatusCode.InternalServerError)
         {
-            _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message.SanitizeForLog());
+            _logger.LogError(exception, "Unhandled exception: {Message}", LogSanitizer.SanitizeForLog(exception.Message));
         }
         else if (statusCode == HttpStatusCode.NotFound)
         {
-            _logger.LogWarning(exception, "Resource not found: {Message}", exception.Message.SanitizeForLog());
+            _logger.LogWarning(exception, "Resource not found: {Message}", LogSanitizer.SanitizeForLog(exception.Message));
         }
         else
         {
-            _logger.LogInformation(exception, "Client error: {Message}", exception.Message.SanitizeForLog());
+            _logger.LogInformation(exception, "Client error: {Message}", LogSanitizer.SanitizeForLog(exception.Message));
         }
 
         context.Response.StatusCode = (int)statusCode;

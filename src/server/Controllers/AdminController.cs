@@ -35,7 +35,7 @@ public class AdminController : ControllerBase
         puzzle.Validate();
 
         _puzzlePersister.AddPuzzle(puzzle);
-        _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", puzzle.Id.SanitizeForLog());
+        _logger.LogInformation("Successfully added puzzle {PuzzleId} via admin API", LogSanitizer.SanitizeForLog(puzzle.Id));
         
         return Ok(new { message = "Puzzle added successfully", puzzleId = puzzle.Id });
     }
@@ -52,7 +52,7 @@ public class AdminController : ControllerBase
         }
 
         _puzzlePersister.DeletePuzzle(puzzleId);
-        _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", puzzleId.SanitizeForLog());
+        _logger.LogInformation("Successfully deleted puzzle {PuzzleId} via admin API", LogSanitizer.SanitizeForLog(puzzleId));
         return Ok(new { message = "Puzzle deleted successfully", puzzleId });
     }
 
@@ -79,7 +79,7 @@ public class AdminController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting puzzle {PuzzleId}", puzzleId.SanitizeForLog());
+                _logger.LogError(ex, "Error deleting puzzle {PuzzleId}", LogSanitizer.SanitizeForLog(puzzleId));
                 errors.Add($"{puzzleId}: {ex.Message}");
             }
         }
@@ -127,7 +127,7 @@ public class AdminController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Validation error for puzzle {PuzzleId}", puzzle.Id.SanitizeForLog());
+                _logger.LogError(ex, "Validation error for puzzle {PuzzleId}", LogSanitizer.SanitizeForLog(puzzle.Id));
                 errors.Add($"{puzzle.Id}: {ex.Message}");
             }
         }
