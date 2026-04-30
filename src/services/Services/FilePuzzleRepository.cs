@@ -114,9 +114,6 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
         }
     }
 
-    private static string? SanitizePuzzleId(string? puzzleId) =>
-        puzzleId?.Replace("\r", "").Replace("\n", "");
-
     public void AddPuzzle(CrosswordPuzzle puzzle)
     {
         lock (_lock)
@@ -125,12 +122,12 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
             if (existingIndex >= 0)
             {
                 _puzzles[existingIndex] = puzzle;
-                _logger.LogInformation("Updated puzzle {PuzzleId}", SanitizePuzzleId(puzzle.Id));
+                _logger.LogInformation("Updated puzzle {PuzzleId}", LogSanitizer.SanitizeForLog(puzzle.Id));
             }
             else
             {
                 _puzzles.Add(puzzle);
-                _logger.LogInformation("Added new puzzle {PuzzleId}", SanitizePuzzleId(puzzle.Id));
+                _logger.LogInformation("Added new puzzle {PuzzleId}", LogSanitizer.SanitizeForLog(puzzle.Id));
             }
             SaveToFile();
         }
@@ -143,12 +140,12 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
             var removed = _puzzles.RemoveAll(p => p.Id == puzzleId);
             if (removed > 0)
             {
-                _logger.LogInformation("Deleted puzzle {PuzzleId}", SanitizePuzzleId(puzzleId));
+                _logger.LogInformation("Deleted puzzle {PuzzleId}", LogSanitizer.SanitizeForLog(puzzleId));
                 SaveToFile();
             }
             else
             {
-                _logger.LogWarning("Attempted to delete non-existent puzzle {PuzzleId}", SanitizePuzzleId(puzzleId));
+                _logger.LogWarning("Attempted to delete non-existent puzzle {PuzzleId}", LogSanitizer.SanitizeForLog(puzzleId));
             }
         }
     }
