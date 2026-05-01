@@ -197,7 +197,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                solvedPuzzles.Add(new PuzzleId(int.Parse(reader.GetString(0))));
+                solvedPuzzles.Add(new PuzzleId(uint.Parse(reader.GetString(0))));
             }
         }
         catch (Exception ex)
@@ -256,7 +256,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             while (reader.Read())
             {
                 var userId = reader.GetString(0);
-                var puzzleId = new PuzzleId(int.Parse(reader.GetString(1)));
+                var puzzleId = new PuzzleId(uint.Parse(reader.GetString(1)));
                 var solvedAtStr = reader.GetString(2);
                 
                 if (DateTime.TryParse(solvedAtStr, out var solvedAt))

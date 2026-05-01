@@ -118,7 +118,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 {
                     puzzles.Add(new CrosswordPuzzle
                     {
-                        Id = int.Parse(id),
+                        Id = uint.Parse(id),
                         Title = title,
                         Language = language,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
@@ -205,7 +205,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 {
                     puzzles.Add(new CrosswordPuzzle
                     {
-                        Id = int.Parse(id),
+                        Id = uint.Parse(id),
                         Title = title,
                         Language = languageValue,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },
@@ -262,7 +262,7 @@ internal class SqlitePuzzleRepository : IPuzzleRepositoryReader, IPuzzleReposito
                 {
                     return new CrosswordPuzzle
                     {
-                        Id = int.Parse(id),
+                        Id = uint.Parse(id),
                         Title = title,
                         Language = language,
                         Size = new PuzzleSize { Rows = rows, Cols = cols },

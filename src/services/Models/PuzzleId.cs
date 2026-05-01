@@ -7,10 +7,10 @@ namespace CrossWords.Services.Models;
 
 [JsonConverter(typeof(PuzzleIdJsonConverter))]
 [TypeConverter(typeof(PuzzleIdTypeConverter))]
-public readonly record struct PuzzleId(int Value) : IComparable<PuzzleId>
+public readonly record struct PuzzleId(uint Value) : IComparable<PuzzleId>
 {
-    public static implicit operator int(PuzzleId id) => id.Value;
-    public static implicit operator PuzzleId(int value) => new(value);
+    public static implicit operator uint(PuzzleId id) => id.Value;
+    public static implicit operator PuzzleId(uint value) => new(value);
 
     public override string ToString() => Value.ToString();
 
@@ -23,17 +23,17 @@ public class PuzzleIdJsonConverter : JsonConverter<PuzzleId>
     {
         if (reader.TokenType == JsonTokenType.Number)
         {
-            return new PuzzleId(reader.GetInt32());
+            return new PuzzleId(reader.GetUInt32());
         }
 
         if (reader.TokenType == JsonTokenType.String)
         {
             var str = reader.GetString();
-            if (str != null && int.TryParse(str, out var val))
+            if (str != null && uint.TryParse(str, out var val))
                 return new PuzzleId(val);
         }
 
-        throw new JsonException("Cannot convert value to PuzzleId. Expected a number.");
+        throw new JsonException("Cannot convert value to PuzzleId. Expected a non-negative number.");
     }
 
     public override void Write(Utf8JsonWriter writer, PuzzleId value, JsonSerializerOptions options)
@@ -44,7 +44,7 @@ public class PuzzleIdJsonConverter : JsonConverter<PuzzleId>
     public override PuzzleId ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var str = reader.GetString();
-        if (str != null && int.TryParse(str, out var val))
+        if (str != null && uint.TryParse(str, out var val))
             return new PuzzleId(val);
         throw new JsonException($"Cannot convert property name '{str}' to PuzzleId.");
     }
@@ -59,22 +59,22 @@ public class PuzzleIdTypeConverter : TypeConverter
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
     {
-        return sourceType == typeof(string) || sourceType == typeof(int) || base.CanConvertFrom(context, sourceType);
+        return sourceType == typeof(string) || sourceType == typeof(uint) || base.CanConvertFrom(context, sourceType);
     }
 
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
         return value switch
         {
-            string str when int.TryParse(str, out var intVal) => new PuzzleId(intVal),
-            int intVal => new PuzzleId(intVal),
+            string str when uint.TryParse(str, out var uintVal) => new PuzzleId(uintVal),
+            uint uintVal => new PuzzleId(uintVal),
             _ => base.ConvertFrom(context, culture, value)
         };
     }
 
     public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
     {
-        return destinationType == typeof(string) || destinationType == typeof(int) || base.CanConvertTo(context, destinationType);
+        return destinationType == typeof(string) || destinationType == typeof(uint) || base.CanConvertTo(context, destinationType);
     }
 
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
@@ -83,7 +83,7 @@ public class PuzzleIdTypeConverter : TypeConverter
         {
             if (destinationType == typeof(string))
                 return puzzleId.ToString();
-            if (destinationType == typeof(int))
+            if (destinationType == typeof(uint))
                 return puzzleId.Value;
         }
 
