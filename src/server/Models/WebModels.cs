@@ -1,3 +1,5 @@
+using CrossWords.Services.Models;
+
 namespace CrossWords.Models;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace CrossWords.Models;
 /// </summary>
 public class RecordSolvedPuzzleRequest
 {
-    public string PuzzleId { get; init; } = string.Empty;
+    public PuzzleId PuzzleId { get; init; }
 }
 
 /// <summary>
@@ -13,7 +15,7 @@ public class RecordSolvedPuzzleRequest
 /// </summary>
 public class DeletePuzzlesRequest
 {
-    public List<string> PuzzleIds { get; init; } = new();
+    public List<PuzzleId> PuzzleIds { get; init; } = new();
 }
 
 /// <summary>
@@ -21,5 +23,5 @@ public class DeletePuzzlesRequest
 /// </summary>
 public class ForgetPuzzlesRequest
 {
-    public IEnumerable<string> PuzzleIds { get; init; } = new List<string>();
+    public IEnumerable<PuzzleId> PuzzleIds { get; init; } = new List<PuzzleId>();
 }

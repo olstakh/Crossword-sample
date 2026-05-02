@@ -62,7 +62,7 @@ public class UserController : ControllerBase
             return BadRequest(new { error = "User ID is required in X-User-Id header" });
         }
 
-        if (string.IsNullOrWhiteSpace(request.PuzzleId))
+        if (request.PuzzleId == default)
         {
             return BadRequest(new { error = "Puzzle ID is required" });
         }
@@ -114,16 +114,11 @@ public class UserController : ControllerBase
     [HttpGet("has-solved/{puzzleId}")]
     public ActionResult<bool> HasSolvedPuzzle(
         [FromHeader(Name = "X-User-Id")] string? userId,
-        string puzzleId)
+        PuzzleId puzzleId)
     {
         if (string.IsNullOrWhiteSpace(userId))
         {
             return BadRequest(new { error = "User ID is required in X-User-Id header" });
-        }
-
-        if (string.IsNullOrWhiteSpace(puzzleId))
-        {
-            return BadRequest(new { error = "Puzzle ID is required" });
         }
 
         var hasSolved = _repositoryReader.IsPuzzleSolved(userId, puzzleId);

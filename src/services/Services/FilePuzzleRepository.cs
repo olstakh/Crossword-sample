@@ -106,7 +106,7 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
         return allPuzzles;
     }
 
-    public CrosswordPuzzle? GetPuzzle(string puzzleId)
+    public CrosswordPuzzle? GetPuzzle(PuzzleId puzzleId)
     {
         lock (_lock)
         {
@@ -114,8 +114,8 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
         }
     }
 
-    private static string? SanitizePuzzleId(string? puzzleId) =>
-        puzzleId?.Replace("\r", "").Replace("\n", "");
+    private static string? SanitizePuzzleId(PuzzleId puzzleId) =>
+        puzzleId.ToString();
 
     public void AddPuzzle(CrosswordPuzzle puzzle)
     {
@@ -136,7 +136,7 @@ internal class FilePuzzleRepository : IPuzzleRepositoryReader, IPuzzleRepository
         }
     }
 
-    public void DeletePuzzle(string puzzleId)
+    public void DeletePuzzle(PuzzleId puzzleId)
     {
         lock (_lock)
         {

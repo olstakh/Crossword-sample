@@ -23,11 +23,11 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
 
         // Assert
         response.EnsureSuccessStatusCode();
-        var puzzleIds = await response.Content.ReadFromJsonAsync<List<string>>(cancellationToken: TestContext.Current.CancellationToken);
+        var puzzleIds = await response.Content.ReadFromJsonAsync<List<uint>>(cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.NotNull(puzzleIds);
         Assert.NotEmpty(puzzleIds);
-        Assert.Contains("puzzle2", puzzleIds);
+        Assert.Contains(2u, puzzleIds);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(puzzles);
         Assert.NotEmpty(puzzles);
         Assert.All(puzzles, p => Assert.NotNull(p.Title));
-        Assert.All(puzzles, p => Assert.NotNull(p.Id));
+        Assert.All(puzzles, p => Assert.True(p.Id != default));
         Assert.All(puzzles, p => Assert.True(p.Size.Rows > 0 && p.Size.Cols > 0));
     }
 
@@ -73,9 +73,9 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Theory]
-    [InlineData("puzzle2")]
-    [InlineData("puzzle3")]
-    public async Task GetPuzzle_WithValidId_ReturnsSuccessAndPuzzle(string puzzleId)
+    [InlineData(2u)]
+    [InlineData(3u)]
+    public async Task GetPuzzle_WithValidId_ReturnsSuccessAndPuzzle(uint puzzleId)
     {
         // Act
         var response = await _client.GetAsync($"/api/crossword/puzzle/{puzzleId}", TestContext.Current.CancellationToken);
@@ -85,7 +85,7 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
         var puzzle = await response.Content.ReadFromJsonAsync<CrosswordPuzzle>(cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.NotNull(puzzle);
-        Assert.Equal(puzzleId, puzzle.Id);
+        Assert.Equal((PuzzleId)puzzleId, puzzle.Id);
         Assert.NotEmpty(puzzle.Grid);
         Assert.NotEmpty(puzzle.Title);
     }
@@ -145,7 +145,7 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
     public async Task Puzzle_GridContainsValidData()
     {
         // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle/puzzle2", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/crossword/puzzle/2", TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -172,7 +172,7 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
     public async Task GetPuzzle_WithInvalidId_ReturnsNotFound()
     {
         // Act
-        var response = await _client.GetAsync("/api/crossword/puzzle/nonexistent", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/crossword/puzzle/99999", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -209,7 +209,7 @@ public class CrosswordControllerTests : IClassFixture<TestWebApplicationFactory>
 
         // Assert
         response.EnsureSuccessStatusCode();
-        var puzzleIds = await response.Content.ReadFromJsonAsync<List<string>>(cancellationToken: TestContext.Current.CancellationToken);
+        var puzzleIds = await response.Content.ReadFromJsonAsync<List<uint>>(cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.NotNull(puzzleIds);
         Assert.NotEmpty(puzzleIds);

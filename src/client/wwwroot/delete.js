@@ -105,7 +105,7 @@ function handleSelectAll(event) {
     
     document.querySelectorAll('.puzzle-checkbox').forEach(checkbox => {
         checkbox.checked = isChecked;
-        const puzzleId = checkbox.dataset.puzzleId;
+        const puzzleId = Number(checkbox.dataset.puzzleId);
         
         if (isChecked) {
             selectedPuzzleIds.add(puzzleId);
@@ -119,7 +119,7 @@ function handleSelectAll(event) {
 
 // Handle individual checkbox change
 function handleCheckboxChange(event) {
-    const puzzleId = event.target.dataset.puzzleId;
+    const puzzleId = Number(event.target.dataset.puzzleId);
     
     if (event.target.checked) {
         selectedPuzzleIds.add(puzzleId);
@@ -138,7 +138,7 @@ function handleCheckboxChange(event) {
 
 // Handle delete single puzzle
 async function handleDeleteSingle(event) {
-    const puzzleId = event.target.dataset.puzzleId;
+    const puzzleId = Number(event.target.dataset.puzzleId);
     const puzzle = puzzles.find(p => p.id === puzzleId);
     
     if (!confirm(`Are you sure you want to delete puzzle "${puzzle?.title || puzzleId}"?`)) {

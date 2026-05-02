@@ -38,7 +38,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             {
                 new CrosswordPuzzle
                 {
-                    Id = "puzzle1",
+                    Id = 1,
                     Title = "Test Small Puzzle",
                     Language = PuzzleLanguage.English,
                     Size = new PuzzleSize { Rows = 5, Cols = 5 },
@@ -53,7 +53,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 },
                 new CrosswordPuzzle
                 {
-                    Id = "puzzle2",
+                    Id = 2,
                     Title = "Test Medium Puzzle",
                     Language = PuzzleLanguage.English,
                     Size = new PuzzleSize { Rows = 10, Cols = 10 },
@@ -63,7 +63,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 },
                 new CrosswordPuzzle
                 {
-                    Id = "puzzle3",
+                    Id = 3,
                     Title = "Test Big Puzzle (English)",
                     Language = PuzzleLanguage.English,
                     Size = new PuzzleSize { Rows = 17, Cols = 17 },
@@ -73,7 +73,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 },
                 new CrosswordPuzzle
                 {
-                    Id = "puzzle4",
+                    Id = 4,
                     Title = "Test Medium Puzzle (Ukrainian)",
                     Language = PuzzleLanguage.Ukrainian,
                     Size = new PuzzleSize { Rows = 11, Cols = 11 },
@@ -83,7 +83,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 },
                 new CrosswordPuzzle
                 {
-                    Id = "puzzle5",
+                    Id = 5,
                     Title = "Test Big Puzzle (Ukrainian)",
                     Language = PuzzleLanguage.Ukrainian,
                     Size = new PuzzleSize { Rows = 18, Cols = 18 },

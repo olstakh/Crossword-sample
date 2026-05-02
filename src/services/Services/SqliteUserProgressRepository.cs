@@ -1,4 +1,5 @@
 using CrossWords.Services.Abstractions;
+using CrossWords.Services.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 
@@ -72,7 +73,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
-    public bool IsPuzzleSolved(string userId, string puzzleId)
+    public bool IsPuzzleSolved(string userId, PuzzleId puzzleId)
     {
         try
         {
@@ -85,7 +86,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
                 FROM UserProgress 
                 WHERE UserId = $userId AND PuzzleId = $puzzleId";
             command.Parameters.AddWithValue("$userId", userId);
-            command.Parameters.AddWithValue("$puzzleId", puzzleId);
+            command.Parameters.AddWithValue("$puzzleId", puzzleId.ToString());
 
             var count = Convert.ToInt32(command.ExecuteScalar() ?? 0);
             return count > 0;
@@ -98,7 +99,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
-    public void RecordSolvedPuzzle(string userId, string puzzleId)
+    public void RecordSolvedPuzzle(string userId, PuzzleId puzzleId)
     {
         try
         {
@@ -110,7 +111,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
                 INSERT OR IGNORE INTO UserProgress (UserId, PuzzleId, SolvedAt)
                 VALUES ($userId, $puzzleId, $solvedAt)";
             command.Parameters.AddWithValue("$userId", userId);
-            command.Parameters.AddWithValue("$puzzleId", puzzleId);
+            command.Parameters.AddWithValue("$puzzleId", puzzleId.ToString());
             command.Parameters.AddWithValue("$solvedAt", DateTime.UtcNow.ToString("O"));
 
             var rowsAffected = command.ExecuteNonQuery();
@@ -132,7 +133,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
-    public void ForgetPuzzles(string userId, IEnumerable<string> puzzleIds)
+    public void ForgetPuzzles(string userId, IEnumerable<PuzzleId> puzzleIds)
     {
         var puzzleIdList = puzzleIds.ToList();
         if (puzzleIdList.Count == 0)
@@ -161,7 +162,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             int totalDeleted = 0;
             foreach (var puzzleId in puzzleIdList)
             {
-                puzzleIdParam.Value = puzzleId;
+                puzzleIdParam.Value = puzzleId.ToString();
                 totalDeleted += command.ExecuteNonQuery();
             }
             
@@ -176,9 +177,9 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
         }
     }
 
-    public HashSet<string> GetSolvedPuzzles(string userId)
+    public HashSet<PuzzleId> GetSolvedPuzzles(string userId)
     {
-        var solvedPuzzles = new HashSet<string>();
+        var solvedPuzzles = new HashSet<PuzzleId>();
 
         try
         {
@@ -196,7 +197,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                solvedPuzzles.Add(reader.GetString(0));
+                solvedPuzzles.Add(new PuzzleId(uint.Parse(reader.GetString(0))));
             }
         }
         catch (Exception ex)
@@ -255,7 +256,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             while (reader.Read())
             {
                 var userId = reader.GetString(0);
-                var puzzleId = reader.GetString(1);
+                var puzzleId = new PuzzleId(uint.Parse(reader.GetString(1)));
                 var solvedAtStr = reader.GetString(2);
                 
                 if (DateTime.TryParse(solvedAtStr, out var solvedAt))
@@ -314,7 +315,7 @@ internal class SqliteUserProgressRepository : IUserProgressRepositoryReader, IUs
             foreach (var record in recordsList)
             {
                 userIdParam.Value = record.UserId;
-                puzzleIdParam.Value = record.PuzzleId;
+                puzzleIdParam.Value = record.PuzzleId.ToString();
                 solvedAtParam.Value = record.SolvedAt.ToString("O");
                 
                 insertCommand.ExecuteNonQuery();

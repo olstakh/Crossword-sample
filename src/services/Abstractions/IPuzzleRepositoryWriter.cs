@@ -21,5 +21,5 @@ public interface IPuzzleRepositoryWriter
     /// <summary>
     /// Delete a puzzle from the repository
     /// </summary>
-    void DeletePuzzle(string puzzleId);
+    void DeletePuzzle(PuzzleId puzzleId);
 }

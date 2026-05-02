@@ -1,7 +1,7 @@
 // Test helper to create puzzle data
 export function createMockPuzzleData(overrides = {}) {
   return {
-    id: 'test-puzzle',
+    id: 1,
     title: 'Test Puzzle',
     language: 'English',
     size: { rows: 3, cols: 3 },

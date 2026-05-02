@@ -7,7 +7,7 @@ namespace CrossWords.Models;
 /// </summary>
 public class PuzzleListItem
 {
-    public string Id { get; init; } = string.Empty;
+    public PuzzleId Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public PuzzleLanguage Language { get; init; }
     public PuzzleSize Size { get; init; } = new();

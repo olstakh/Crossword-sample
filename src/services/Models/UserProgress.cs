@@ -6,7 +6,7 @@ namespace CrossWords.Services.Models;
 public class UserProgress
 {
     public string UserId { get; init; } = string.Empty;
-    public List<string> SolvedPuzzleIds { get; init; } = new();
+    public List<PuzzleId> SolvedPuzzleIds { get; init; } = new();
     public DateTime LastPlayed { get; init; } = DateTime.UtcNow;
     public int TotalPuzzlesSolved { get; init; }
 }
@@ -16,8 +16,8 @@ public class UserProgress
 /// </summary>
 public class AvailablePuzzlesResponse
 {
-    public List<string> UnsolvedPuzzleIds { get; init; } = new();
-    public List<string> SolvedPuzzleIds { get; init; } = new();
+    public List<PuzzleId> UnsolvedPuzzleIds { get; init; } = new();
+    public List<PuzzleId> SolvedPuzzleIds { get; init; } = new();
     public int TotalAvailable { get; init; }
     public int TotalSolved { get; init; }
 }

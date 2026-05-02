@@ -26,7 +26,7 @@ public class CrosswordController : ControllerBase
     /// Get a list of available puzzle IDs
     /// </summary>
     [HttpGet("puzzles")]
-    public ActionResult<List<string>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
+    public ActionResult<List<PuzzleId>> GetPuzzleList([FromQuery] PuzzleLanguage? language = null)
     {
         var puzzleIds = _puzzleRepositoryReader
             .GetPuzzles(language: language, sizeCategory: PuzzleSizeCategory.Any)
@@ -66,7 +66,7 @@ public class CrosswordController : ControllerBase
     /// Get a specific puzzle by ID
     /// </summary>
     [HttpGet("puzzle/{id}")]
-    public ActionResult<CrosswordPuzzle> GetPuzzleById(string id)
+    public ActionResult<CrosswordPuzzle> GetPuzzleById(PuzzleId id)
     {
         var puzzle = _puzzleRepositoryReader.GetPuzzle(id);
 
